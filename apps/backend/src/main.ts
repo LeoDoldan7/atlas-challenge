@@ -10,4 +10,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   logger.log(`🚀 API running at http://localhost:${port}`);
 }
-bootstrap();
+
+bootstrap().catch((e) => {
+  console.error('Cannot start server', e);
+});
