@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionType {
+  individual
+  family
+}
+
+enum SubscriptionStatus {
+  draft
+  pending
+  active
+  canceled
+  terminated
+}
+
+enum ItemRole {
+  employee
+  spouse
+  child
+}
+
+enum StepStatus {
+  pending
+  completed
+  skipped
+}
+
+enum MaritalStatus {
+  single
+  married
+  divorced
+  widowed
+  separated
+}
+
+/* ---------------------------- Models --------------------------- */
+
+model Company {
+  id               BigInt                     @id @default(autoincrement()) @db.BigInt
+  name             String
+  country_iso_code String                     @db.Char(2)
+  created_at       DateTime                   @default(now())
+
+  employees        Employee[]
+  subscriptions    HealthcareSubscription[]
+
+  @@map("companies")
+}
+
+model Demographic {
+  id             BigInt                        @id @default(autoincrement()) @db.BigInt
+  first_name     String
+  last_name      String
+  government_id  String                        @unique
+  birth_date     DateTime                      @db.Date
+  created_at     DateTime                      @default(now())
+
+  employees      Employee[]
+  subItems       HealthcareSubscriptionItem[]
+
+  @@map("demographics")
+}
+
+model Employee {
+  id               BigInt                     @id @default(autoincrement()) @db.BigInt
+  company_id       BigInt
+  demographics_id  BigInt
+  email            String                     @unique
+  birth_date       DateTime                   @db.Date
+  marital_status   MaritalStatus
+  created_at       DateTime                   @default(now())
+
+  company          Company                    @relation(fields: [company_id], references: [id], onDelete: Restrict)
+  demographics     Demographic                @relation(fields: [demographics_id], references: [id], onDelete: Restrict)
+  wallet           Wallet?
+  subscriptions    HealthcareSubscription[]
+
+  @@index([company_id])
+  @@index([demographics_id])
+  @@map("employees")
+}
+
+model Wallet {
+  id            BigInt    @id @default(autoincrement()) @db.BigInt
+  employee_id   BigInt    @unique
+  balance_cents BigInt    @db.BigInt
+  currency_code String    @db.Char(3)
+  created_at    DateTime  @default(now())
+
+  employee      Employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+model HealthcarePlan {
+  id                           BigInt   @id @default(autoincrement()) @db.BigInt
+  cost_employee_cents          BigInt   @db.BigInt
+  pct_employee_paid_by_company Decimal  @db.Decimal(5, 2)
+  cost_spouse_cents            BigInt   @db.BigInt
+  pct_spouse_paid_by_company   Decimal  @db.Decimal(5, 2)
+  cost_child_cents             BigInt   @db.BigInt
+  pct_child_paid_by_company    Decimal  @db.Decimal(5, 2)
+
+  subscriptions                HealthcareSubscription[]
+
+  @@map("healthcare_plans")
+}
+
+model HealthcareSubscription {
+  id             BigInt                @id @default(autoincrement()) @db.BigInt
+  company_id     BigInt
+  employee_id    BigInt
+  type           SubscriptionType
+  status         SubscriptionStatus
+  plan_id        BigInt
+  start_date     DateTime              @db.Date
+  end_date       DateTime?             @db.Date
+  billing_anchor Int                   @db.SmallInt
+  created_at     DateTime              @default(now())
+
+  company        Company               @relation(fields: [company_id], references: [id], onDelete: Restrict)
+  employee       Employee              @relation(fields: [employee_id], references: [id], onDelete: Restrict)
+  plan           HealthcarePlan        @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+
+  items          HealthcareSubscriptionItem[]
+  steps          HealthcareSubscriptionStep[]
+
+  @@index([company_id])
+  @@index([employee_id])
+  @@index([plan_id])
+  @@map("healthcare_subscriptions")
+}
+
+model HealthcareSubscriptionItem {
+  id                         BigInt          @id @default(autoincrement()) @db.BigInt
+  healthcare_subscription_id BigInt
+  role                       ItemRole
+  demographic_id             BigInt
+  created_at                 DateTime        @default(now())
+
+  subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
+  demographic                Demographic            @relation(fields: [demographic_id], references: [id], onDelete: Restrict)
+
+  @@index([healthcare_subscription_id])
+  @@index([demographic_id])
+  @@map("healthcare_subscription_items")
+}
+
+model HealthcareSubscriptionStep {
+  id                         BigInt                 @id @default(autoincrement()) @db.BigInt
+  healthcare_subscription_id BigInt
+  name                       String
+  status                     StepStatus
+  required                   Boolean                @default(true)
+  completed_at               DateTime?
+
+  subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
+  files                      HealthcareSubscriptionStepFile[]
+
+  @@index([healthcare_subscription_id])
+  @@map("healthcare_subscription_steps")
+}
+
+model HealthcareSubscriptionStepFile {
+  id                               BigInt                      @id @default(autoincrement()) @db.BigInt
+  healthcare_subscription_step_id  BigInt
+  path                             String
+  original_name                    String
+  file_size_bytes                  Int
+  mime_type                        String
+  created_at                       DateTime  @default(now())
+
+  step                             HealthcareSubscriptionStep   @relation(fields: [healthcare_subscription_step_id], references: [id], onDelete: Cascade)
+
+  @@index([healthcare_subscription_step_id])
+  @@map("healthcare_subscription_step_files")
+}
