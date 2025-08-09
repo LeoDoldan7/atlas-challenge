@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useSubscriptions } from '../hooks/useSubscriptions';
-import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION } from '../lib/queries';
+import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION } from '../lib/queries';
 
 // Form validation schema for demographic data
 const demographicSchema = z.object({
@@ -48,8 +48,11 @@ const SubscriptionDetails: React.FC = () => {
 
   const subscription = subscriptions.find(sub => sub.id === id);
   const [isSubmittingDemographics, setIsSubmittingDemographics] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   const [uploadFamilyDemographics] = useMutation(UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION);
+  const [uploadFiles] = useMutation(UPLOAD_FILES_MUTATION);
 
 
   console.log('### subscription', subscription)
@@ -147,6 +150,98 @@ const SubscriptionDetails: React.FC = () => {
     } finally {
       setIsSubmittingDemographics(false);
     }
+  };
+
+  // File upload handlers
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Remove the data:mime/type;base64, prefix
+        const base64Data = base64String.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB max to account for base64 overhead)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('File type not allowed. Please upload PDF, JPG, PNG, GIF, or Word documents.');
+        return;
+      }
+
+      setSelectedFile(file);
+    }
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile || !subscription?.id) return;
+
+    setIsUploadingFiles(true);
+    try {
+      // Convert file to base64
+      const base64Data = await convertFileToBase64(selectedFile);
+
+      // Call the mutation
+      await uploadFiles({
+        variables: {
+          uploadFilesInput: {
+            subscriptionId: subscription.id,
+            files: [{
+              filename: selectedFile.name,
+              mimetype: selectedFile.type,
+              data: base64Data,
+            }],
+          },
+        },
+      });
+
+      toast.success('File uploaded successfully! Subscription status updated.');
+      
+      // Refetch subscriptions to get updated data
+      await refetch();
+      
+      // Reset file selection
+      setSelectedFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('file-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
+    } catch (error: unknown) {
+      console.error('Error uploading file:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload file. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsUploadingFiles(false);
+    }
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   };
 
   const formatDate = (dateString: string) => {
@@ -480,16 +575,67 @@ const SubscriptionDetails: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="text-center p-8 border-2 border-dashed border-slate-300 rounded-lg">
-                    <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-2">Upload Required Documents</h3>
-                    <p className="text-slate-600 mb-4">
-                      Accepted formats: PDF, JPG, PNG, Word documents (max 10MB each)
-                    </p>
-                    <Button className="px-6 py-2">
-                      Choose Files
-                    </Button>
+                  {/* File Upload Area */}
+                  <div className="space-y-4">
+                    <div className="text-center p-8 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition-colors">
+                      <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                      <h3 className="text-lg font-medium text-slate-900 mb-2">Upload Document</h3>
+                      <p className="text-slate-600 mb-4">
+                        Accepted formats: PDF, JPG, PNG, GIF, Word documents (max 5MB)
+                      </p>
+                      <div className="space-y-4">
+                        <Input
+                          id="file-input"
+                          type="file"
+                          onChange={handleFileSelect}
+                          accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
+                          className="hidden"
+                        />
+                        <Button
+                          onClick={() => document.getElementById('file-input')?.click()}
+                          className="px-6 py-2"
+                          disabled={isUploadingFiles}
+                        >
+                          Choose File
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Selected File Display */}
+                    {selectedFile && (
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-slate-500" />
+                            <div>
+                              <p className="font-medium text-slate-900">{selectedFile.name}</p>
+                              <p className="text-sm text-slate-500">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={removeSelectedFile}
+                              disabled={isUploadingFiles}
+                            >
+                              Remove
+                            </Button>
+                            <Button
+                              onClick={handleFileUpload}
+                              disabled={isUploadingFiles}
+                              className="px-4 py-2"
+                            >
+                              {isUploadingFiles ? 'Uploading...' : 'Upload'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
+
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h4 className="font-medium text-blue-900 mb-2">Required Documents:</h4>
                     <ul className="text-sm text-blue-800 space-y-1">

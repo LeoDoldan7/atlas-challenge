@@ -84,7 +84,7 @@ export class FileUploadService {
       throw new Error('Maximum of 10 files allowed');
     }
 
-    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
     const allowedMimeTypes = [
       'application/pdf',
       'image/jpeg',
@@ -105,7 +105,7 @@ export class FileUploadService {
       try {
         const buffer = Buffer.from(file.data, 'base64');
         if (buffer.length > maxFileSize) {
-          throw new Error(`File ${file.filename} exceeds maximum size of 10MB`);
+          throw new Error(`File ${file.filename} exceeds maximum size of 5MB`);
         }
       } catch {
         throw new Error(`Invalid file data for ${file.filename}`);

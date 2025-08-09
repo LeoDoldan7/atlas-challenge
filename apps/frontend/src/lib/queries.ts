@@ -169,3 +169,53 @@ export const UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION = gql`
     }
   }
 `;
+
+export const UPLOAD_FILES_MUTATION = gql`
+  mutation UploadFiles($uploadFilesInput: UploadFilesInput!) {
+    uploadFiles(uploadFilesInput: $uploadFilesInput) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
+      files {
+        id
+        healthcareSubscriptionId
+        path
+        originalName
+        fileSizeBytes
+        mimeType
+        createdAt
+      }
+    }
+  }
+`;

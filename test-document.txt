@@ -1,0 +1,21 @@
+Test Healthcare Document
+
+This is a test document for healthcare subscription file upload.
+
+Employee: John Doe
+Policy Number: HC-2024-001
+Document Type: Medical Insurance Application
+
+--- Medical History ---
+No significant medical conditions
+No current medications
+No allergies
+
+--- Emergency Contact ---
+Name: Jane Doe
+Relationship: Spouse
+Phone: (555) 123-4567
+
+This document serves as a test file to verify the file upload functionality is working correctly with proper payload size limits configured on both frontend and backend.
+
+File size should be small enough to test the base64 encoding and GraphQL transmission without hitting payload limits.

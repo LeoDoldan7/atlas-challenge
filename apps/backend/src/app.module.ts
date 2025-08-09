@@ -20,6 +20,7 @@ import { FileUploadService } from './services/file-upload.service';
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
+      context: ({ req }) => ({ req }),
       formatError: (error) => {
         return {
           message: error.message,
@@ -27,6 +28,8 @@ import { FileUploadService } from './services/file-upload.service';
           path: error.path,
         };
       },
+      // Increase limits for file uploads
+      persistedQueries: false,
     }),
   ],
   controllers: [AppController],
