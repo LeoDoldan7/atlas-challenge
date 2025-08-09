@@ -24,6 +24,6 @@ export class HealthcareSubscriptionFile {
   @Field()
   createdAt: Date;
 
-  @Field(() => HealthcareSubscription)
-  subscription: HealthcareSubscription;
+  @Field(() => HealthcareSubscription, { nullable: true })
+  subscription?: HealthcareSubscription;
 }

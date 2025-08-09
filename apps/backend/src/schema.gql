@@ -82,7 +82,7 @@ type HealthcareSubscriptionFile {
   mimeType: String!
   originalName: String!
   path: String!
-  subscription: HealthcareSubscription!
+  subscription: HealthcareSubscription
 }
 
 type HealthcareSubscriptionItem {
@@ -118,6 +118,9 @@ type Mutation {
 type Query {
   """Get employees by company ID"""
   employeesByCompany(companyId: String!): [Employee!]!
+
+  """Get all healthcare subscriptions"""
+  getSubscriptions: [HealthcareSubscription!]!
 
   """Get all healthcare plans without relations"""
   healthcarePlans: [HealthcarePlan!]!
