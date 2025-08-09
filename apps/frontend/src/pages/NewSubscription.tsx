@@ -28,10 +28,10 @@ type SubscriptionForm = z.infer<typeof subscriptionSchema>;
 
 const NewSubscription: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Fetch employees for company #1
   const { employees, loading: employeesLoading, error: employeesError, refetch: refetchEmployees } = useEmployees('1');
-  
+
   // Fetch all healthcare plans (keeping the hook but not displaying them)
   const { loading: plansLoading, error: plansError, refetch: refetchPlans } = useHealthcarePlans();
 
@@ -57,7 +57,7 @@ const NewSubscription: React.FC = () => {
   const childrenCount = watch('childrenCount');
 
   // Calculate subscription type dynamically
-  const subscriptionType: SubscriptionType = 
+  const subscriptionType: SubscriptionType =
     !spouseIncluded && childrenCount === 0 ? 'INDIVIDUAL' : 'FAMILY';
 
   // Find selected employee
@@ -144,7 +144,7 @@ const NewSubscription: React.FC = () => {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          
+
           <div>
             <h1 className="text-3xl font-bold">New Subscription</h1>
             <p className="mt-2 text-muted-foreground">
@@ -166,8 +166,8 @@ const NewSubscription: React.FC = () => {
             <CardContent>
               <div className="space-y-2">
                 <Label htmlFor="employee-select">Employee *</Label>
-                <Select 
-                  value={employeeId} 
+                <Select
+                  value={employeeId}
                   onValueChange={(value) => setValue('employeeId', value, { shouldValidate: true })}
                 >
                   <SelectTrigger id="employee-select" className={errors.employeeId ? 'border-red-500' : ''}>
@@ -207,7 +207,7 @@ const NewSubscription: React.FC = () => {
                 <Checkbox
                   id="spouse-included"
                   checked={spouseIncluded}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setValue('spouseIncluded', checked as boolean, { shouldValidate: true })
                   }
                 />
@@ -227,11 +227,11 @@ const NewSubscription: React.FC = () => {
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  
+
                   <span className="min-w-[3rem] text-center text-lg font-medium">
                     {childrenCount}
                   </span>
-                  
+
                   <Button
                     type="button"
                     variant="outline"
@@ -263,7 +263,7 @@ const NewSubscription: React.FC = () => {
                     {subscriptionType.toLowerCase()}
                   </Badge>
                 </div>
-                
+
                 {selectedEmployee && (
                   <div className="p-4 bg-muted rounded-lg">
                     <h4 className="font-medium mb-2">Selected Employee</h4>
