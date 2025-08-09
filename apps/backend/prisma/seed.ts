@@ -151,6 +151,55 @@ async function main() {
     );
   }
 
+  // -------------------- Seed healthcare subscriptions --------------------
+  // Get first plan for testing
+  const basicPlan = await prisma.healthcarePlan.findFirst();
+  if (!basicPlan) {
+    throw new Error('No healthcare plans found');
+  }
+
+  // Get first employee for testing
+  const firstEmployee = await prisma.employee.findFirst();
+  if (!firstEmployee) {
+    throw new Error('No employees found');
+  }
+
+  // Create a family subscription for the first employee
+  const familySubscription = await prisma.healthcareSubscription.create({
+    data: {
+      employee_id: firstEmployee.id,
+      billing_anchor: new Date().getDate(),
+      company_id: company.id,
+      plan_id: basicPlan.id,
+      start_date: new Date(),
+      status: 'demographic_verification_pending',
+      type: 'family',
+    },
+  });
+
+  // Create subscription items for family members (employee, spouse, 1 child)
+  await prisma.healthcareSubscriptionItem.createMany({
+    data: [
+      {
+        role: 'employee',
+        healthcare_subscription_id: familySubscription.id,
+        demographic_id: firstEmployee.demographics_id,
+      },
+      {
+        role: 'spouse',
+        healthcare_subscription_id: familySubscription.id,
+      },
+      {
+        role: 'child',
+        healthcare_subscription_id: familySubscription.id,
+      },
+    ],
+  });
+
+  console.log(`✅ Created family subscription for ${firstEmployee.email}`);
+  console.log(`📋 Subscription ID: ${familySubscription.id} (status: ${familySubscription.status})`);
+  console.log('💡 Use the uploadFamilyDemographics mutation to add spouse and child demographics');
+
   console.log('🎉 Database seeded successfully!');
 }
 

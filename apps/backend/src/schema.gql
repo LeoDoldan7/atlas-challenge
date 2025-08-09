@@ -33,6 +33,13 @@ type Demographic {
   subItems: [HealthcareSubscriptionItem!]
 }
 
+input DemographicInput {
+  birthDate: DateTime!
+  firstName: String!
+  governmentId: String!
+  lastName: String!
+}
+
 type Employee {
   birthDate: DateTime!
   companyId: ID!
@@ -42,6 +49,11 @@ type Employee {
   email: String!
   id: ID!
   maritalStatus: MaritalStatus!
+}
+
+input FamilyMemberInput {
+  demographic: DemographicInput!
+  role: ItemRole!
 }
 
 type HealthcarePlan {
@@ -113,6 +125,7 @@ enum MaritalStatus {
 
 type Mutation {
   createSubscription(createSubscriptionInput: CreateSubscriptionInput!): HealthcareSubscription!
+  uploadFamilyDemographics(uploadFamilyDemographicsInput: UploadFamilyDemographicsInput!): HealthcareSubscription!
 }
 
 type Query {
@@ -140,4 +153,9 @@ enum SubscriptionStatus {
 enum SubscriptionType {
   FAMILY
   INDIVIDUAL
+}
+
+input UploadFamilyDemographicsInput {
+  familyMembers: [FamilyMemberInput!]!
+  subscriptionId: String!
 }

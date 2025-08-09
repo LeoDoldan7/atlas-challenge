@@ -8,6 +8,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { EmployeeResolver } from './graphql/resolvers/employee.resolver';
 import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.resolver';
 import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-subscription.resolver';
+import { FamilyDemographicsService } from './services/family-demographics.service';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-s
   providers: [
     AppService,
     PrismaService,
+    FamilyDemographicsService,
     EmployeeResolver,
     HealthcarePlanResolver,
     HealthcareSubscriptionResolver,
