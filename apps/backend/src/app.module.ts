@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { EmployeeResolver } from './graphql/resolvers/employee.resolver';
 import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.resolver';
+import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-subscription.resolver';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.reso
     PrismaService,
     EmployeeResolver,
     HealthcarePlanResolver,
+    HealthcareSubscriptionResolver,
   ],
 })
 export class AppModule {}

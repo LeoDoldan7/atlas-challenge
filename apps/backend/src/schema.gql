@@ -11,6 +11,13 @@ type Company {
   subscriptions: [HealthcareSubscription!]
 }
 
+input CreateSubscriptionInput {
+  employeeId: Float!
+  includeSpouse: Boolean!
+  numOfChildren: Float!
+  planId: Float!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
@@ -102,6 +109,10 @@ enum MaritalStatus {
   SEPARATED
   SINGLE
   WIDOWED
+}
+
+type Mutation {
+  createSubscription(createSubscriptionInput: CreateSubscriptionInput!): HealthcareSubscription!
 }
 
 type Query {
