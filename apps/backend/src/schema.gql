@@ -2,10 +2,30 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type Company {
+  countryIsoCode: String!
+  createdAt: DateTime!
+  employees: [Employee!]
+  id: ID!
+  name: String!
+  subscriptions: [HealthcareSubscription!]
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Demographic {
+  birthDate: DateTime!
+  createdAt: DateTime!
+  employees: [Employee!]
+  firstName: String!
+  governmentId: String!
+  id: ID!
+  lastName: String!
+  subItems: [HealthcareSubscriptionItem!]
+}
 
 type Employee {
   birthDate: DateTime!
@@ -15,6 +35,64 @@ type Employee {
   email: String!
   id: ID!
   maritalStatus: MaritalStatus!
+}
+
+type HealthcarePlan {
+  costChildCents: String!
+  costEmployeeCents: String!
+  costSpouseCents: String!
+  id: ID!
+  name: String!
+  pctChildPaidByCompany: String!
+  pctEmployeePaidByCompany: String!
+  pctSpousePaidByCompany: String!
+  subscriptions: [HealthcareSubscription!]
+}
+
+type HealthcareSubscription {
+  billingAnchor: Float!
+  company: Company!
+  companyId: ID!
+  createdAt: DateTime!
+  employee: Employee!
+  employeeId: ID!
+  endDate: DateTime
+  files: [HealthcareSubscriptionFile!]
+  id: ID!
+  items: [HealthcareSubscriptionItem!]
+  plan: HealthcarePlan!
+  planId: ID!
+  startDate: DateTime!
+  status: SubscriptionStatus!
+  type: SubscriptionType!
+}
+
+type HealthcareSubscriptionFile {
+  createdAt: DateTime!
+  fileSizeBytes: Float!
+  healthcareSubscriptionId: ID!
+  id: ID!
+  mimeType: String!
+  originalName: String!
+  path: String!
+  subscription: HealthcareSubscription!
+}
+
+type HealthcareSubscriptionItem {
+  createdAt: DateTime!
+  demographic: Demographic!
+  demographicId: ID!
+  healthcareSubscriptionId: ID!
+  id: ID!
+  role: ItemRole!
+  subscription: HealthcareSubscription!
+}
+
+"""Role of person in healthcare subscription"""
+enum ItemRole {
+  CHILD
+  EMPLOYEE
+  SPOUSE
 }
 
 """Marital status of employee"""
@@ -29,4 +107,23 @@ enum MaritalStatus {
 type Query {
   """Get employees by company ID"""
   employeesByCompany(companyId: String!): [Employee!]!
+
+  """Get all healthcare plans without relations"""
+  healthcarePlans: [HealthcarePlan!]!
+}
+
+"""Healthcare subscription status"""
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  DEMOGRAPHIC_VERIFICATION_PENDING
+  DOCUMENT_UPLOAD_PENDING
+  PLAN_ACTIVATION_PENDING
+  TERMINATED
+}
+
+"""Healthcare subscription type"""
+enum SubscriptionType {
+  FAMILY
+  INDIVIDUAL
 }
