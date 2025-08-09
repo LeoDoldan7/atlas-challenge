@@ -14,8 +14,8 @@ export class HealthcareSubscriptionItem {
   @Field(() => ItemRole)
   role: ItemRole;
 
-  @Field(() => ID)
-  demographicId: string;
+  @Field(() => ID, { nullable: true })
+  demographicId?: string;
 
   @Field()
   createdAt: Date;

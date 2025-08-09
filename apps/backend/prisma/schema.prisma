@@ -137,11 +137,11 @@ model HealthcareSubscriptionItem {
   id                         BigInt          @id @default(autoincrement()) @db.BigInt
   healthcare_subscription_id BigInt
   role                       ItemRole
-  demographic_id             BigInt
+  demographic_id             BigInt?
   created_at                 DateTime        @default(now())
 
   subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
-  demographic                Demographic            @relation(fields: [demographic_id], references: [id], onDelete: Restrict)
+  demographic                Demographic?           @relation(fields: [demographic_id], references: [id], onDelete: Restrict)
 
   @@index([healthcare_subscription_id])
   @@index([demographic_id])

@@ -68,6 +68,13 @@ export interface HealthcarePlan {
   pctChildPaidByCompany: string;
 }
 
+export interface HealthcareSubscriptionItem {
+  id: string;
+  role: ItemRole;
+  demographicId: string;
+  createdAt: string; // DateTime as ISO string
+}
+
 export interface HealthcareSubscription {
   id: string;
   companyId: string;
@@ -81,6 +88,7 @@ export interface HealthcareSubscription {
   createdAt: string; // DateTime as ISO string
   employee?: Employee;
   plan?: HealthcarePlan;
+  items?: HealthcareSubscriptionItem[];
 }
 
 // GraphQL query response types

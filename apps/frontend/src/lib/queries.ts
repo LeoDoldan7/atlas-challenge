@@ -69,6 +69,12 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
         id
         name
       }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
     }
   }
 `;
@@ -103,6 +109,12 @@ export const CREATE_SUBSCRIPTION_MUTATION = gql`
       plan {
         id
         name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
       }
     }
   }

@@ -88,7 +88,7 @@ type HealthcareSubscriptionFile {
 type HealthcareSubscriptionItem {
   createdAt: DateTime!
   demographic: Demographic!
-  demographicId: ID!
+  demographicId: ID
   healthcareSubscriptionId: ID!
   id: ID!
   role: ItemRole!
