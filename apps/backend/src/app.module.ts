@@ -15,7 +15,7 @@ import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.reso
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
-      introspection: true,
+      introspection: process.env.NODE_ENV !== 'production',
       formatError: (error) => {
         return {
           message: error.message,
