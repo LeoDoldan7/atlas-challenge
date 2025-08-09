@@ -75,6 +75,15 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
         demographicId
         createdAt
       }
+      files {
+        id
+        healthcareSubscriptionId
+        path
+        originalName
+        fileSizeBytes
+        mimeType
+        createdAt
+      }
     }
   }
 `;

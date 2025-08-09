@@ -9,6 +9,11 @@ import {
   FileText,
   User,
   Users,
+  Upload,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -160,6 +165,12 @@ const SubscriptionDetails: React.FC = () => {
         return 'bg-red-100 text-red-800 border-red-200';
       case 'TERMINATED':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'DEMOGRAPHIC_VERIFICATION_PENDING':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'DOCUMENT_UPLOAD_PENDING':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'PLAN_ACTIVATION_PENDING':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
       default:
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
@@ -451,6 +462,196 @@ const SubscriptionDetails: React.FC = () => {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Document Upload Section - Only show if status is DOCUMENT_UPLOAD_PENDING */}
+          {subscription.status === 'DOCUMENT_UPLOAD_PENDING' && (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Document Upload
+                </CardTitle>
+                <CardDescription>
+                  Please upload the required documents to proceed with your subscription.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="text-center p-8 border-2 border-dashed border-slate-300 rounded-lg">
+                    <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">Upload Required Documents</h3>
+                    <p className="text-slate-600 mb-4">
+                      Accepted formats: PDF, JPG, PNG, Word documents (max 10MB each)
+                    </p>
+                    <Button className="px-6 py-2">
+                      Choose Files
+                    </Button>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Required Documents:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Government-issued ID for all family members</li>
+                      <li>• Proof of employment</li>
+                      <li>• Previous insurance documentation (if applicable)</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Plan Activation Pending - Only show if status is PLAN_ACTIVATION_PENDING */}
+          {subscription.status === 'PLAN_ACTIVATION_PENDING' && (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-orange-500" />
+                  Plan Activation Pending
+                </CardTitle>
+                <CardDescription>
+                  Your documents have been received and are being reviewed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="bg-orange-50 p-6 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <Clock className="h-6 w-6 text-orange-500 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-orange-900 mb-2">Under Review</h3>
+                        <p className="text-orange-800 mb-4">
+                          Our team is reviewing your submitted documents and demographic information. 
+                          This process typically takes 2-3 business days.
+                        </p>
+                        <p className="text-sm text-orange-700">
+                          You will receive an email notification once your plan is activated.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {subscription.files && subscription.files.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-slate-900 mb-3">Submitted Documents:</h4>
+                      <div className="space-y-2">
+                        {subscription.files.map((file) => (
+                          <div key={file.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                            <FileText className="h-5 w-5 text-slate-500" />
+                            <div className="flex-1">
+                              <p className="font-medium text-slate-900">{file.originalName}</p>
+                              <p className="text-sm text-slate-500">
+                                {(file.fileSizeBytes / 1024 / 1024).toFixed(2)} MB • {file.mimeType}
+                              </p>
+                            </div>
+                            <CheckCircle className="h-5 w-5 text-green-500" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Active Status - Only show if status is ACTIVE */}
+          {subscription.status === 'ACTIVE' && (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  Active Subscription
+                </CardTitle>
+                <CardDescription>
+                  Your healthcare subscription is now active and ready to use.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="bg-green-50 p-6 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <CheckCircle className="h-6 w-6 text-green-500 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-green-900 mb-2">Subscription Active</h3>
+                        <p className="text-green-800 mb-4">
+                          Congratulations! Your healthcare subscription is now active. You can start using your benefits immediately.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <div className="bg-white p-4 rounded-lg border border-green-200">
+                            <h4 className="font-medium text-slate-900 mb-2">Coverage Starts</h4>
+                            <p className="text-slate-600">{formatDate(subscription.startDate)}</p>
+                          </div>
+                          <div className="bg-white p-4 rounded-lg border border-green-200">
+                            <h4 className="font-medium text-slate-900 mb-2">Monthly Billing</h4>
+                            <p className="text-slate-600">{subscription.billingAnchor} of each month</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-medium text-slate-900 mb-3">Covered Members:</h4>
+                    <div className="space-y-2">
+                      {subscription.items?.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                          <User className="h-5 w-5 text-slate-500" />
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 capitalize">{item.role.toLowerCase()}</p>
+                            {item.demographicId && (
+                              <p className="text-sm text-slate-500">Verified</p>
+                            )}
+                          </div>
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Canceled/Terminated Status - Only show if status is CANCELED or TERMINATED */}
+          {(subscription.status === 'CANCELED' || subscription.status === 'TERMINATED') && (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <XCircle className="h-5 w-5 text-red-500" />
+                  {subscription.status === 'CANCELED' ? 'Subscription Canceled' : 'Subscription Terminated'}
+                </CardTitle>
+                <CardDescription>
+                  This subscription is no longer active.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="bg-red-50 p-6 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <AlertCircle className="h-6 w-6 text-red-500 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-red-900 mb-2">
+                          {subscription.status === 'CANCELED' ? 'Canceled' : 'Terminated'}
+                        </h3>
+                        <p className="text-red-800 mb-4">
+                          {subscription.status === 'CANCELED' 
+                            ? 'This subscription has been canceled and is no longer providing coverage.'
+                            : 'This subscription has been terminated and is no longer providing coverage.'
+                          }
+                        </p>
+                        {subscription.endDate && (
+                          <div className="bg-white p-4 rounded-lg border border-red-200 mt-4">
+                            <h4 className="font-medium text-slate-900 mb-2">Coverage Ended</h4>
+                            <p className="text-slate-600">{formatDate(subscription.endDate)}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}

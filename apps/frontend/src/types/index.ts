@@ -75,6 +75,16 @@ export interface HealthcareSubscriptionItem {
   createdAt: string; // DateTime as ISO string
 }
 
+export interface HealthcareSubscriptionFile {
+  id: string;
+  healthcareSubscriptionId: string;
+  path: string;
+  originalName: string;
+  fileSizeBytes: number;
+  mimeType: string;
+  createdAt: string; // DateTime as ISO string
+}
+
 export interface HealthcareSubscription {
   id: string;
   companyId: string;
@@ -89,6 +99,7 @@ export interface HealthcareSubscription {
   employee?: Employee;
   plan?: HealthcarePlan;
   items?: HealthcareSubscriptionItem[];
+  files?: HealthcareSubscriptionFile[];
 }
 
 // GraphQL query response types
