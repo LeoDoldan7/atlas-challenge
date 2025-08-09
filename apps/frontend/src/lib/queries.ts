@@ -29,3 +29,30 @@ export const HEALTHCARE_PLANS_QUERY = gql`
     }
   }
 `;
+
+export const CREATE_SUBSCRIPTION_MUTATION = gql`
+  mutation CreateSubscription($createSubscriptionInput: CreateSubscriptionInput!) {
+    createSubscription(createSubscriptionInput: $createSubscriptionInput) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+      }
+      plan {
+        id
+        name
+      }
+    }
+  }
+`;

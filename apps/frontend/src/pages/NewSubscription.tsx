@@ -4,9 +4,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Minus, Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { useEmployees } from '../hooks/useEmployees';
 import { useHealthcarePlans } from '../hooks/useHealthcarePlans';
+import { useCreateSubscription } from '../hooks/useCreateSubscription';
 import type { Employee, SubscriptionType } from '../types';
 
 import { Button } from '@/components/ui/button';
@@ -32,8 +34,11 @@ const NewSubscription: React.FC = () => {
   // Fetch employees for company #1
   const { employees, loading: employeesLoading, error: employeesError, refetch: refetchEmployees } = useEmployees('1');
 
-  // Fetch all healthcare plans (keeping the hook but not displaying them)
-  const { loading: plansLoading, error: plansError, refetch: refetchPlans } = useHealthcarePlans();
+  // Fetch all healthcare plans
+  const { plans, loading: plansLoading, error: plansError, refetch: refetchPlans } = useHealthcarePlans();
+
+  // Create subscription mutation
+  const { createSubscription, loading: creatingSubscription, error: createSubscriptionError } = useCreateSubscription();
 
   // Form state
   const {
@@ -65,20 +70,39 @@ const NewSubscription: React.FC = () => {
 
   // Loading and error states
   const isLoading = employeesLoading || plansLoading;
-  const hasError = employeesError || plansError;
+  const hasError = employeesError || plansError || createSubscriptionError;
 
   const handleRetry = async () => {
     await Promise.all([refetchEmployees(), refetchPlans()]);
   };
 
-  const onSubmit = (data: SubscriptionForm) => {
-    console.log('Form submitted:', {
-      ...data,
-      subscriptionType,
-      selectedEmployee,
-    });
-    // TODO: Implement actual submission logic
-    alert(`Subscription created for employee ${selectedEmployee?.email} (${subscriptionType})`);
+  const onSubmit = async (data: SubscriptionForm) => {
+    if (!selectedEmployee) {
+      toast.error('Please select an employee');
+      return;
+    }
+
+    // Use the first available plan for now
+    const firstPlan = plans[0];
+    if (!firstPlan) {
+      toast.error('No healthcare plans available');
+      return;
+    }
+
+    try {
+      const subscription = await createSubscription({
+        employeeId: parseInt(data.employeeId),
+        includeSpouse: data.spouseIncluded,
+        numOfChildren: data.childrenCount,
+        planId: parseInt(firstPlan.id),
+      });
+
+      toast.success(`Subscription created successfully! ID: ${subscription.id}`);
+      navigate('/subscriptions');
+    } catch (error) {
+      console.error('Failed to create subscription:', error);
+      toast.error('Failed to create subscription. Please try again.');
+    }
   };
 
   const handleCancel = () => {
@@ -118,7 +142,7 @@ const NewSubscription: React.FC = () => {
               </div>
               <h2 className="text-xl font-semibold mb-3 text-slate-900">Failed to load data</h2>
               <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                {employeesError?.message || plansError?.message || 'An error occurred while fetching data'}
+                {employeesError?.message || plansError?.message || createSubscriptionError?.message || 'An error occurred while fetching data'}
               </p>
               <Button onClick={handleRetry} className="px-6 py-3 rounded-xl font-medium">Try Again</Button>
             </CardContent>
@@ -311,10 +335,10 @@ const NewSubscription: React.FC = () => {
             </Button>
             <Button 
               type="submit" 
-              disabled={!isValid}
+              disabled={!isValid || creatingSubscription}
               className="px-8 py-3 text-base font-medium rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl"
             >
-              Save Subscription
+              {creatingSubscription ? 'Creating...' : 'Save Subscription'}
             </Button>
           </div>
         </form>

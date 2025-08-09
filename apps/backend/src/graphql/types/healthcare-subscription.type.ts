@@ -41,11 +41,11 @@ export class HealthcareSubscription {
   @Field(() => Company)
   company: Company;
 
-  @Field(() => Employee)
-  employee: Employee;
+  @Field(() => Employee, { nullable: true })
+  employee?: Employee;
 
-  @Field(() => HealthcarePlan)
-  plan: HealthcarePlan;
+  @Field(() => HealthcarePlan, { nullable: true })
+  plan?: HealthcarePlan;
 
   @Field(() => [HealthcareSubscriptionItem], { nullable: true })
   items?: HealthcareSubscriptionItem[];

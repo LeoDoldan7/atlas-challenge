@@ -61,13 +61,13 @@ type HealthcareSubscription {
   company: Company!
   companyId: ID!
   createdAt: DateTime!
-  employee: Employee!
+  employee: Employee
   employeeId: ID!
   endDate: DateTime
   files: [HealthcareSubscriptionFile!]
   id: ID!
   items: [HealthcareSubscriptionItem!]
-  plan: HealthcarePlan!
+  plan: HealthcarePlan
   planId: ID!
   startDate: DateTime!
   status: SubscriptionStatus!

@@ -58,6 +58,21 @@ export interface HealthcarePlan {
   pctChildPaidByCompany: string;
 }
 
+export interface HealthcareSubscription {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  planId: string;
+  type: SubscriptionType;
+  status: SubscriptionStatus;
+  startDate: string; // DateTime as ISO string
+  endDate?: string; // DateTime as ISO string
+  billingAnchor: number;
+  createdAt: string; // DateTime as ISO string
+  employee?: Employee;
+  plan?: HealthcarePlan;
+}
+
 // GraphQL query response types
 export interface EmployeesByCompanyResponse {
   employeesByCompany: Employee[];
