@@ -125,15 +125,22 @@ const Subscriptions: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {subscriptions.map((subscription: HealthcareSubscription) => (
-              <Card key={subscription.id} className="rounded-2xl border-slate-200/50 bg-white/95 shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-200">
+              <Card 
+                key={subscription.id} 
+                className="rounded-2xl border-slate-200/50 bg-white/95 shadow-lg backdrop-blur-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-200 cursor-pointer group"
+                onClick={() => navigate(`/subscriptions/${subscription.id}`)}
+              >
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-slate-900">
+                    <CardTitle className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {subscription.type === 'INDIVIDUAL' ? 'Individual' : 'Family'} Plan
                     </CardTitle>
-                    <Badge className={`${getStatusColor(subscription.status)} border-0`}>
-                      {subscription.status.toLowerCase()}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`${getStatusColor(subscription.status)} border-0`}>
+                        {subscription.status.toLowerCase()}
+                      </Badge>
+                      <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                    </div>
                   </div>
                   <CardDescription className="text-slate-600">
                     {subscription.plan?.name || 'Healthcare Plan'}

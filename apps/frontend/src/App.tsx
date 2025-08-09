@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import { apolloClient } from './lib/apollo-client';
 import Subscriptions from './pages/Subscriptions';
 import NewSubscription from './pages/NewSubscription';
+import SubscriptionDetails from './pages/SubscriptionDetails';
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Navigate to="/subscriptions" replace />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/subscriptions/new" element={<NewSubscription />} />
+            <Route path="/subscriptions/:id" element={<SubscriptionDetails />} />
           </Routes>
           <Toaster
             position="top-right"
