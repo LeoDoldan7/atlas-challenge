@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@apollo/client';
 import {
   ArrowLeft,
   FileText,
@@ -18,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useSubscriptions } from '../hooks/useSubscriptions';
+import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION } from '../lib/queries';
 
 // Form validation schema for demographic data
 const demographicSchema = z.object({
@@ -37,10 +39,12 @@ type DemographicForm = z.infer<typeof demographicFormSchema>;
 const SubscriptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { subscriptions, loading, error } = useSubscriptions();
+  const { subscriptions, loading, error, refetch } = useSubscriptions();
 
   const subscription = subscriptions.find(sub => sub.id === id);
   const [isSubmittingDemographics, setIsSubmittingDemographics] = useState(false);
+
+  const [uploadFamilyDemographics] = useMutation(UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION);
 
 
   console.log('### subscription', subscription)
@@ -77,16 +81,64 @@ const SubscriptionDetails: React.FC = () => {
 
   // Handle form submission
   const onSubmitDemographics = async (data: DemographicForm) => {
+    if (!subscription?.id) return;
+
     setIsSubmittingDemographics(true);
     try {
       console.log('Submitting demographic data:', data);
-      // TODO: Implement API call to save demographic data
-      toast.success('Demographic data saved successfully!');
+
+      // Transform form data to match GraphQL input
+      const familyMembers = [];
+
+      // Add spouse if provided
+      if (data.spouse && spouseCount > 0) {
+        familyMembers.push({
+          role: 'SPOUSE',
+          demographic: {
+            firstName: data.spouse.firstName,
+            lastName: data.spouse.lastName,
+            governmentId: data.spouse.governmentId,
+            birthDate: new Date(data.spouse.birthDate).toISOString(),
+          },
+        });
+      }
+
+      // Add children if provided
+      if (data.children && data.children.length > 0) {
+        data.children.forEach(child => {
+          familyMembers.push({
+            role: 'CHILD',
+            demographic: {
+              firstName: child.firstName,
+              lastName: child.lastName,
+              governmentId: child.governmentId,
+              birthDate: new Date(child.birthDate).toISOString(),
+            },
+          });
+        });
+      }
+
+      // Call the mutation
+      await uploadFamilyDemographics({
+        variables: {
+          uploadFamilyDemographicsInput: {
+            subscriptionId: subscription.id,
+            familyMembers,
+          },
+        },
+      });
+
+      toast.success('Demographic data saved successfully! Subscription status updated.');
+      
+      // Refetch subscriptions to get updated data
+      await refetch();
+      
       // Reset form after successful submission
       reset(getDefaultFormValues());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error saving demographic data:', error);
-      toast.error('Failed to save demographic data. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save demographic data. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmittingDemographics(false);
     }

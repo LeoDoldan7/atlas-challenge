@@ -119,3 +119,44 @@ export const CREATE_SUBSCRIPTION_MUTATION = gql`
     }
   }
 `;
+
+export const UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION = gql`
+  mutation UploadFamilyDemographics($uploadFamilyDemographicsInput: UploadFamilyDemographicsInput!) {
+    uploadFamilyDemographics(uploadFamilyDemographicsInput: $uploadFamilyDemographicsInput) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
+    }
+  }
+`;
