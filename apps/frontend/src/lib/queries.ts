@@ -11,6 +11,14 @@ export const EMPLOYEES_BY_COMPANY_QUERY = gql`
       birthDate
       maritalStatus
       createdAt
+      demographic {
+        id
+        firstName
+        lastName
+        governmentId
+        birthDate
+        createdAt
+      }
     }
   }
 `;
@@ -26,6 +34,41 @@ export const HEALTHCARE_PLANS_QUERY = gql`
       pctSpousePaidByCompany
       costChildCents
       pctChildPaidByCompany
+    }
+  }
+`;
+
+export const GET_SUBSCRIPTIONS_QUERY = gql`
+  query GetSubscriptions {
+    getSubscriptions {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
     }
   }
 `;
@@ -48,6 +91,14 @@ export const CREATE_SUBSCRIPTION_MUTATION = gql`
         email
         birthDate
         maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
       }
       plan {
         id

@@ -26,6 +26,16 @@ export class EmployeeResolver {
         birth_date: true,
         marital_status: true,
         created_at: true,
+        demographics: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            government_id: true,
+            birth_date: true,
+            created_at: true,
+          },
+        },
       },
     });
 
@@ -37,6 +47,14 @@ export class EmployeeResolver {
       birthDate: employee.birth_date,
       maritalStatus: this.mapPrismaMaritalStatus(employee.marital_status),
       createdAt: employee.created_at,
+      demographic: {
+        id: employee.demographics.id.toString(),
+        firstName: employee.demographics.first_name,
+        lastName: employee.demographics.last_name,
+        governmentId: employee.demographics.government_id,
+        birthDate: employee.demographics.birth_date,
+        createdAt: employee.demographics.created_at,
+      },
     }));
   }
 

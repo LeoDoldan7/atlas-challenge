@@ -37,6 +37,15 @@ export type SubscriptionType =
   | 'INDIVIDUAL';
 
 // Main entity types
+export interface Demographic {
+  id: string;
+  firstName: string;
+  lastName: string;
+  governmentId: string;
+  birthDate: string; // DateTime as ISO string
+  createdAt: string; // DateTime as ISO string
+}
+
 export interface Employee {
   id: string;
   companyId: string;
@@ -45,6 +54,7 @@ export interface Employee {
   birthDate: string; // DateTime as ISO string
   maritalStatus: MaritalStatus;
   createdAt: string; // DateTime as ISO string
+  demographic: Demographic;
 }
 
 export interface HealthcarePlan {
@@ -80,6 +90,10 @@ export interface EmployeesByCompanyResponse {
 
 export interface HealthcarePlansResponse {
   healthcarePlans: HealthcarePlan[];
+}
+
+export interface SubscriptionsResponse {
+  getSubscriptions: HealthcareSubscription[];
 }
 
 // API error type compatible with Apollo Client

@@ -26,7 +26,6 @@ scalar DateTime
 type Demographic {
   birthDate: DateTime!
   createdAt: DateTime!
-  employees: [Employee!]
   firstName: String!
   governmentId: String!
   id: ID!
@@ -38,6 +37,7 @@ type Employee {
   birthDate: DateTime!
   companyId: ID!
   createdAt: DateTime!
+  demographic: Demographic!
   demographicsId: ID!
   email: String!
   id: ID!

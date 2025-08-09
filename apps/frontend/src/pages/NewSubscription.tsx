@@ -90,14 +90,14 @@ const NewSubscription: React.FC = () => {
     }
 
     try {
-      const subscription = await createSubscription({
+      await createSubscription({
         employeeId: parseInt(data.employeeId),
         includeSpouse: data.spouseIncluded,
         numOfChildren: data.childrenCount,
         planId: parseInt(firstPlan.id),
       });
 
-      toast.success(`Subscription created successfully! ID: ${subscription.id}`);
+      toast.success(`Subscription created successfully for ${selectedEmployee.demographic.firstName} ${selectedEmployee.demographic.lastName}!`);
       navigate('/subscriptions');
     } catch (error) {
       console.error('Failed to create subscription:', error);
@@ -204,9 +204,11 @@ const NewSubscription: React.FC = () => {
                     {employees.map((employee: Employee) => (
                       <SelectItem key={employee.id} value={employee.id}>
                         <div className="flex flex-col py-1">
-                          <span className="font-medium text-slate-900">{employee.email}</span>
+                          <span className="font-medium text-slate-900">
+                            {employee.demographic.firstName} {employee.demographic.lastName}
+                          </span>
                           <span className="text-sm text-slate-500">
-                            {employee.maritalStatus} • Born: {new Date(employee.birthDate).toLocaleDateString()}
+                            {employee.email} • {employee.maritalStatus} • Born: {new Date(employee.birthDate).toLocaleDateString()}
                           </span>
                         </div>
                       </SelectItem>
@@ -307,6 +309,9 @@ const NewSubscription: React.FC = () => {
                   <div className="p-6 bg-white/70 backdrop-blur rounded-xl border border-slate-200">
                     <h4 className="text-lg font-semibold text-slate-900 mb-4">Selected Employee</h4>
                     <div className="space-y-2">
+                      <p className="text-sm text-slate-600">
+                        <span className="font-medium text-slate-900">Name:</span> {selectedEmployee.demographic.firstName} {selectedEmployee.demographic.lastName}
+                      </p>
                       <p className="text-sm text-slate-600">
                         <span className="font-medium text-slate-900">Email:</span> {selectedEmployee.email}
                       </p>

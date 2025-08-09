@@ -1,5 +1,4 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Employee } from './employee.type';
 import { HealthcareSubscriptionItem } from './healthcare-subscription-item.type';
 
 @ObjectType()
@@ -22,8 +21,6 @@ export class Demographic {
   @Field()
   createdAt: Date;
 
-  @Field(() => [Employee], { nullable: true })
-  employees?: Employee[];
 
   @Field(() => [HealthcareSubscriptionItem], { nullable: true })
   subItems?: HealthcareSubscriptionItem[];

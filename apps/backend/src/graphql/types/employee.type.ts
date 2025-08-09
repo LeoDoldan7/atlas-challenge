@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { MaritalStatus } from './enums';
+import { Demographic } from './demographic.type';
 
 @ObjectType()
 export class Employee {
@@ -23,4 +24,7 @@ export class Employee {
 
   @Field()
   createdAt: Date;
+
+  @Field(() => Demographic)
+  demographic: Demographic;
 }
