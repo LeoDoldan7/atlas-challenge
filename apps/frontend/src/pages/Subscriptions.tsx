@@ -21,21 +21,21 @@ const Subscriptions: React.FC = () => {
       <div className="pointer-events-none absolute -right-28 top-32 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl animate-blob animation-delay-4000" />
 
       {/* Hero */}
-      <section className="relative mx-auto max-w-7xl px-4 pt-12 pb-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
+      <section className="relative mx-auto max-w-7xl px-4 pt-20 pb-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h1 className="mt-8 text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl dark:text-white">
             Healthcare Subscriptions
           </h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">
+          <p className="mt-6 text-xl leading-8 text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
             Manage, monitor, and analyze your organization’s healthcare benefits from a single, modern dashboard.
           </p>
 
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-10 flex items-center justify-center">
             <Button
               onClick={handleNewSubscription}
-              className="rounded-xl bg-blue-600 px-5 py-5 text-base text-white shadow-lg hover:bg-blue-700 hover:shadow-xl"
+              className="rounded-2xl bg-blue-600 px-8 py-6 text-lg font-semibold text-white shadow-xl hover:bg-blue-700 hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
             >
-              <Plus className="mr-2 h-5 w-5" />
+              <Plus className="mr-3 h-6 w-6" />
               Create New Subscription
             </Button>
           </div>       
@@ -43,29 +43,29 @@ const Subscriptions: React.FC = () => {
       </section>
 
       {/* Main */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="flex justify-center">
           {/* Empty-state / hero card */}
-          <Card className="lg:col-span-2 rounded-3xl border-slate-200/70 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-            <CardHeader className="pb-0 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg">
-                <Activity className="h-7 w-7" />
+          <Card className="w-full max-w-4xl rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
+            <CardHeader className="pb-8 pt-12 text-center">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-2xl mb-6">
+                <Activity className="h-10 w-10" />
               </div>
-              <CardTitle className="mt-4 text-2xl">Ready to get started?</CardTitle>
-              <CardDescription className="mt-1">
+              <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ready to get started?</CardTitle>
+              <CardDescription className="mt-4 text-lg leading-7 text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
                 Create your first healthcare subscription and start managing employee benefits with ease.
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="pt-6">
+            <CardContent className="pb-12 pt-0">
               <div className="flex flex-col items-center">               
                 <Button
                   onClick={handleNewSubscription}
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-white shadow-lg hover:bg-blue-700 hover:shadow-xl"
+                  className="mt-8 inline-flex items-center gap-3 rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-xl hover:bg-blue-700 hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-6 w-6" />
                   Create your first subscription
-                  <ArrowRight className="h-5 w-5" />
+                  <ArrowRight className="h-6 w-6" />
                 </Button>
               </div>
             </CardContent>

@@ -74,6 +74,7 @@ export default {
         "scale-in": "scaleIn 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
         blob: "blob 7s infinite",
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       keyframes: {
         fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
