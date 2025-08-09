@@ -197,8 +197,49 @@ async function main() {
   });
 
   console.log(`✅ Created family subscription for ${firstEmployee.email}`);
-  console.log(`📋 Subscription ID: ${familySubscription.id} (status: ${familySubscription.status})`);
-  console.log('💡 Use the uploadFamilyDemographics mutation to add spouse and child demographics');
+  console.log(
+    `📋 Subscription ID: ${familySubscription.id} (status: ${familySubscription.status})`,
+  );
+  console.log(
+    '💡 Use the uploadFamilyDemographics mutation to add spouse and child demographics',
+  );
+
+  // -------------------- Create second subscription for file upload testing --------------------
+  // Get second employee for testing file upload
+  const secondEmployee = await prisma.employee.findFirst({
+    where: { id: { not: firstEmployee.id } },
+  });
+
+  if (secondEmployee) {
+    const fileUploadSubscription = await prisma.healthcareSubscription.create({
+      data: {
+        employee_id: secondEmployee.id,
+        billing_anchor: new Date().getDate(),
+        company_id: company.id,
+        plan_id: basicPlan.id,
+        start_date: new Date(),
+        status: 'document_upload_pending',
+        type: 'individual',
+      },
+    });
+
+    // Create subscription item for employee only
+    await prisma.healthcareSubscriptionItem.create({
+      data: {
+        role: 'employee',
+        healthcare_subscription_id: fileUploadSubscription.id,
+        demographic_id: secondEmployee.demographics_id,
+      },
+    });
+
+    console.log(
+      `✅ Created individual subscription for file upload testing: ${secondEmployee.email}`,
+    );
+    console.log(
+      `📋 Subscription ID: ${fileUploadSubscription.id} (status: ${fileUploadSubscription.status})`,
+    );
+    console.log('💡 Use the uploadFiles mutation to add documents');
+  }
 
   console.log('🎉 Database seeded successfully!');
 }

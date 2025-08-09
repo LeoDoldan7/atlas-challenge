@@ -56,6 +56,12 @@ input FamilyMemberInput {
   role: ItemRole!
 }
 
+input FileInput {
+  data: String!
+  filename: String!
+  mimetype: String!
+}
+
 type HealthcarePlan {
   costChildCents: String!
   costEmployeeCents: String!
@@ -126,6 +132,7 @@ enum MaritalStatus {
 type Mutation {
   createSubscription(createSubscriptionInput: CreateSubscriptionInput!): HealthcareSubscription!
   uploadFamilyDemographics(uploadFamilyDemographicsInput: UploadFamilyDemographicsInput!): HealthcareSubscription!
+  uploadFiles(uploadFilesInput: UploadFilesInput!): HealthcareSubscription!
 }
 
 type Query {
@@ -157,5 +164,10 @@ enum SubscriptionType {
 
 input UploadFamilyDemographicsInput {
   familyMembers: [FamilyMemberInput!]!
+  subscriptionId: String!
+}
+
+input UploadFilesInput {
+  files: [FileInput!]!
   subscriptionId: String!
 }

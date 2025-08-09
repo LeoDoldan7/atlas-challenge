@@ -3,7 +3,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { HealthcareSubscription, SubscriptionStatus } from '../types';
 import { CreateSubscriptionInput } from '../dto/create-subscription.input';
 import { UploadFamilyDemographicsInput } from '../dto/upload-family-demographics.input';
+import { UploadFilesInput } from '../dto/upload-files.input';
 import { FamilyDemographicsService } from '../../services/family-demographics.service';
+import { FileUploadService } from '../../services/file-upload.service';
 import { getHealthcareSubscriptionType } from 'src/utils/healthcare-subscription.utils';
 import { Prisma } from '@prisma/client';
 import { toId } from 'src/utils';
@@ -26,6 +28,7 @@ export class HealthcareSubscriptionResolver {
   constructor(
     private readonly prisma: PrismaService,
     private readonly familyDemographicsService: FamilyDemographicsService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   @Query(() => [HealthcareSubscription], {
@@ -203,31 +206,32 @@ export class HealthcareSubscriptionResolver {
     @Args('uploadFamilyDemographicsInput')
     uploadFamilyDemographicsInput: UploadFamilyDemographicsInput,
   ) {
-    const result = await this.familyDemographicsService.validateAndUploadFamilyDemographics(
-      uploadFamilyDemographicsInput
-    );
+    const result =
+      await this.familyDemographicsService.validateAndUploadFamilyDemographics(
+        uploadFamilyDemographicsInput,
+      );
 
     // Return the updated subscription with new status
-    const updatedSubscription = await this.prisma.healthcareSubscription.findUnique({
-      where: { id: result.subscription.id },
-      include: {
-        items: true,
-        files: true,
-        employee: {
-          include: {
-            demographics: true,
+    const updatedSubscription =
+      await this.prisma.healthcareSubscription.findUnique({
+        where: { id: result.subscription.id },
+        include: {
+          items: true,
+          files: true,
+          employee: {
+            include: {
+              demographics: true,
+            },
           },
+          plan: true,
         },
-        plan: true,
-      },
-    });
+      });
 
     if (!updatedSubscription) {
       throw new Error('Updated subscription not found');
     }
 
-    // Map the response similar to getSubscriptions
-    const mapItem = (i: any) => ({
+    const mapItem = (i: SubWithRelations['items'][number]) => ({
       id: toId(i.id),
       healthcareSubscriptionId: toId(i.healthcare_subscription_id),
       role: i.role,
@@ -235,7 +239,7 @@ export class HealthcareSubscriptionResolver {
       createdAt: i.created_at,
     });
 
-    const mapFile = (f: any) => ({
+    const mapFile = (f: SubWithRelations['files'][number]) => ({
       id: toId(f.id),
       healthcareSubscriptionId: toId(f.healthcare_subscription_id),
       path: f.path,
@@ -270,7 +274,8 @@ export class HealthcareSubscriptionResolver {
               id: toId(updatedSubscription.employee.demographics.id),
               firstName: updatedSubscription.employee.demographics.first_name,
               lastName: updatedSubscription.employee.demographics.last_name,
-              governmentId: updatedSubscription.employee.demographics.government_id,
+              governmentId:
+                updatedSubscription.employee.demographics.government_id,
               birthDate: updatedSubscription.employee.demographics.birth_date,
               createdAt: updatedSubscription.employee.demographics.created_at,
             },
@@ -281,13 +286,119 @@ export class HealthcareSubscriptionResolver {
         ? {
             id: toId(updatedSubscription.plan.id),
             name: updatedSubscription.plan.name,
-            costEmployeeCents: updatedSubscription.plan.cost_employee_cents.toString(),
+            costEmployeeCents:
+              updatedSubscription.plan.cost_employee_cents.toString(),
             pctEmployeePaidByCompany:
               updatedSubscription.plan.pct_employee_paid_by_company.toString(),
-            costSpouseCents: updatedSubscription.plan.cost_spouse_cents.toString(),
+            costSpouseCents:
+              updatedSubscription.plan.cost_spouse_cents.toString(),
             pctSpousePaidByCompany:
               updatedSubscription.plan.pct_spouse_paid_by_company.toString(),
-            costChildCents: updatedSubscription.plan.cost_child_cents.toString(),
+            costChildCents:
+              updatedSubscription.plan.cost_child_cents.toString(),
+            pctChildPaidByCompany:
+              updatedSubscription.plan.pct_child_paid_by_company.toString(),
+          }
+        : null,
+
+      items: updatedSubscription.items.map(mapItem),
+      files: updatedSubscription.files.map(mapFile),
+    };
+  }
+
+  @Mutation(() => HealthcareSubscription)
+  async uploadFiles(
+    @Args('uploadFilesInput')
+    uploadFilesInput: UploadFilesInput,
+  ) {
+    const result = await this.fileUploadService.uploadFiles(uploadFilesInput);
+
+    // Return the updated subscription with new status
+    const updatedSubscription =
+      await this.prisma.healthcareSubscription.findUnique({
+        where: { id: result.subscription.id },
+        include: {
+          items: true,
+          files: true,
+          employee: {
+            include: {
+              demographics: true,
+            },
+          },
+          plan: true,
+        },
+      });
+
+    if (!updatedSubscription) {
+      throw new Error('Updated subscription not found');
+    }
+
+    // Map the response similar to getSubscriptions
+    const mapItem = (i: SubWithRelations['items'][number]) => ({
+      id: toId(i.id),
+      healthcareSubscriptionId: toId(i.healthcare_subscription_id),
+      role: i.role,
+      demographicId: i.demographic_id ? toId(i.demographic_id) : null,
+      createdAt: i.created_at,
+    });
+
+    const mapFile = (f: SubWithRelations['files'][number]) => ({
+      id: toId(f.id),
+      healthcareSubscriptionId: toId(f.healthcare_subscription_id),
+      path: f.path,
+      originalName: f.original_name,
+      fileSizeBytes: f.file_size_bytes,
+      mimeType: f.mime_type,
+      createdAt: f.created_at,
+    });
+
+    return {
+      id: toId(updatedSubscription.id),
+      companyId: toId(updatedSubscription.company_id),
+      employeeId: toId(updatedSubscription.employee_id),
+      type: updatedSubscription.type,
+      status: updatedSubscription.status,
+      planId: toId(updatedSubscription.plan_id),
+      startDate: updatedSubscription.start_date,
+      endDate: updatedSubscription.end_date ?? null,
+      billingAnchor: updatedSubscription.billing_anchor,
+      createdAt: updatedSubscription.created_at,
+
+      employee: updatedSubscription.employee
+        ? {
+            id: toId(updatedSubscription.employee.id),
+            companyId: toId(updatedSubscription.employee.company_id),
+            demographicsId: toId(updatedSubscription.employee.demographics_id),
+            email: updatedSubscription.employee.email,
+            birthDate: updatedSubscription.employee.birth_date,
+            maritalStatus: updatedSubscription.employee.marital_status,
+            createdAt: updatedSubscription.employee.created_at,
+            demographic: {
+              id: toId(updatedSubscription.employee.demographics.id),
+              firstName: updatedSubscription.employee.demographics.first_name,
+              lastName: updatedSubscription.employee.demographics.last_name,
+              governmentId:
+                updatedSubscription.employee.demographics.government_id,
+              birthDate: updatedSubscription.employee.demographics.birth_date,
+              createdAt: updatedSubscription.employee.demographics.created_at,
+            },
+          }
+        : null,
+
+      plan: updatedSubscription.plan
+        ? {
+            id: toId(updatedSubscription.plan.id),
+            name: updatedSubscription.plan.name,
+            costEmployeeCents:
+              updatedSubscription.plan.cost_employee_cents.toString(),
+            pctEmployeePaidByCompany:
+              updatedSubscription.plan.pct_employee_paid_by_company.toString(),
+            costSpouseCents:
+              updatedSubscription.plan.cost_spouse_cents.toString(),
+            pctSpousePaidByCompany:
+              updatedSubscription.plan.pct_spouse_paid_by_company.toString(),
+            costChildCents:
+              updatedSubscription.plan.cost_child_cents.toString(),
             pctChildPaidByCompany:
               updatedSubscription.plan.pct_child_paid_by_company.toString(),
           }

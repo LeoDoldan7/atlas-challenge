@@ -9,6 +9,8 @@ import { EmployeeResolver } from './graphql/resolvers/employee.resolver';
 import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.resolver';
 import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-subscription.resolver';
 import { FamilyDemographicsService } from './services/family-demographics.service';
+import { MinioService } from './services/minio.service';
+import { FileUploadService } from './services/file-upload.service';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { FamilyDemographicsService } from './services/family-demographics.servic
     AppService,
     PrismaService,
     FamilyDemographicsService,
+    MinioService,
+    FileUploadService,
     EmployeeResolver,
     HealthcarePlanResolver,
     HealthcareSubscriptionResolver,
