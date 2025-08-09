@@ -27,12 +27,6 @@ enum ItemRole {
   child
 }
 
-enum StepName {
-  DEMOGRAPHIC_VERIFICATION
-  DOCUMENT_UPLOAD
-  PLAN_ACTIVATION
-}
-
 enum MaritalStatus {
   single
   married
@@ -101,6 +95,7 @@ model Wallet {
 
 model HealthcarePlan {
   id                           BigInt   @id @default(autoincrement()) @db.BigInt
+  name                         String   @unique
   cost_employee_cents          BigInt   @db.BigInt
   pct_employee_paid_by_company Decimal  @db.Decimal(5, 2)
   cost_spouse_cents            BigInt   @db.BigInt
@@ -129,7 +124,8 @@ model HealthcareSubscription {
   employee       Employee              @relation(fields: [employee_id], references: [id], onDelete: Restrict)
   plan           HealthcarePlan        @relation(fields: [plan_id], references: [id], onDelete: Restrict)
 
-  items          HealthcareSubscriptionItem[]  
+  items          HealthcareSubscriptionItem[]
+  files          HealthcareSubscriptionFile[] 
 
   @@index([company_id])
   @@index([employee_id])
@@ -152,32 +148,17 @@ model HealthcareSubscriptionItem {
   @@map("healthcare_subscription_items")
 }
 
-model HealthcareSubscriptionStep {
-  id                         BigInt                 @id @default(autoincrement()) @db.BigInt
+model HealthcareSubscriptionFile {
+  id                         BigInt @id @default(autoincrement()) @db.BigInt
   healthcare_subscription_id BigInt
-  name                       String
-  status                     StepStatus
-  required                   Boolean                @default(true)
-  completed_at               DateTime?
+  path            String
+  original_name   String
+  file_size_bytes Int
+  mime_type       String
+  created_at      DateTime @default(now())
 
-  subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
-  files                      HealthcareSubscriptionStepFile[]
+  subscription    HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
 
   @@index([healthcare_subscription_id])
-  @@map("healthcare_subscription_steps")
-}
-
-model HealthcareSubscriptionStepFile {
-  id                               BigInt                      @id @default(autoincrement()) @db.BigInt
-  healthcare_subscription_step_id  BigInt
-  path                             String
-  original_name                    String
-  file_size_bytes                  Int
-  mime_type                        String
-  created_at                       DateTime  @default(now())
-
-  step                             HealthcareSubscriptionStep   @relation(fields: [healthcare_subscription_step_id], references: [id], onDelete: Cascade)
-
-  @@index([healthcare_subscription_step_id])
-  @@map("healthcare_subscription_step_files")
+  @@map("healthcare_subscription_files")
 }

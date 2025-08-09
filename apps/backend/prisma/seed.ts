@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma, MaritalStatus } from '@prisma/client';
+import { dollarsToCents } from '../src/utils';
 
 const prisma = new PrismaClient();
 
@@ -12,10 +13,47 @@ async function main() {
       country_iso_code: 'US',
     },
   });
-
   console.log(`✅ Created company: ${company.name}`);
 
-  // Create demographics and employees
+  // -------------------- Seed healthcare plans --------------------
+  // amounts are in cents, stored as BigInt
+  const plans = [
+    {
+      name: 'Basic Health Plan',
+      employeeCents: dollarsToCents(120),
+      spouseCents: dollarsToCents(80),
+      childCents: dollarsToCents(40),
+    },
+    {
+      name: 'Premium Health Plan',
+      employeeCents: dollarsToCents(200),
+      spouseCents: dollarsToCents(120),
+      childCents: dollarsToCents(60),
+    },
+    {
+      name: 'Dental Add-on',
+      employeeCents: dollarsToCents(25),
+      spouseCents: dollarsToCents(20),
+      childCents: dollarsToCents(15),
+    },
+  ];
+
+  for (const p of plans) {
+    await prisma.healthcarePlan.create({
+      data: {
+        name: p.name,
+        cost_employee_cents: BigInt(p.employeeCents),
+        pct_employee_paid_by_company: new Prisma.Decimal(0),
+        cost_spouse_cents: BigInt(p.spouseCents),
+        pct_spouse_paid_by_company: new Prisma.Decimal(0),
+        cost_child_cents: BigInt(p.childCents),
+        pct_child_paid_by_company: new Prisma.Decimal(0),
+      },
+    });
+    console.log(`✅ Created plan: ${p.name}`);
+  }
+
+  // -------------------- Seed employees + wallets --------------------
   const employeesData = [
     {
       demographic: {
@@ -27,7 +65,7 @@ async function main() {
       employee: {
         email: 'john.smith@atlas.com',
         birth_date: new Date('1985-03-15'),
-        marital_status: 'married' as const,
+        marital_status: MaritalStatus.married,
       },
     },
     {
@@ -40,7 +78,7 @@ async function main() {
       employee: {
         email: 'sarah.johnson@atlas.com',
         birth_date: new Date('1990-07-22'),
-        marital_status: 'single' as const,
+        marital_status: MaritalStatus.single,
       },
     },
     {
@@ -53,7 +91,7 @@ async function main() {
       employee: {
         email: 'michael.davis@atlas.com',
         birth_date: new Date('1982-11-08'),
-        marital_status: 'divorced' as const,
+        marital_status: MaritalStatus.divorced,
       },
     },
     {
@@ -66,7 +104,7 @@ async function main() {
       employee: {
         email: 'emily.rodriguez@atlas.com',
         birth_date: new Date('1988-05-30'),
-        marital_status: 'married' as const,
+        marital_status: MaritalStatus.married,
       },
     },
     {
@@ -79,7 +117,7 @@ async function main() {
       employee: {
         email: 'david.wilson@atlas.com',
         birth_date: new Date('1975-12-03'),
-        marital_status: 'widowed' as const,
+        marital_status: MaritalStatus.widowed,
       },
     },
   ];
@@ -103,7 +141,7 @@ async function main() {
     await prisma.wallet.create({
       data: {
         employee_id: employee.id,
-        balance_cents: Math.floor(Math.random() * 100000), // Random balance between $0-$1000
+        balance_cents: BigInt(Math.floor(Math.random() * dollarsToCents(1000))), // $0–$1,000
         currency_code: 'USD',
       },
     });
