@@ -77,6 +77,6 @@ export interface ApiError {
       readonly column: number;
     }>;
     readonly path?: ReadonlyArray<string | number>;
-    readonly extensions?: Record<string, any>;
+    readonly extensions?: Record<string, unknown>;
   }>;
 }

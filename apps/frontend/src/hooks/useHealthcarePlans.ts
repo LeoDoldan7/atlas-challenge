@@ -6,7 +6,7 @@ interface UseHealthcarePlansReturn {
   plans: HealthcarePlan[];
   loading: boolean;
   error: ApiError | null;
-  refetch: () => Promise<any>;
+  refetch: () => Promise<unknown>;
 }
 
 /**

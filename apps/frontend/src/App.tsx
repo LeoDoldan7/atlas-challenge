@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
 import { apolloClient } from './lib/apollo-client';
 import Home from './pages/Home';
+import Subscriptions from './pages/Subscriptions';
 import NewSubscription from './pages/NewSubscription';
 
 const App: React.FC = () => {
@@ -12,6 +13,7 @@ const App: React.FC = () => {
         <div>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/subscriptions/new" element={<NewSubscription />} />
           </Routes>
         </div>

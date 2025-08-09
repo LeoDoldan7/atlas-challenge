@@ -6,7 +6,7 @@ interface UseEmployeesReturn {
   employees: Employee[];
   loading: boolean;
   error: ApiError | null;
-  refetch: () => Promise<any>;
+  refetch: () => Promise<unknown>;
 }
 
 /**

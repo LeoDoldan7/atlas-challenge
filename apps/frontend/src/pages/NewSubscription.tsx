@@ -1,53 +1,105 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Minus, Plus } from 'lucide-react';
+
 import { useEmployees } from '../hooks/useEmployees';
 import { useHealthcarePlans } from '../hooks/useHealthcarePlans';
-import type { Employee, HealthcarePlan } from '../types';
+import type { Employee, SubscriptionType } from '../types';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+
+// Form validation schema
+const subscriptionSchema = z.object({
+  employeeId: z.string().min(1, 'Please select an employee'),
+  spouseIncluded: z.boolean(),
+  childrenCount: z.number().min(0).max(7),
+});
+
+type SubscriptionForm = z.infer<typeof subscriptionSchema>;
 
 const NewSubscription: React.FC = () => {
+  const navigate = useNavigate();
+  
   // Fetch employees for company #1
   const { employees, loading: employeesLoading, error: employeesError, refetch: refetchEmployees } = useEmployees('1');
   
-  // Fetch all healthcare plans
-  const { plans, loading: plansLoading, error: plansError, refetch: refetchPlans } = useHealthcarePlans();
+  // Fetch all healthcare plans (keeping the hook but not displaying them)
+  const { loading: plansLoading, error: plansError, refetch: refetchPlans } = useHealthcarePlans();
 
+  // Form state
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<SubscriptionForm>({
+    resolver: zodResolver(subscriptionSchema),
+    defaultValues: {
+      employeeId: '',
+      spouseIncluded: false,
+      childrenCount: 0,
+    },
+    mode: 'onChange',
+  });
+
+  // Watch form values for dynamic updates
+  const employeeId = watch('employeeId');
+  const spouseIncluded = watch('spouseIncluded');
+  const childrenCount = watch('childrenCount');
+
+  // Calculate subscription type dynamically
+  const subscriptionType: SubscriptionType = 
+    !spouseIncluded && childrenCount === 0 ? 'INDIVIDUAL' : 'FAMILY';
+
+  // Find selected employee
+  const selectedEmployee = employees.find(emp => emp.id === employeeId);
+
+  // Loading and error states
   const isLoading = employeesLoading || plansLoading;
   const hasError = employeesError || plansError;
-
-  const formatCurrency = (cents: string) => {
-    const amount = parseInt(cents, 10) / 100;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const formatPercentage = (percentage: string) => {
-    const pct = parseFloat(percentage);
-    return `${pct}%`;
-  };
 
   const handleRetry = async () => {
     await Promise.all([refetchEmployees(), refetchPlans()]);
   };
 
+  const onSubmit = (data: SubscriptionForm) => {
+    console.log('Form submitted:', {
+      ...data,
+      subscriptionType,
+      selectedEmployee,
+    });
+    // TODO: Implement actual submission logic
+    alert(`Subscription created for employee ${selectedEmployee?.email} (${subscriptionType})`);
+  };
+
+  const handleCancel = () => {
+    navigate('/subscriptions');
+  };
+
+  const adjustChildrenCount = (adjustment: number) => {
+    const newCount = Math.max(0, Math.min(7, childrenCount + adjustment));
+    setValue('childrenCount', newCount, { shouldValidate: true });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-lg text-gray-600">Loading subscription data...</span>
-            </div>
-          </div>
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              <span className="ml-3 text-lg text-muted-foreground">Loading subscription data...</span>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -56,26 +108,21 @@ const NewSubscription: React.FC = () => {
   if (hasError) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center py-12">
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardContent className="text-center py-12">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-medium text-gray-900 mb-2">Failed to load data</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-lg font-medium mb-2">Failed to load data</h2>
+              <p className="text-muted-foreground mb-4">
                 {employeesError?.message || plansError?.message || 'An error occurred while fetching data'}
               </p>
-              <button
-                onClick={handleRetry}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
+              <Button onClick={handleRetry}>Try Again</Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -83,125 +130,168 @@ const NewSubscription: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">New Subscription</h1>
-          <p className="mt-2 text-gray-600">Create a new healthcare subscription by selecting an employee and plan.</p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header with Breadcrumbs */}
+        <div className="space-y-4">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/subscriptions">Subscriptions</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>New</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          
+          <div>
+            <h1 className="text-3xl font-bold">New Subscription</h1>
+            <p className="mt-2 text-muted-foreground">
+              Create a new healthcare subscription by selecting an employee and configuring coverage options.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Employees Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Company Employees</h2>
-              <p className="text-sm text-gray-600 mt-1">{employees.length} employees found</p>
-            </div>
-            <div className="p-6">
-              {employees.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No employees found for this company.</p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {employees.map((employee: Employee) => (
-                    <div
-                      key={employee.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-colors"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-gray-900">{employee.email}</h3>
-                          <p className="text-sm text-gray-600 mt-1">ID: {employee.id}</p>
-                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                            <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                              {employee.maritalStatus}
-                            </span>
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              Born: {formatDate(employee.birthDate)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Healthcare Plans Section */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Healthcare Plans</h2>
-              <p className="text-sm text-gray-600 mt-1">{plans.length} plans available</p>
-            </div>
-            <div className="p-6">
-              {plans.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No healthcare plans available.</p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {plans.map((plan: HealthcarePlan) => (
-                    <div
-                      key={plan.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:bg-green-50 cursor-pointer transition-colors"
-                    >
-                      <h3 className="font-semibold text-gray-900 mb-3">{plan.name}</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <span className="font-medium text-gray-700">Employee:</span>
-                            <div className="text-gray-600">
-                              Cost: {formatCurrency(plan.costEmployeeCents)}
-                            </div>
-                            <div className="text-gray-600">
-                              Company pays: {formatPercentage(plan.pctEmployeePaidByCompany)}
-                            </div>
-                          </div>
-                          <div>
-                            <span className="font-medium text-gray-700">Spouse:</span>
-                            <div className="text-gray-600">
-                              Cost: {formatCurrency(plan.costSpouseCents)}
-                            </div>
-                            <div className="text-gray-600">
-                              Company pays: {formatPercentage(plan.pctSpousePaidByCompany)}
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Child:</span>
-                          <span className="text-gray-600 ml-2">
-                            {formatCurrency(plan.costChildCents)} (Company pays: {formatPercentage(plan.pctChildPaidByCompany)})
+        {/* Main Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Employee Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Employee Selection</CardTitle>
+              <CardDescription>
+                Select the employee for this subscription
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="employee-select">Employee *</Label>
+                <Select 
+                  value={employeeId} 
+                  onValueChange={(value) => setValue('employeeId', value, { shouldValidate: true })}
+                >
+                  <SelectTrigger id="employee-select" className={errors.employeeId ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Search and select an employee..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {employees.map((employee: Employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{employee.email}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {employee.maritalStatus} • Born: {new Date(employee.birthDate).toLocaleDateString()}
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.employeeId && (
+                  <p className="text-sm text-red-600">{errors.employeeId.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Data Summary */}
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Data Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-              <span className="text-gray-600">
-                <span className="font-medium text-gray-900">{employees.length}</span> employees loaded from Company #1
-              </span>
-            </div>
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-              <span className="text-gray-600">
-                <span className="font-medium text-gray-900">{plans.length}</span> healthcare plans available
-              </span>
-            </div>
+          {/* Coverage Choices */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Coverage Choices</CardTitle>
+              <CardDescription>
+                Configure family coverage options
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Spouse Checkbox */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="spouse-included"
+                  checked={spouseIncluded}
+                  onCheckedChange={(checked) => 
+                    setValue('spouseIncluded', checked as boolean, { shouldValidate: true })
+                  }
+                />
+                <Label htmlFor="spouse-included">Spouse included</Label>
+              </div>
+
+              {/* Children Count Stepper */}
+              <div className="space-y-2">
+                <Label>Number of children</Label>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => adjustChildrenCount(-1)}
+                    disabled={childrenCount <= 0}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  
+                  <span className="min-w-[3rem] text-center text-lg font-medium">
+                    {childrenCount}
+                  </span>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => adjustChildrenCount(1)}
+                    disabled={childrenCount >= 7}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Maximum 7 children allowed</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscription Type Preview */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Preview</CardTitle>
+              <CardDescription>
+                Based on your coverage selections
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Label>Subscription type:</Label>
+                  <Badge variant={subscriptionType === 'INDIVIDUAL' ? 'secondary' : 'default'}>
+                    {subscriptionType.toLowerCase()}
+                  </Badge>
+                </div>
+                
+                {selectedEmployee && (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium mb-2">Selected Employee</h4>
+                    <p className="text-sm">
+                      <strong>Email:</strong> {selectedEmployee.email}
+                    </p>
+                    <p className="text-sm">
+                      <strong>Marital Status:</strong> {selectedEmployee.maritalStatus}
+                    </p>
+                    <p className="text-sm">
+                      <strong>Birth Date:</strong> {new Date(selectedEmployee.birthDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!isValid}>
+              Save Subscription
+            </Button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
