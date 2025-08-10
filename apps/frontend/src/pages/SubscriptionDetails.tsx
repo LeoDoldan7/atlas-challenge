@@ -5,24 +5,35 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@apollo/client';
 import {
-  ArrowLeft,
-  FileText,
-  User,
-  Users,
-  Upload,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  XCircle,
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  IconArrowLeft,
+  IconFileText,
+  IconUser,
+  IconUsers,
+  IconUpload,
+  IconCheck,
+  IconClock,
+  IconAlertCircle,
+  IconX,
+} from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import {
+  Button,
+  Card,
+  Stack,
+  Group,
+  Text,
+  Title,
+  Container,
+  Badge,
+  Loader,
+  TextInput,
+  Breadcrumbs,
+  Anchor,
+  Alert,
+  ThemeIcon,
+  SimpleGrid,
+} from '@mantine/core';
 import { useSubscriptions } from '../hooks/useSubscriptions';
 import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
 
@@ -138,7 +149,12 @@ const SubscriptionDetails: React.FC = () => {
         },
       });
 
-      toast.success('Demographic data saved successfully! Subscription status updated.');
+      notifications.show({
+        title: 'Success',
+        message: 'Demographic data saved successfully! Subscription status updated.',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
       
       // Refetch subscriptions to get updated data
       await refetch();
@@ -148,7 +164,12 @@ const SubscriptionDetails: React.FC = () => {
     } catch (error: unknown) {
       console.error('Error saving demographic data:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save demographic data. Please try again.';
-      toast.error(errorMessage);
+      notifications.show({
+        title: 'Error',
+        message: errorMessage,
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
     } finally {
       setIsSubmittingDemographics(false);
     }
@@ -175,7 +196,12 @@ const SubscriptionDetails: React.FC = () => {
       // Validate file size (5MB max to account for base64 overhead)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
-        toast.error('File size must be less than 5MB');
+        notifications.show({
+          title: 'Error',
+          message: 'File size must be less than 5MB',
+          color: 'red',
+          icon: <IconX size={16} />,
+        });
         return;
       }
 
@@ -190,7 +216,12 @@ const SubscriptionDetails: React.FC = () => {
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        toast.error('File type not allowed. Please upload PDF, JPG, PNG, GIF, or Word documents.');
+        notifications.show({
+          title: 'Error',
+          message: 'File type not allowed. Please upload PDF, JPG, PNG, GIF, or Word documents.',
+          color: 'red',
+          icon: <IconX size={16} />,
+        });
         return;
       }
 
@@ -220,7 +251,12 @@ const SubscriptionDetails: React.FC = () => {
         },
       });
 
-      toast.success('File uploaded successfully! Subscription status updated.');
+      notifications.show({
+        title: 'Success',
+        message: 'File uploaded successfully! Subscription status updated.',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
       
       // Refetch subscriptions to get updated data
       await refetch();
@@ -234,7 +270,12 @@ const SubscriptionDetails: React.FC = () => {
     } catch (error: unknown) {
       console.error('Error uploading file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload file. Please try again.';
-      toast.error(errorMessage);
+      notifications.show({
+        title: 'Error',
+        message: errorMessage,
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
     } finally {
       setIsUploadingFiles(false);
     }
@@ -259,7 +300,12 @@ const SubscriptionDetails: React.FC = () => {
         },
       });
 
-      toast.success('Plan activated successfully! Your subscription is now active.');
+      notifications.show({
+        title: 'Success',
+        message: 'Plan activated successfully! Your subscription is now active.',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
       
       // Refetch subscriptions to get updated data
       await refetch();
@@ -267,7 +313,12 @@ const SubscriptionDetails: React.FC = () => {
     } catch (error: unknown) {
       console.error('Error activating plan:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
-      toast.error(errorMessage);
+      notifications.show({
+        title: 'Error',
+        message: errorMessage,
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
     } finally {
       setIsActivatingPlan(false);
     }
@@ -284,559 +335,574 @@ const SubscriptionDetails: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'green';
       case 'CANCELED':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'red';
       case 'TERMINATED':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'gray';
       case 'DEMOGRAPHIC_VERIFICATION_PENDING':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'blue';
       case 'DOCUMENT_UPLOAD_PENDING':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'violet';
       case 'PLAN_ACTIVATION_PENDING':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'orange';
       default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'yellow';
     }
   };
 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mb-6"></div>
-              <span className="text-xl font-medium text-slate-700">Loading subscription details...</span>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Container size="lg" py="xl">
+        <Card p="xl" radius="xl" shadow="lg" style={{ maxWidth: 600, margin: '0 auto' }}>
+          <Stack align="center" gap="md">
+            <Loader size="xl" />
+            <Text size="xl" fw={500}>Loading subscription details...</Text>
+          </Stack>
+        </Card>
+      </Container>
     );
   }
 
   if (error || !subscription) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardContent className="text-center py-16">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
-                <FileText className="h-8 w-8 text-red-600" />
-              </div>
-              <h2 className="text-xl font-semibold mb-3 text-slate-900">Subscription Not Found</h2>
-              <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                The subscription you're looking for doesn't exist or couldn't be loaded.
-              </p>
-              <Button
-                onClick={() => navigate('/subscriptions')}
-                className="px-6 py-3 rounded-xl font-medium"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Subscriptions
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Container size="lg" py="xl">
+        <Card p="xl" radius="xl" shadow="lg" style={{ maxWidth: 600, margin: '0 auto' }}>
+          <Stack align="center" gap="md">
+            <ThemeIcon size={64} radius="xl" color="red">
+              <IconFileText size={32} />
+            </ThemeIcon>
+            <Title order={2}>Subscription Not Found</Title>
+            <Text ta="center" c="dimmed" maw={400}>
+              The subscription you're looking for doesn't exist or couldn't be loaded.
+            </Text>
+            <Button
+              onClick={() => navigate('/subscriptions')}
+              leftSection={<IconArrowLeft size={16} />}
+              radius="xl"
+            >
+              Back to Subscriptions
+            </Button>
+          </Stack>
+        </Card>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <Container size="xl" py="xl">
+      <Stack gap="xl">
         {/* Header with Breadcrumbs */}
-        <div className="space-y-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/subscriptions" className="text-slate-600 hover:text-slate-900">
-                  Subscriptions
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="font-medium">Details</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+        <Stack gap="md">
+          <Breadcrumbs>
+            <Anchor href="/subscriptions" c="dimmed">
+              Subscriptions
+            </Anchor>
+            <Text fw={500}>Details</Text>
+          </Breadcrumbs>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+          <Group justify="apart">
+            <Stack gap="xs">
+              <Title order={1} size={36} fw={700}>
                 Subscription Details
-              </h1>
-              <p className="mt-2 text-lg text-slate-600">
+              </Title>
+              <Text size="lg" c="dimmed">
                 {subscription.type === 'INDIVIDUAL' ? 'Individual' : 'Family'} healthcare subscription
-              </p>
-            </div>
+              </Text>
+            </Stack>
             <Button
               onClick={() => navigate('/subscriptions')}
               variant="outline"
-              className="px-6 py-3 rounded-xl"
+              radius="xl"
+              leftSection={<IconArrowLeft size={16} />}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-          </div>
-        </div>
+          </Group>
+        </Stack>
 
-        <div className="max-w-2xl mx-auto">
-          {/* Overview Card */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-semibold">Overview</CardTitle>
-                <Badge className={`${getStatusColor(subscription.status)} border`}>
-                  {subscription.status.toLowerCase().replace(/_/g, ' ')}
-                </Badge>
-              </div>
-              <CardDescription>
-                Subscription ID: {subscription.id}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Start Date</p>
-                  <p className="text-lg text-slate-900">{formatDate(subscription.startDate)}</p>
-                </div>
+        <Container size="sm" p={0}>
+          <Stack gap="lg">
+            {/* Overview Card */}
+            <Card p="lg" radius="xl" shadow="md">
+              <Stack gap="md">
+                <Group justify="apart" align="flex-start">
+                  <Title order={3} fw={600}>Overview</Title>
+                  <Badge color={getStatusColor(subscription.status)} variant="light" size="lg">
+                    {subscription.status.toLowerCase().replace(/_/g, ' ')}
+                  </Badge>
+                </Group>
+                
+                <Text c="dimmed">
+                  Subscription ID: {subscription.id}
+                </Text>
 
-                {subscription.endDate && (
+                <Stack gap="md">
                   <div>
-                    <p className="text-sm font-medium text-slate-700">End Date</p>
-                    <p className="text-lg text-red-600">{formatDate(subscription.endDate)}</p>
+                    <Text size="sm" fw={500} c="dimmed" mb={4}>Start Date</Text>
+                    <Text size="lg">{formatDate(subscription.startDate)}</Text>
                   </div>
-                )}
 
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Billing Anchor</p>
-                  <p className="text-lg text-slate-900">{subscription.billingAnchor} of each month</p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-slate-700">Type</p>
-                  <p className="text-lg text-slate-900 capitalize">{subscription.type.toLowerCase()}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Demographic Data Entry - Only show if status is DEMOGRAPHIC_VERIFICATION_PENDING */}
-          {subscription.status === 'DEMOGRAPHIC_VERIFICATION_PENDING' && (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Demographic Verification
-                </CardTitle>
-                <CardDescription>
-                  Please provide demographic information for family members covered under this subscription.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmitDemographics)} className="space-y-8">
-                  {/* Spouse Section - Only show if subscription has spouse */}
-                  {spouseCount > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-slate-500" />
-                        <h3 className="text-lg font-semibold text-slate-900">Spouse Information</h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
-                        <div className="space-y-2">
-                          <Label htmlFor="spouse.firstName">First Name *</Label>
-                          <Input
-                            id="spouse.firstName"
-                            {...register('spouse.firstName')}
-                            placeholder="Enter first name"
-                            className={errors.spouse?.firstName ? 'border-red-500' : ''}
-                          />
-                          {errors.spouse?.firstName && (
-                            <p className="text-sm text-red-600">{errors.spouse.firstName.message}</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="spouse.lastName">Last Name *</Label>
-                          <Input
-                            id="spouse.lastName"
-                            {...register('spouse.lastName')}
-                            placeholder="Enter last name"
-                            className={errors.spouse?.lastName ? 'border-red-500' : ''}
-                          />
-                          {errors.spouse?.lastName && (
-                            <p className="text-sm text-red-600">{errors.spouse.lastName.message}</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="spouse.governmentId">Government ID *</Label>
-                          <Input
-                            id="spouse.governmentId"
-                            {...register('spouse.governmentId')}
-                            placeholder="e.g., SSN-123456789"
-                            className={errors.spouse?.governmentId ? 'border-red-500' : ''}
-                          />
-                          {errors.spouse?.governmentId && (
-                            <p className="text-sm text-red-600">{errors.spouse.governmentId.message}</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="spouse.birthDate">Birth Date *</Label>
-                          <Input
-                            id="spouse.birthDate"
-                            type="date"
-                            {...register('spouse.birthDate')}
-                            className={errors.spouse?.birthDate ? 'border-red-500' : ''}
-                          />
-                          {errors.spouse?.birthDate && (
-                            <p className="text-sm text-red-600">{errors.spouse.birthDate.message}</p>
-                          )}
-                        </div>
-                      </div>
+                  {subscription.endDate && (
+                    <div>
+                      <Text size="sm" fw={500} c="dimmed" mb={4}>End Date</Text>
+                      <Text size="lg" c="red">{formatDate(subscription.endDate)}</Text>
                     </div>
                   )}
 
-                  {/* Children Section - Only show if subscription has children */}
-                  {childrenCount > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-slate-500" />
-                        <h3 className="text-lg font-semibold text-slate-900">
-                          Children Information ({childrenCount} {childrenCount === 1 ? 'child' : 'children'})
-                        </h3>
-                      </div>
-
-                      <div className="space-y-4">
-                        {Array.from({ length: childrenCount }, (_, index) => (
-                          <div key={index} className="space-y-4 p-4 bg-slate-50 rounded-lg">
-                            <h4 className="font-medium text-slate-900">Child #{index + 1}</h4>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor={`children.${index}.firstName`}>First Name *</Label>
-                                <Input
-                                  id={`children.${index}.firstName`}
-                                  {...register(`children.${index}.firstName`)}
-                                  placeholder="Enter first name"
-                                  className={errors.children?.[index]?.firstName ? 'border-red-500' : ''}
-                                />
-                                {errors.children?.[index]?.firstName && (
-                                  <p className="text-sm text-red-600">{errors.children[index]?.firstName?.message}</p>
-                                )}
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label htmlFor={`children.${index}.lastName`}>Last Name *</Label>
-                                <Input
-                                  id={`children.${index}.lastName`}
-                                  {...register(`children.${index}.lastName`)}
-                                  placeholder="Enter last name"
-                                  className={errors.children?.[index]?.lastName ? 'border-red-500' : ''}
-                                />
-                                {errors.children?.[index]?.lastName && (
-                                  <p className="text-sm text-red-600">{errors.children[index]?.lastName?.message}</p>
-                                )}
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label htmlFor={`children.${index}.governmentId`}>Government ID *</Label>
-                                <Input
-                                  id={`children.${index}.governmentId`}
-                                  {...register(`children.${index}.governmentId`)}
-                                  placeholder="e.g., SSN-123456789"
-                                  className={errors.children?.[index]?.governmentId ? 'border-red-500' : ''}
-                                />
-                                {errors.children?.[index]?.governmentId && (
-                                  <p className="text-sm text-red-600">{errors.children[index]?.governmentId?.message}</p>
-                                )}
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label htmlFor={`children.${index}.birthDate`}>Birth Date *</Label>
-                                <Input
-                                  id={`children.${index}.birthDate`}
-                                  type="date"
-                                  {...register(`children.${index}.birthDate`)}
-                                  className={errors.children?.[index]?.birthDate ? 'border-red-500' : ''}
-                                />
-                                {errors.children?.[index]?.birthDate && (
-                                  <p className="text-sm text-red-600">{errors.children[index]?.birthDate?.message}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <div className="flex justify-end space-x-4 pt-6">
-                    <Button
-                      type="submit"
-                      disabled={isSubmittingDemographics}
-                      className="px-8 py-3 bg-blue-600 hover:bg-blue-700"
-                    >
-                      {isSubmittingDemographics ? 'Saving...' : 'Save Demographic Information'}
-                    </Button>
+                  <div>
+                    <Text size="sm" fw={500} c="dimmed" mb={4}>Billing Anchor</Text>
+                    <Text size="lg">{subscription.billingAnchor} of each month</Text>
                   </div>
-                </form>
-              </CardContent>
+
+                  <div>
+                    <Text size="sm" fw={500} c="dimmed" mb={4}>Type</Text>
+                    <Text size="lg" tt="capitalize">{subscription.type.toLowerCase()}</Text>
+                  </div>
+                </Stack>
+              </Stack>
             </Card>
-          )}
 
-          {/* Document Upload Section - Only show if status is DOCUMENT_UPLOAD_PENDING */}
-          {subscription.status === 'DOCUMENT_UPLOAD_PENDING' && (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Document Upload
-                </CardTitle>
-                <CardDescription>
-                  Please upload the required documents to proceed with your subscription.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* File Upload Area */}
-                  <div className="space-y-4">
-                    <div className="text-center p-8 border-2 border-dashed border-slate-300 rounded-lg hover:border-slate-400 transition-colors">
-                      <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                      <h3 className="text-lg font-medium text-slate-900 mb-2">Upload Document</h3>
-                      <p className="text-slate-600 mb-4">
-                        Accepted formats: PDF, JPG, PNG, GIF, Word documents (max 5MB)
-                      </p>
-                      <div className="space-y-4">
-                        <Input
+            {/* Demographic Data Entry - Only show if status is DEMOGRAPHIC_VERIFICATION_PENDING */}
+            {subscription.status === 'DEMOGRAPHIC_VERIFICATION_PENDING' && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconUsers size={20} />
+                    <Title order={3} fw={600}>Demographic Verification</Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    Please provide demographic information for family members covered under this subscription.
+                  </Text>
+
+                  <form onSubmit={handleSubmit(onSubmitDemographics)}>
+                    <Stack gap="xl">
+                      {/* Spouse Section - Only show if subscription has spouse */}
+                      {spouseCount > 0 && (
+                        <Stack gap="md">
+                          <Group gap="sm">
+                            <IconUser size={16} style={{ opacity: 0.6 }} />
+                            <Title order={4} fw={600}>Spouse Information</Title>
+                          </Group>
+
+                          <Card p="md" radius="md" bg="gray.1">
+                            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                              <Stack gap="xs">
+                                <Text size="sm" fw={500}>First Name *</Text>
+                                <TextInput
+                                  {...register('spouse.firstName')}
+                                  placeholder="Enter first name"
+                                  error={errors.spouse?.firstName?.message}
+                                />
+                              </Stack>
+
+                              <Stack gap="xs">
+                                <Text size="sm" fw={500}>Last Name *</Text>
+                                <TextInput
+                                  {...register('spouse.lastName')}
+                                  placeholder="Enter last name"
+                                  error={errors.spouse?.lastName?.message}
+                                />
+                              </Stack>
+
+                              <Stack gap="xs">
+                                <Text size="sm" fw={500}>Government ID *</Text>
+                                <TextInput
+                                  {...register('spouse.governmentId')}
+                                  placeholder="e.g., SSN-123456789"
+                                  error={errors.spouse?.governmentId?.message}
+                                />
+                              </Stack>
+
+                              <Stack gap="xs">
+                                <Text size="sm" fw={500}>Birth Date *</Text>
+                                <TextInput
+                                  type="date"
+                                  {...register('spouse.birthDate')}
+                                  error={errors.spouse?.birthDate?.message}
+                                />
+                              </Stack>
+                            </SimpleGrid>
+                          </Card>
+                        </Stack>
+                      )}
+
+                      {/* Children Section - Only show if subscription has children */}
+                      {childrenCount > 0 && (
+                        <Stack gap="md">
+                          <Group gap="sm">
+                            <IconUsers size={16} style={{ opacity: 0.6 }} />
+                            <Title order={4} fw={600}>
+                              Children Information ({childrenCount} {childrenCount === 1 ? 'child' : 'children'})
+                            </Title>
+                          </Group>
+
+                          <Stack gap="md">
+                            {Array.from({ length: childrenCount }, (_, index) => (
+                              <Card key={index} p="md" radius="md" bg="gray.1">
+                                <Stack gap="md">
+                                  <Title order={5} fw={500}>Child #{index + 1}</Title>
+
+                                  <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+                                    <Stack gap="xs">
+                                      <Text size="sm" fw={500}>First Name *</Text>
+                                      <TextInput
+                                        {...register(`children.${index}.firstName`)}
+                                        placeholder="Enter first name"
+                                        error={errors.children?.[index]?.firstName?.message}
+                                      />
+                                    </Stack>
+
+                                    <Stack gap="xs">
+                                      <Text size="sm" fw={500}>Last Name *</Text>
+                                      <TextInput
+                                        {...register(`children.${index}.lastName`)}
+                                        placeholder="Enter last name"
+                                        error={errors.children?.[index]?.lastName?.message}
+                                      />
+                                    </Stack>
+
+                                    <Stack gap="xs">
+                                      <Text size="sm" fw={500}>Government ID *</Text>
+                                      <TextInput
+                                        {...register(`children.${index}.governmentId`)}
+                                        placeholder="e.g., SSN-123456789"
+                                        error={errors.children?.[index]?.governmentId?.message}
+                                      />
+                                    </Stack>
+
+                                    <Stack gap="xs">
+                                      <Text size="sm" fw={500}>Birth Date *</Text>
+                                      <TextInput
+                                        type="date"
+                                        {...register(`children.${index}.birthDate`)}
+                                        error={errors.children?.[index]?.birthDate?.message}
+                                      />
+                                    </Stack>
+                                  </SimpleGrid>
+                                </Stack>
+                              </Card>
+                            ))}
+                          </Stack>
+                        </Stack>
+                      )}
+
+                      {/* Submit Button */}
+                      <Group justify="end" pt="md">
+                        <Button
+                          type="submit"
+                          loading={isSubmittingDemographics}
+                          radius="xl"
+                          size="md"
+                        >
+                          {isSubmittingDemographics ? 'Saving...' : 'Save Demographic Information'}
+                        </Button>
+                      </Group>
+                    </Stack>
+                  </form>
+                </Stack>
+              </Card>
+            )}
+
+            {/* Document Upload Section - Only show if status is DOCUMENT_UPLOAD_PENDING */}
+            {subscription.status === 'DOCUMENT_UPLOAD_PENDING' && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconUpload size={20} />
+                    <Title order={3} fw={600}>Document Upload</Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    Please upload the required documents to proceed with your subscription.
+                  </Text>
+
+                  <Stack gap="lg">
+                    {/* File Upload Area */}
+                    <Card
+                      p="xl"
+                      radius="md"
+                      style={{
+                        border: '2px dashed var(--mantine-color-gray-4)',
+                        backgroundColor: 'transparent',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--mantine-color-gray-6)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--mantine-color-gray-4)';
+                      }}
+                    >
+                      <Stack align="center" gap="md">
+                        <ThemeIcon size={48} radius="xl" color="gray" variant="light">
+                          <IconUpload size={24} />
+                        </ThemeIcon>
+                        <Title order={4}>Upload Document</Title>
+                        <Text c="dimmed" size="sm">
+                          Accepted formats: PDF, JPG, PNG, GIF, Word documents (max 5MB)
+                        </Text>
+                        <input
                           id="file-input"
                           type="file"
                           onChange={handleFileSelect}
                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
-                          className="hidden"
+                          style={{ display: 'none' }}
                         />
                         <Button
                           onClick={() => document.getElementById('file-input')?.click()}
-                          className="px-6 py-2"
+                          radius="xl"
                           disabled={isUploadingFiles}
                         >
                           Choose File
                         </Button>
-                      </div>
-                    </div>
+                      </Stack>
+                    </Card>
 
                     {/* Selected File Display */}
                     {selectedFile && (
-                      <div className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-5 w-5 text-slate-500" />
-                            <div>
-                              <p className="font-medium text-slate-900">{selectedFile.name}</p>
-                              <p className="text-sm text-slate-500">
+                      <Card p="md" radius="md" bg="gray.1">
+                        <Group justify="apart">
+                          <Group gap="md">
+                            <ThemeIcon size={40} radius="md" color="gray" variant="light">
+                              <IconFileText size={20} />
+                            </ThemeIcon>
+                            <Stack gap={4}>
+                              <Text fw={500}>{selectedFile.name}</Text>
+                              <Text size="sm" c="dimmed">
                                 {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
+                              </Text>
+                            </Stack>
+                          </Group>
+                          <Group gap="xs">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={removeSelectedFile}
                               disabled={isUploadingFiles}
+                              radius="xl"
                             >
                               Remove
                             </Button>
                             <Button
                               onClick={handleFileUpload}
-                              disabled={isUploadingFiles}
-                              className="px-4 py-2"
+                              loading={isUploadingFiles}
+                              size="sm"
+                              radius="xl"
                             >
                               {isUploadingFiles ? 'Uploading...' : 'Upload'}
                             </Button>
-                          </div>
-                        </div>
-                      </div>
+                          </Group>
+                        </Group>
+                      </Card>
                     )}
-                  </div>
 
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">Required Documents:</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Government-issued ID for all family members</li>
-                      <li>• Proof of employment</li>
-                      <li>• Previous insurance documentation (if applicable)</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    <Alert color="blue" radius="md">
+                      <Stack gap="xs">
+                        <Text fw={500}>Required Documents:</Text>
+                        <Text size="sm">
+                          • Government-issued ID for all family members<br />
+                          • Proof of employment<br />
+                          • Previous insurance documentation (if applicable)
+                        </Text>
+                      </Stack>
+                    </Alert>
+                  </Stack>
+                </Stack>
+              </Card>
+            )}
 
-          {/* Plan Activation Pending - Only show if status is PLAN_ACTIVATION_PENDING */}
-          {subscription.status === 'PLAN_ACTIVATION_PENDING' && (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-orange-500" />
-                  Plan Activation Pending
-                </CardTitle>
-                <CardDescription>
-                  Your documents have been received and are being reviewed.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-orange-50 p-6 rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <Clock className="h-6 w-6 text-orange-500 mt-0.5" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-orange-900 mb-2">Ready for Activation</h3>
-                        <p className="text-orange-800 mb-4">
-                          Your documents and demographic information have been reviewed and approved. 
-                          You can now activate your healthcare plan.
-                        </p>
-                        <Button
-                          onClick={handlePlanActivation}
-                          disabled={isActivatingPlan}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
-                        >
-                          {isActivatingPlan ? 'Activating...' : 'Activate Plan'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+            {/* Plan Activation Pending - Only show if status is PLAN_ACTIVATION_PENDING */}
+            {subscription.status === 'PLAN_ACTIVATION_PENDING' && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconClock size={20} style={{ color: 'var(--mantine-color-orange-6)' }} />
+                    <Title order={3} fw={600}>Plan Activation Pending</Title>
+                  </Group>
                   
-                  {subscription.files && subscription.files.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-slate-900 mb-3">Submitted Documents:</h4>
-                      <div className="space-y-2">
-                        {subscription.files.map((file) => (
-                          <div key={file.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                            <FileText className="h-5 w-5 text-slate-500" />
-                            <div className="flex-1">
-                              <p className="font-medium text-slate-900">{file.originalName}</p>
-                              <p className="text-sm text-slate-500">
-                                {(file.fileSizeBytes / 1024 / 1024).toFixed(2)} MB • {file.mimeType}
-                              </p>
-                            </div>
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          </div>
+                  <Text c="dimmed">
+                    Your documents have been received and are being reviewed.
+                  </Text>
+
+                  <Stack gap="lg">
+                    <Alert color="orange" radius="md">
+                      <Group gap="md" align="flex-start">
+                        <ThemeIcon size={24} color="orange" variant="light">
+                          <IconClock size={16} />
+                        </ThemeIcon>
+                        <Stack gap="xs" style={{ flex: 1 }}>
+                          <Text fw={500}>Ready for Activation</Text>
+                          <Text size="sm">
+                            Your documents and demographic information have been reviewed and approved. 
+                            You can now activate your healthcare plan.
+                          </Text>
+                          <Button
+                            onClick={handlePlanActivation}
+                            loading={isActivatingPlan}
+                            color="green"
+                            radius="xl"
+                            size="sm"
+                            mt="sm"
+                          >
+                            {isActivatingPlan ? 'Activating...' : 'Activate Plan'}
+                          </Button>
+                        </Stack>
+                      </Group>
+                    </Alert>
+                    
+                    {subscription.files && subscription.files.length > 0 && (
+                      <Stack gap="md">
+                        <Title order={5} fw={500}>Submitted Documents:</Title>
+                        <Stack gap="xs">
+                          {subscription.files.map((file) => (
+                            <Card key={file.id} p="md" radius="md" bg="gray.1">
+                              <Group gap="md">
+                                <ThemeIcon size={40} radius="md" color="gray" variant="light">
+                                  <IconFileText size={20} />
+                                </ThemeIcon>
+                                <Stack gap={4} style={{ flex: 1 }}>
+                                  <Text fw={500}>{file.originalName}</Text>
+                                  <Text size="sm" c="dimmed">
+                                    {(file.fileSizeBytes / 1024 / 1024).toFixed(2)} MB • {file.mimeType}
+                                  </Text>
+                                </Stack>
+                                <ThemeIcon size={24} color="green" variant="light">
+                                  <IconCheck size={16} />
+                                </ThemeIcon>
+                              </Group>
+                            </Card>
+                          ))}
+                        </Stack>
+                      </Stack>
+                    )}
+                  </Stack>
+                </Stack>
+              </Card>
+            )}
+
+            {/* Active Status - Only show if status is ACTIVE */}
+            {subscription.status === 'ACTIVE' && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconCheck size={20} style={{ color: 'var(--mantine-color-green-6)' }} />
+                    <Title order={3} fw={600}>Active Subscription</Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    Your healthcare subscription is now active and ready to use.
+                  </Text>
+
+                  <Stack gap="lg">
+                    <Alert color="green" radius="md">
+                      <Group gap="md" align="flex-start">
+                        <ThemeIcon size={24} color="green" variant="light">
+                          <IconCheck size={16} />
+                        </ThemeIcon>
+                        <Stack gap="md" style={{ flex: 1 }}>
+                          <Text fw={500}>Subscription Active</Text>
+                          <Text size="sm">
+                            Congratulations! Your healthcare subscription is now active. You can start using your benefits immediately.
+                          </Text>
+                          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mt="sm">
+                            <Card p="md" radius="md" withBorder>
+                              <Stack gap="xs">
+                                <Text fw={500}>Coverage Starts</Text>
+                                <Text c="dimmed">{formatDate(subscription.startDate)}</Text>
+                              </Stack>
+                            </Card>
+                            <Card p="md" radius="md" withBorder>
+                              <Stack gap="xs">
+                                <Text fw={500}>Monthly Billing</Text>
+                                <Text c="dimmed">{subscription.billingAnchor} of each month</Text>
+                              </Stack>
+                            </Card>
+                          </SimpleGrid>
+                        </Stack>
+                      </Group>
+                    </Alert>
+
+                    <Stack gap="md">
+                      <Title order={5} fw={500}>Covered Members:</Title>
+                      <Stack gap="xs">
+                        {subscription.items?.map((item) => (
+                          <Card key={item.id} p="md" radius="md" bg="gray.1">
+                            <Group gap="md">
+                              <ThemeIcon size={40} radius="md" color="gray" variant="light">
+                                <IconUser size={20} />
+                              </ThemeIcon>
+                              <Stack gap={4} style={{ flex: 1 }}>
+                                <Text fw={500} tt="capitalize">{item.role.toLowerCase()}</Text>
+                                {item.demographicId && (
+                                  <Text size="sm" c="dimmed">Verified</Text>
+                                )}
+                              </Stack>
+                              <ThemeIcon size={24} color="green" variant="light">
+                                <IconCheck size={16} />
+                              </ThemeIcon>
+                            </Group>
+                          </Card>
                         ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                      </Stack>
+                    </Stack>
+                  </Stack>
+                </Stack>
+              </Card>
+            )}
 
-          {/* Active Status - Only show if status is ACTIVE */}
-          {subscription.status === 'ACTIVE' && (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  Active Subscription
-                </CardTitle>
-                <CardDescription>
-                  Your healthcare subscription is now active and ready to use.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-green-50 p-6 rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <CheckCircle className="h-6 w-6 text-green-500 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium text-green-900 mb-2">Subscription Active</h3>
-                        <p className="text-green-800 mb-4">
-                          Congratulations! Your healthcare subscription is now active. You can start using your benefits immediately.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                          <div className="bg-white p-4 rounded-lg border border-green-200">
-                            <h4 className="font-medium text-slate-900 mb-2">Coverage Starts</h4>
-                            <p className="text-slate-600">{formatDate(subscription.startDate)}</p>
-                          </div>
-                          <div className="bg-white p-4 rounded-lg border border-green-200">
-                            <h4 className="font-medium text-slate-900 mb-2">Monthly Billing</h4>
-                            <p className="text-slate-600">{subscription.billingAnchor} of each month</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            {/* Canceled/Terminated Status - Only show if status is CANCELED or TERMINATED */}
+            {(subscription.status === 'CANCELED' || subscription.status === 'TERMINATED') && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconX size={20} style={{ color: 'var(--mantine-color-red-6)' }} />
+                    <Title order={3} fw={600}>
+                      {subscription.status === 'CANCELED' ? 'Subscription Canceled' : 'Subscription Terminated'}
+                    </Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    This subscription is no longer active.
+                  </Text>
 
-                  <div>
-                    <h4 className="font-medium text-slate-900 mb-3">Covered Members:</h4>
-                    <div className="space-y-2">
-                      {subscription.items?.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                          <User className="h-5 w-5 text-slate-500" />
-                          <div className="flex-1">
-                            <p className="font-medium text-slate-900 capitalize">{item.role.toLowerCase()}</p>
-                            {item.demographicId && (
-                              <p className="text-sm text-slate-500">Verified</p>
-                            )}
-                          </div>
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Canceled/Terminated Status - Only show if status is CANCELED or TERMINATED */}
-          {(subscription.status === 'CANCELED' || subscription.status === 'TERMINATED') && (
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-500" />
-                  {subscription.status === 'CANCELED' ? 'Subscription Canceled' : 'Subscription Terminated'}
-                </CardTitle>
-                <CardDescription>
-                  This subscription is no longer active.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-red-50 p-6 rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <AlertCircle className="h-6 w-6 text-red-500 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium text-red-900 mb-2">
+                  <Alert color="red" radius="md">
+                    <Group gap="md" align="flex-start">
+                      <ThemeIcon size={24} color="red" variant="light">
+                        <IconAlertCircle size={16} />
+                      </ThemeIcon>
+                      <Stack gap="md" style={{ flex: 1 }}>
+                        <Text fw={500}>
                           {subscription.status === 'CANCELED' ? 'Canceled' : 'Terminated'}
-                        </h3>
-                        <p className="text-red-800 mb-4">
+                        </Text>
+                        <Text size="sm">
                           {subscription.status === 'CANCELED' 
                             ? 'This subscription has been canceled and is no longer providing coverage.'
                             : 'This subscription has been terminated and is no longer providing coverage.'
                           }
-                        </p>
+                        </Text>
                         {subscription.endDate && (
-                          <div className="bg-white p-4 rounded-lg border border-red-200 mt-4">
-                            <h4 className="font-medium text-slate-900 mb-2">Coverage Ended</h4>
-                            <p className="text-slate-600">{formatDate(subscription.endDate)}</p>
-                          </div>
+                          <Card p="md" radius="md" withBorder mt="sm">
+                            <Stack gap="xs">
+                              <Text fw={500}>Coverage Ended</Text>
+                              <Text c="dimmed">{formatDate(subscription.endDate)}</Text>
+                            </Stack>
+                          </Card>
                         )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </div>
+                      </Stack>
+                    </Group>
+                  </Alert>
+                </Stack>
+              </Card>
+            )}
+          </Stack>
+        </Container>
+      </Stack>
+    </Container>
   );
 };
 

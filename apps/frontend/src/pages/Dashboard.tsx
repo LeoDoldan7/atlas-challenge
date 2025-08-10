@@ -1,8 +1,19 @@
 import React from "react";
 import { useQuery } from "@apollo/client";
 import { COMPANY_SPENDING_STATISTICS_QUERY } from "../lib/queries";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, Building, PieChart, TrendingUp } from "lucide-react";
+import {
+  Card,
+  Container,
+  Stack,
+  Group,
+  Text,
+  Title,
+  Loader,
+  Alert,
+  SimpleGrid,
+  ThemeIcon
+} from "@mantine/core";
+import { IconCurrencyDollar, IconUsers, IconBuilding, IconChartPie, IconTrendingUp } from "@tabler/icons-react";
 
 interface CompanySpendingStatistics {
   companyId: string;
@@ -49,184 +60,155 @@ const Dashboard: React.FC = () => {
   const statistics = data?.getCompanySpendingStatistics;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900">
-      {/* Decorative blobs */}
-      <div className="pointer-events-none absolute -top-28 -left-28 h-72 w-72 rounded-full bg-blue-400/25 blur-3xl animate-blob" />
-      <div className="pointer-events-none absolute -bottom-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-fuchsia-400/20 blur-3xl animate-blob animation-delay-2000" />
-      <div className="pointer-events-none absolute -right-28 top-32 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl animate-blob animation-delay-4000" />
+    <Container size="xl" py={48}>
+      {/* Hero Section */}
+      <Stack align="center" mb={48}>
+        <Title order={1} size={48} ta="center" fw={900}>
+          Company Dashboard
+        </Title>
+        <Text size="xl" c="dimmed" ta="center" maw={600}>
+          View comprehensive spending statistics and analytics for your healthcare benefits.
+        </Text>
+      </Stack>
 
-      {/* Hero */}
-      <section className="relative mx-auto max-w-7xl px-4 pt-20 pb-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h1 className="mt-8 text-5xl font-bold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl dark:text-white">
-            Company Dashboard
-          </h1>
-          <p className="mt-6 text-xl leading-8 text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-            View comprehensive spending statistics and analytics for your healthcare benefits.
-          </p>
-        </div>
-      </section>
+      {/* Main Content */}
+      {loading ? (
+        <Card shadow="xl" padding="xl">
+          <Stack align="center" justify="center" style={{ minHeight: '200px' }}>
+            <Loader size="xl" />
+            <Text size="xl" fw={500}>Loading dashboard...</Text>
+          </Stack>
+        </Card>
+      ) : error ? (
+        <Card shadow="xl" padding="xl">
+          <Stack align="center" justify="center" style={{ minHeight: '200px' }}>
+            <Alert color="red" title="Failed to load dashboard" style={{ textAlign: 'center' }}>
+              <Text>
+                {error.message || 'An error occurred while fetching company statistics'}
+              </Text>
+            </Alert>
+          </Stack>
+        </Card>
+      ) : statistics ? (
+        <Stack gap="xl">
+          {/* Company Overview */}
+          <Card shadow="xl" padding="xl">
+            <Group gap="md">
+              <ThemeIcon size="xl" variant="light" color="blue">
+                <IconBuilding size={32} />
+              </ThemeIcon>
+              <Stack gap="xs">
+                <Title order={2}>{statistics.companyName}</Title>
+                <Text c="dimmed">Company ID: {statistics.companyId}</Text>
+              </Stack>
+            </Group>
+          </Card>
 
-      {/* Main */}
-      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        {loading ? (
-          <div className="flex justify-center">
-            <Card className="w-full max-w-4xl rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mb-6"></div>
-                <span className="text-xl font-medium text-slate-700">Loading dashboard...</span>
-              </CardContent>
-            </Card>
-          </div>
-        ) : error ? (
-          <div className="flex justify-center">
-            <Card className="w-full max-w-4xl rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm">
-              <CardContent className="text-center py-16">
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
-                  <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-xl font-semibold mb-3 text-slate-900">Failed to load dashboard</h2>
-                <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                  {error.message || 'An error occurred while fetching company statistics'}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        ) : statistics ? (
-          <div className="space-y-8">
-            {/* Company Overview */}
-            <Card className="rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Building className="h-8 w-8 text-blue-600" />
-                  <div>
-                    <CardTitle className="text-2xl font-bold text-slate-900">{statistics.companyName}</CardTitle>
-                    <CardDescription className="text-slate-600">Company ID: {statistics.companyId}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
+          {/* Cost Overview Cards */}
+          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+            <Card shadow="lg" padding="lg">
+              <Group justify="space-between" mb="xs">
+                <Text size="sm" fw={500}>Total Monthly Cost</Text>
+                <ThemeIcon size="sm" variant="light">
+                  <IconCurrencyDollar size={16} />
+                </ThemeIcon>
+              </Group>
+              <Text size="xl" fw={700}>{formatCurrency(statistics.totalMonthlyCostCents)}</Text>
+              <Text size="xs" c="dimmed">Total healthcare spending</Text>
             </Card>
 
-            {/* Cost Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="rounded-2xl border-slate-200/50 bg-white/95 shadow-lg backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Monthly Cost</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{formatCurrency(statistics.totalMonthlyCostCents)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Total healthcare spending
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border-slate-200/50 bg-white/95 shadow-lg backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Company Contribution</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{formatCurrency(statistics.companyMonthlyCostCents)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Company pays monthly
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-2xl border-slate-200/50 bg-white/95 shadow-lg backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Employee Contribution</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{formatCurrency(statistics.employeeMonthlyCostCents)}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Employees pay monthly
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Employee Breakdown */}
-            <Card className="rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6 text-blue-600" />
-                  <CardTitle className="text-xl font-bold">Employee Breakdown</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {statistics.employeeBreakdown.map((employee) => (
-                    <Card key={employee.employeeId} className="rounded-xl border-slate-200/50 bg-slate-50/50">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium">{employee.employeeName}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600">Total:</span>
-                          <span className="font-medium">{formatCurrency(employee.totalMonthlyCostCents)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600">Company:</span>
-                          <span className="font-medium text-green-600">{formatCurrency(employee.companyMonthlyCostCents)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-600">Employee:</span>
-                          <span className="font-medium text-blue-600">{formatCurrency(employee.employeeMonthlyCostCents)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
+            <Card shadow="lg" padding="lg">
+              <Group justify="space-between" mb="xs">
+                <Text size="sm" fw={500}>Company Contribution</Text>
+                <ThemeIcon size="sm" variant="light" color="green">
+                  <IconTrendingUp size={16} />
+                </ThemeIcon>
+              </Group>
+              <Text size="xl" fw={700} c="green">{formatCurrency(statistics.companyMonthlyCostCents)}</Text>
+              <Text size="xs" c="dimmed">Company pays monthly</Text>
             </Card>
 
-            {/* Plan Breakdown */}
-            <Card className="rounded-3xl border-slate-200/50 bg-white/95 shadow-2xl backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <PieChart className="h-6 w-6 text-blue-600" />
-                  <CardTitle className="text-xl font-bold">Plan Breakdown</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {statistics.planBreakdown.map((plan) => (
-                    <Card key={plan.planId} className="rounded-xl border-slate-200/50 bg-slate-50/50">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg font-semibold">{plan.planName}</CardTitle>
-                          <span className="text-sm text-slate-600">{plan.subscriptionCount} subscriptions</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                          <span className="text-slate-600">Total Monthly:</span>
-                          <span className="font-medium">{formatCurrency(plan.totalMonthlyCostCents)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-600">Company Pays:</span>
-                          <span className="font-medium text-green-600">{formatCurrency(plan.companyMonthlyCostCents)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-600">Employee Pays:</span>
-                          <span className="font-medium text-blue-600">{formatCurrency(plan.employeeMonthlyCostCents)}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
+            <Card shadow="lg" padding="lg">
+              <Group justify="space-between" mb="xs">
+                <Text size="sm" fw={500}>Employee Contribution</Text>
+                <ThemeIcon size="sm" variant="light" color="blue">
+                  <IconUsers size={16} />
+                </ThemeIcon>
+              </Group>
+              <Text size="xl" fw={700} c="blue">{formatCurrency(statistics.employeeMonthlyCostCents)}</Text>
+              <Text size="xs" c="dimmed">Employees pay monthly</Text>
             </Card>
-          </div>
-        ) : null}
-      </section>
-    </div>
+          </SimpleGrid>
+
+          {/* Employee Breakdown */}
+          <Card shadow="xl" padding="xl">
+            <Group gap="md" mb="xl">
+              <ThemeIcon size="lg" variant="light" color="blue">
+                <IconUsers size={24} />
+              </ThemeIcon>
+              <Title order={3}>Employee Breakdown</Title>
+            </Group>
+            <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
+              {statistics.employeeBreakdown.map((employee) => (
+                <Card key={employee.employeeId} shadow="sm" padding="md" bg="gray.0">
+                  <Stack gap="xs">
+                    <Text fw={500} size="sm">{employee.employeeName}</Text>
+                    <Group justify="space-between">
+                      <Text size="sm" c="dimmed">Total:</Text>
+                      <Text size="sm" fw={500}>{formatCurrency(employee.totalMonthlyCostCents)}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text size="sm" c="dimmed">Company:</Text>
+                      <Text size="sm" fw={500} c="green">{formatCurrency(employee.companyMonthlyCostCents)}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text size="sm" c="dimmed">Employee:</Text>
+                      <Text size="sm" fw={500} c="blue">{formatCurrency(employee.employeeMonthlyCostCents)}</Text>
+                    </Group>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Card>
+
+          {/* Plan Breakdown */}
+          <Card shadow="xl" padding="xl">
+            <Group gap="md" mb="xl">
+              <ThemeIcon size="lg" variant="light" color="blue">
+                <IconChartPie size={24} />
+              </ThemeIcon>
+              <Title order={3}>Plan Breakdown</Title>
+            </Group>
+            <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+              {statistics.planBreakdown.map((plan) => (
+                <Card key={plan.planId} shadow="sm" padding="lg" bg="gray.0">
+                  <Stack gap="md">
+                    <Group justify="space-between" align="flex-start">
+                      <Title order={4}>{plan.planName}</Title>
+                      <Text size="sm" c="dimmed">{plan.subscriptionCount} subscriptions</Text>
+                    </Group>
+                    <Stack gap="xs">
+                      <Group justify="space-between">
+                        <Text c="dimmed">Total Monthly:</Text>
+                        <Text fw={500}>{formatCurrency(plan.totalMonthlyCostCents)}</Text>
+                      </Group>
+                      <Group justify="space-between">
+                        <Text c="dimmed">Company Pays:</Text>
+                        <Text fw={500} c="green">{formatCurrency(plan.companyMonthlyCostCents)}</Text>
+                      </Group>
+                      <Group justify="space-between">
+                        <Text c="dimmed">Employee Pays:</Text>
+                        <Text fw={500} c="blue">{formatCurrency(plan.employeeMonthlyCostCents)}</Text>
+                      </Group>
+                    </Stack>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Card>
+        </Stack>
+      ) : null}
+    </Container>
   );
 };
 

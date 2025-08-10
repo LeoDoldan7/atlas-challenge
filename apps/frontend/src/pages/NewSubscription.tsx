@@ -3,21 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Minus, Plus } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { IconMinus, IconPlus } from '@tabler/icons-react';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Select,
+  Badge,
+  Breadcrumbs,
+  Anchor,
+  Text,
+  Title,
+  Container,
+  Stack,
+  Group,
+  ActionIcon,
+  Loader,
+  Alert,
+  Grid
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 
 import { useEmployees } from '../hooks/useEmployees';
 import { useHealthcarePlans } from '../hooks/useHealthcarePlans';
 import { useCreateSubscription } from '../hooks/useCreateSubscription';
 import type { Employee, SubscriptionType } from '../types';
-
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 // Form validation schema
 const subscriptionSchema = z.object({
@@ -82,12 +92,20 @@ const NewSubscription: React.FC = () => {
 
   const onSubmit = async (data: SubscriptionForm) => {
     if (!selectedEmployee) {
-      toast.error('Please select an employee');
+      notifications.show({
+        color: 'red',
+        title: 'Error',
+        message: 'Please select an employee',
+      });
       return;
     }
 
     if (!selectedPlan) {
-      toast.error('Please select a healthcare plan');
+      notifications.show({
+        color: 'red',
+        title: 'Error',
+        message: 'Please select a healthcare plan',
+      });
       return;
     }
 
@@ -99,11 +117,19 @@ const NewSubscription: React.FC = () => {
         planId: parseInt(data.planId),
       });
 
-      toast.success(`Subscription created successfully for ${selectedEmployee.demographic.firstName} ${selectedEmployee.demographic.lastName}!`);
+      notifications.show({
+        color: 'green',
+        title: 'Success',
+        message: `Subscription created successfully for ${selectedEmployee.demographic.firstName} ${selectedEmployee.demographic.lastName}!`,
+      });
       navigate('/subscriptions');
     } catch (error) {
       console.error('Failed to create subscription:', error);
-      toast.error('Failed to create subscription. Please try again.');
+      notifications.show({
+        color: 'red',
+        title: 'Error',
+        message: 'Failed to create subscription. Please try again.',
+      });
     }
   };
 
@@ -118,303 +144,263 @@ const NewSubscription: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mb-6"></div>
-              <span className="text-xl font-medium text-slate-700">Loading subscription data...</span>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <Container size="lg" py={48}>
+        <Card shadow="xl" padding="xl">
+          <Stack align="center" justify="center" style={{ minHeight: '200px' }}>
+            <Loader size="xl" />
+            <Text size="xl" fw={500}>Loading subscription data...</Text>
+          </Stack>
+        </Card>
+      </Container>
     );
   }
 
   if (hasError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-            <CardContent className="text-center py-16">
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
-                <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold mb-3 text-slate-900">Failed to load data</h2>
-              <p className="text-slate-600 mb-6 max-w-md mx-auto">
+      <Container size="lg" py={48}>
+        <Card shadow="xl" padding="xl">
+          <Stack align="center" justify="center" style={{ minHeight: '200px' }}>
+            <Alert color="red" title="Failed to load data" style={{ textAlign: 'center' }}>
+              <Text>
                 {employeesError?.message || plansError?.message || createSubscriptionError?.message || 'An error occurred while fetching data'}
-              </p>
-              <Button onClick={handleRetry} className="px-6 py-3 rounded-xl font-medium">Try Again</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              </Text>
+            </Alert>
+            <Button onClick={handleRetry} size="lg">Try Again</Button>
+          </Stack>
+        </Card>
+      </Container>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        {/* Header with Breadcrumbs */}
-        <div className="space-y-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/subscriptions" className="text-slate-600 hover:text-slate-900">Subscriptions</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="font-medium">New</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+  const breadcrumbItems = [
+    { title: 'Subscriptions', href: '/subscriptions' },
+    { title: 'New', href: '#' },
+  ];
 
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">New Subscription</h1>
-            <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+  return (
+    <Container size="xl" py={32}>
+      <Stack gap="xl">
+        {/* Header with Breadcrumbs */}
+        <Stack gap="md">
+          <Breadcrumbs>
+            {breadcrumbItems.map((item, index) => (
+              <Anchor key={index} href={item.href} c={index === breadcrumbItems.length - 1 ? 'dimmed' : 'blue'}>
+                {item.title}
+              </Anchor>
+            ))}
+          </Breadcrumbs>
+
+          <Stack align="center" gap="xs">
+            <Title order={1}>New Subscription</Title>
+            <Text c="dimmed" size="lg" ta="center">
               Create a new healthcare subscription by selecting an employee and configuring coverage options.
-            </p>
-          </div>
-        </div>
+            </Text>
+          </Stack>
+        </Stack>
 
         {/* Main Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* Employee Selection */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                Employee Selection
-              </CardTitle>
-              <CardDescription className="text-base">
-                Select the employee for this subscription
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <Label htmlFor="employee-select" className="text-sm font-medium text-slate-700">Employee *</Label>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap="xl">
+            {/* Employee Selection */}
+            <Card shadow="lg" padding="lg">
+              <Stack gap="md">
+                <Group gap="xs">
+                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-blue-6)', borderRadius: '50%' }} />
+                  <Title order={3}>Employee Selection</Title>
+                </Group>
+                <Text c="dimmed">Select the employee for this subscription</Text>
+
                 <Select
+                  label="Employee *"
+                  placeholder="Search and select an employee..."
+                  data={employees.map((employee: Employee) => ({
+                    value: employee.id,
+                    label: `${employee.demographic.firstName} ${employee.demographic.lastName}`,
+                  }))}
                   value={employeeId}
-                  onValueChange={(value) => setValue('employeeId', value, { shouldValidate: true })}
-                >
-                  <SelectTrigger id="employee-select" className={`h-12 ${errors.employeeId ? 'border-red-500' : 'border-slate-300'}`}>
-                    <SelectValue placeholder="Search and select an employee..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((employee: Employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        <div className="flex flex-col py-1">
-                          <span className="font-medium text-slate-900">
-                            {employee.demographic.firstName} {employee.demographic.lastName}
-                          </span>
-                          <span className="text-sm text-slate-500">
-                            {employee.email} • {employee.maritalStatus} • Born: {new Date(employee.birthDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.employeeId && (
-                  <p className="text-sm text-red-600">{errors.employeeId.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Healthcare Plan Selection */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                Healthcare Plan
-              </CardTitle>
-              <CardDescription className="text-base">
-                Select the healthcare plan for this subscription
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <Label htmlFor="plan-select" className="text-sm font-medium text-slate-700">Healthcare Plan *</Label>
-                <Select
-                  value={planId}
-                  onValueChange={(value) => setValue('planId', value, { shouldValidate: true })}
-                >
-                  <SelectTrigger id="plan-select" className={`h-12 ${errors.planId ? 'border-red-500' : 'border-slate-300'}`}>
-                    <SelectValue placeholder="Select a healthcare plan..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plans.map((plan) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        <div className="flex flex-col py-1">
-                          <span className="font-medium text-slate-900">
-                            {plan.name}
-                          </span>
-                          <span className="text-sm text-slate-500">
-                            Employee: ${(parseInt(plan.costEmployeeCents) / 100).toFixed(2)}/month
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.planId && (
-                  <p className="text-sm text-red-600">{errors.planId.message}</p>
-                )}
-                {selectedPlan && (
-                  <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <h4 className="font-medium text-slate-900 mb-2">Plan Details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p><span className="font-medium">Employee Cost:</span> ${(parseInt(selectedPlan.costEmployeeCents) / 100).toFixed(2)}/month</p>
-                          <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctEmployeePaidByCompany}%</p>
-                        </div>
-                        <div>
-                          <p><span className="font-medium">Spouse Cost:</span> ${(parseInt(selectedPlan.costSpouseCents) / 100).toFixed(2)}/month</p>
-                          <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctSpousePaidByCompany}%</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p><span className="font-medium">Child Cost:</span> ${(parseInt(selectedPlan.costChildCents) / 100).toFixed(2)}/month (per child)</p>
-                        <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctChildPaidByCompany}%</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Coverage Choices */}
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Coverage Choices
-              </CardTitle>
-              <CardDescription className="text-base">
-                Configure family coverage options
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8 pt-0">
-              {/* Spouse Checkbox */}
-              <div className="flex items-center space-x-3 p-4 rounded-lg border border-slate-200 bg-slate-50/50">
-                <Checkbox
-                  id="spouse-included"
-                  checked={spouseIncluded}
-                  onCheckedChange={(checked) =>
-                    setValue('spouseIncluded', checked as boolean, { shouldValidate: true })
-                  }
-                  className="w-5 h-5"
+                  onChange={(value) => setValue('employeeId', value || '', { shouldValidate: true })}
+                  error={errors.employeeId?.message}
+                  searchable
                 />
-                <Label htmlFor="spouse-included" className="text-base font-medium text-slate-700">Spouse included</Label>
-              </div>
+              </Stack>
+            </Card>
 
-              {/* Children Count Stepper */}
-              <div className="space-y-4 p-4 rounded-lg border border-slate-200 bg-slate-50/50">
-                <Label className="text-base font-medium text-slate-700">Number of children</Label>
-                <div className="flex items-center justify-center space-x-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => adjustChildrenCount(-1)}
-                    disabled={childrenCount <= 0}
-                    className="h-12 w-12 rounded-full border-2"
-                  >
-                    <Minus className="h-5 w-5" />
-                  </Button>
+            {/* Healthcare Plan Selection */}
+            <Card shadow="lg" padding="lg">
+              <Stack gap="md">
+                <Group gap="xs">
+                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-green-6)', borderRadius: '50%' }} />
+                  <Title order={3}>Healthcare Plan</Title>
+                </Group>
+                <Text c="dimmed">Select the healthcare plan for this subscription</Text>
 
-                  <span className="min-w-[4rem] text-center text-2xl font-bold text-slate-900">
-                    {childrenCount}
-                  </span>
+                <Select
+                  label="Healthcare Plan *"
+                  placeholder="Select a healthcare plan..."
+                  data={plans.map((plan) => ({
+                    value: plan.id,
+                    label: plan.name,
+                  }))}
+                  value={planId}
+                  onChange={(value) => setValue('planId', value || '', { shouldValidate: true })}
+                  error={errors.planId?.message}
+                />
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => adjustChildrenCount(1)}
-                    disabled={childrenCount >= 7}
-                    className="h-12 w-12 rounded-full border-2"
-                  >
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                </div>
-                <p className="text-sm text-slate-500 text-center">Maximum 7 children allowed</p>
-              </div>
-            </CardContent>
-          </Card>
+                {selectedPlan && (
+                  <Card bg="gray.0" padding="md">
+                    <Stack gap="xs">
+                      <Text fw={500}>Plan Details</Text>
+                      <Grid>
+                        <Grid.Col span={6}>
+                          <Text size="sm">
+                            <Text component="span" fw={500}>Employee Cost:</Text> ${(parseInt(selectedPlan.costEmployeeCents) / 100).toFixed(2)}/month
+                          </Text>
+                          <Text size="sm">
+                            <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctEmployeePaidByCompany}%
+                          </Text>
+                        </Grid.Col>
+                        <Grid.Col span={6}>
+                          <Text size="sm">
+                            <Text component="span" fw={500}>Spouse Cost:</Text> ${(parseInt(selectedPlan.costSpouseCents) / 100).toFixed(2)}/month
+                          </Text>
+                          <Text size="sm">
+                            <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctSpousePaidByCompany}%
+                          </Text>
+                        </Grid.Col>
+                      </Grid>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Child Cost:</Text> ${(parseInt(selectedPlan.costChildCents) / 100).toFixed(2)}/month (per child)
+                      </Text>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctChildPaidByCompany}%
+                      </Text>
+                    </Stack>
+                  </Card>
+                )}
+              </Stack>
+            </Card>
 
-          {/* Subscription Type Preview */}
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                Subscription Preview
-              </CardTitle>
-              <CardDescription className="text-base">
-                Based on your coverage selections
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-white/70 backdrop-blur">
-                  <Label className="text-base font-medium text-slate-700">Subscription type:</Label>
+            {/* Coverage Choices */}
+            <Card shadow="lg" padding="lg">
+              <Stack gap="md">
+                <Group gap="xs">
+                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-teal-6)', borderRadius: '50%' }} />
+                  <Title order={3}>Coverage Choices</Title>
+                </Group>
+                <Text c="dimmed">Configure family coverage options</Text>
+
+                <Stack gap="lg">
+                  {/* Spouse Checkbox */}
+                  <Card bg="gray.0" padding="md">
+                    <Checkbox
+                      label="Spouse included"
+                      checked={spouseIncluded}
+                      onChange={(event) =>
+                        setValue('spouseIncluded', event.currentTarget.checked, { shouldValidate: true })
+                      }
+                    />
+                  </Card>
+
+                  {/* Children Count Stepper */}
+                  <Card bg="gray.0" padding="md">
+                    <Stack gap="md">
+                      <Text fw={500}>Number of children</Text>
+                      <Group justify="center">
+                        <ActionIcon
+                          size="xl"
+                          variant="outline"
+                          radius="xl"
+                          onClick={() => adjustChildrenCount(-1)}
+                          disabled={childrenCount <= 0}
+                        >
+                          <IconMinus size={20} />
+                        </ActionIcon>
+
+                        <Text size="xl" fw={700} w={60} ta="center">
+                          {childrenCount}
+                        </Text>
+
+                        <ActionIcon
+                          size="xl"
+                          variant="outline"
+                          radius="xl"
+                          onClick={() => adjustChildrenCount(1)}
+                          disabled={childrenCount >= 7}
+                        >
+                          <IconPlus size={20} />
+                        </ActionIcon>
+                      </Group>
+                      <Text size="sm" c="dimmed" ta="center">Maximum 7 children allowed</Text>
+                    </Stack>
+                  </Card>
+                </Stack>
+              </Stack>
+            </Card>
+
+            {/* Subscription Type Preview */}
+            <Card shadow="lg" padding="lg" bg="blue.0">
+              <Stack gap="md">
+                <Group gap="xs">
+                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-violet-6)', borderRadius: '50%' }} />
+                  <Title order={3}>Subscription Preview</Title>
+                </Group>
+                <Text c="dimmed">Based on your coverage selections</Text>
+
+                <Group justify="space-between" p="md" bg="white" style={{ borderRadius: 8 }}>
+                  <Text fw={500}>Subscription type:</Text>
                   <Badge 
-                    variant={subscriptionType === 'INDIVIDUAL' ? 'secondary' : 'default'}
-                    className="px-3 py-1 text-sm font-medium"
+                    variant={subscriptionType === 'INDIVIDUAL' ? 'light' : 'filled'}
+                    color={subscriptionType === 'INDIVIDUAL' ? 'gray' : 'blue'}
                   >
                     {subscriptionType.toLowerCase()}
                   </Badge>
-                </div>
+                </Group>
 
                 {selectedEmployee && (
-                  <div className="p-6 bg-white/70 backdrop-blur rounded-xl border border-slate-200">
-                    <h4 className="text-lg font-semibold text-slate-900 mb-4">Selected Employee</h4>
-                    <div className="space-y-2">
-                      <p className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-900">Name:</span> {selectedEmployee.demographic.firstName} {selectedEmployee.demographic.lastName}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-900">Email:</span> {selectedEmployee.email}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-900">Marital Status:</span> {selectedEmployee.maritalStatus}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        <span className="font-medium text-slate-900">Birth Date:</span> {new Date(selectedEmployee.birthDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
+                  <Card bg="white" padding="lg" style={{ borderRadius: 12 }}>
+                    <Stack gap="xs">
+                      <Title order={4}>Selected Employee</Title>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Name:</Text> {selectedEmployee.demographic.firstName} {selectedEmployee.demographic.lastName}
+                      </Text>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Email:</Text> {selectedEmployee.email}
+                      </Text>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Marital Status:</Text> {selectedEmployee.maritalStatus}
+                      </Text>
+                      <Text size="sm">
+                        <Text component="span" fw={500}>Birth Date:</Text> {new Date(selectedEmployee.birthDate).toLocaleDateString()}
+                      </Text>
+                    </Stack>
+                  </Card>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </Stack>
+            </Card>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center sm:justify-end space-x-6 pt-8">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleCancel}
-              className="px-8 py-3 text-base font-medium rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={!isValid || creatingSubscription}
-              className="px-8 py-3 text-base font-medium rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl"
-            >
-              {creatingSubscription ? 'Creating...' : 'Save Subscription'}
-            </Button>
-          </div>
+            {/* Action Buttons */}
+            <Group justify="flex-end" pt="lg">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancel}
+                size="lg"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={!isValid || creatingSubscription}
+                loading={creatingSubscription}
+                size="lg"
+              >
+                Save Subscription
+              </Button>
+            </Group>
+          </Stack>
         </form>
-      </div>
-    </div>
+      </Stack>
+    </Container>
   );
 };
 
