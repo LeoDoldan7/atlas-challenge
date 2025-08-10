@@ -1,6 +1,6 @@
 import { useMutation } from '@apollo/client';
 import type { HealthcareSubscription, ApiError } from '../types';
-import { CREATE_SUBSCRIPTION_MUTATION } from '../lib/queries';
+import { CREATE_SUBSCRIPTION_MUTATION, GET_SUBSCRIPTIONS_QUERY } from '../lib/queries';
 
 interface CreateSubscriptionInput {
   employeeId: number;
@@ -26,7 +26,9 @@ export const useCreateSubscription = (): UseCreateSubscriptionReturn => {
   const [createSubscriptionMutation, { loading, error }] = useMutation<
     CreateSubscriptionResponse,
     { createSubscriptionInput: CreateSubscriptionInput }
-  >(CREATE_SUBSCRIPTION_MUTATION);
+  >(CREATE_SUBSCRIPTION_MUTATION, {
+    refetchQueries: [{ query: GET_SUBSCRIPTIONS_QUERY }],
+  });
 
   const apiError: ApiError | null = error
     ? {
