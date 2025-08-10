@@ -269,3 +269,30 @@ export const ACTIVATE_PLAN_MUTATION = gql`
     }
   }
 `;
+
+export const COMPANY_SPENDING_STATISTICS_QUERY = gql`
+  query GetCompanySpendingStatistics($companyId: String!) {
+    getCompanySpendingStatistics(companyId: $companyId) {
+      companyId
+      companyName
+      totalMonthlyCostCents
+      companyMonthlyCostCents
+      employeeMonthlyCostCents
+      employeeBreakdown {
+        employeeId
+        employeeName
+        totalMonthlyCostCents
+        companyMonthlyCostCents
+        employeeMonthlyCostCents
+      }
+      planBreakdown {
+        planId
+        planName
+        subscriptionCount
+        totalMonthlyCostCents
+        companyMonthlyCostCents
+        employeeMonthlyCostCents
+      }
+    }
+  }
+`;

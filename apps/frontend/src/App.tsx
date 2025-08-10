@@ -6,6 +6,7 @@ import { apolloClient } from './lib/apollo-client';
 import Subscriptions from './pages/Subscriptions';
 import NewSubscription from './pages/NewSubscription';
 import SubscriptionDetails from './pages/SubscriptionDetails';
+import Dashboard from './pages/Dashboard';
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <div>
           <Routes>
             <Route path="/" element={<Navigate to="/subscriptions" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
             <Route path="/subscriptions/new" element={<NewSubscription />} />
             <Route path="/subscriptions/:id" element={<SubscriptionDetails />} />
