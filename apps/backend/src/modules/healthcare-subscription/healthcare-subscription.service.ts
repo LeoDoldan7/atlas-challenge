@@ -5,10 +5,10 @@ import { HealthcareSubscription } from '../../graphql/healthcare-subscription/ty
 import { FamilyDemographicsService } from '../family-demographics/family-demographics.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
 import { PlanActivationService } from '../plan-activation/plan-activation.service';
-import { CreateSubscriptionInput } from './dtos/create-subscription.input';
-import { UploadFamilyDemographicsInput } from './dtos/upload-family-demographics.input';
-import { UploadFilesInput } from './dtos/upload-files.input';
-import { ActivatePlanInput } from './dtos/activate-plan.input';
+import { CreateSubscriptionInput } from '../../graphql/healthcare-subscription/dto/create-subscription.input';
+import { UploadFamilyDemographicsInput } from '../../graphql/healthcare-subscription/dto/upload-family-demographics.input';
+import { UploadFilesInput } from '../../graphql/healthcare-subscription/dto/upload-files.input';
+import { ActivatePlanInput } from '../../graphql/healthcare-subscription/dto/activate-plan.input';
 import { SubscriptionStatus } from '../../graphql/shared/enums';
 import { getHealthcareSubscriptionType } from '../../utils/healthcare-subscription.utils';
 import { Prisma } from '@prisma/client';

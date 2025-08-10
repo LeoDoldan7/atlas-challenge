@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PlanActivationRepository } from './plan-activation.repository';
-import { ActivatePlanInput } from '../healthcare-subscription/dtos/activate-plan.input';
+import { ActivatePlanInput } from '../../graphql/healthcare-subscription/dto/activate-plan.input';
 import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { HealthcareSubscriptionResolver } from './healthcare-subscription.resolver';
+import { HealthcareSubscriptionResolver } from '../../graphql/healthcare-subscription/resolver/healthcare-subscription.resolver';
 import { HealthcareSubscriptionService } from './healthcare-subscription.service';
 import { HealthcareSubscriptionRepository } from './healthcare-subscription.repository';
 import { HealthcareSubscriptionMapper } from './healthcare-subscription.mapper';

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { HealthcarePlanResolver } from './healthcare-plan.resolver';
+import { HealthcarePlanResolver } from '../../graphql/healthcare-plan/resolver/healthcare-plan.resolver';
 import { HealthcarePlanService } from './healthcare-plan.service';
 import { HealthcarePlanRepository } from './healthcare-plan.repository';
 import { HealthcarePlanMapper } from './healthcare-plan.mapper';

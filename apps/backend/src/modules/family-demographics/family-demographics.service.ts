@@ -3,7 +3,7 @@ import { FamilyDemographicsRepository } from './family-demographics.repository';
 import {
   UploadFamilyDemographicsInput,
   FamilyMemberInput,
-} from '../healthcare-subscription/dtos/upload-family-demographics.input';
+} from '../../graphql/healthcare-subscription/dto/upload-family-demographics.input';
 import { ItemRole, SubscriptionStatus } from '../../graphql/shared/enums';
 import { HealthcareSubscriptionItem } from '@prisma/client';
 

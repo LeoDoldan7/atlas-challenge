@@ -4,7 +4,7 @@ import { MinioService } from '../minio/minio.service';
 import {
   UploadFilesInput,
   FileInput,
-} from '../healthcare-subscription/dtos/upload-files.input';
+} from '../../graphql/healthcare-subscription/dto/upload-files.input';
 import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()
