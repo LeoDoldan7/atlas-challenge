@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HealthcareSubscriptionItem } from '@prisma/client';
-import { SubscriptionStatus } from '../../graphql/types/enums';
+import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()
 export class FamilyDemographicsRepository {

@@ -1,10 +1,10 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { HealthcareSubscription } from '../types';
+import { HealthcareSubscription } from '../types/healthcare-subscription.type';
 import { CreateSubscriptionInput } from '../dto/create-subscription.input';
 import { UploadFamilyDemographicsInput } from '../dto/upload-family-demographics.input';
 import { UploadFilesInput } from '../dto/upload-files.input';
 import { ActivatePlanInput } from '../dto/activate-plan.input';
-import { HealthcareSubscriptionService } from '../../modules/healthcare-subscription/healthcare-subscription.service';
+import { HealthcareSubscriptionService } from '../../../modules/healthcare-subscription/healthcare-subscription.service';
 
 @Resolver()
 export class HealthcareSubscriptionResolver {

@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { HealthcareSubscription } from './healthcare-subscription.type';
+import { HealthcareSubscription } from '../../healthcare-subscription/types/healthcare-subscription.type';
 
 @ObjectType()
 export class HealthcarePlan {

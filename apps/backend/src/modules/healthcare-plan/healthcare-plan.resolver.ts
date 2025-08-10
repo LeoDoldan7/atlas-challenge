@@ -1,5 +1,5 @@
 import { Resolver, Query } from '@nestjs/graphql';
-import { HealthcarePlan } from '../../graphql/types/healthcare-plan.type';
+import { HealthcarePlan } from '../../graphql/healthcare-plan/types/healthcare-plan.type';
 import { HealthcarePlanService } from './healthcare-plan.service';
 
 @Resolver(() => HealthcarePlan)

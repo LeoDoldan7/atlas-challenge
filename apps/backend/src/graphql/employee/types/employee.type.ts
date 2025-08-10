@@ -1,6 +1,6 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { MaritalStatus } from './enums';
-import { Demographic } from './demographic.type';
+import { MaritalStatus } from '../../shared/enums';
+import { Demographic } from '../../demographic/types/demographic.type';
 
 @ObjectType()
 export class Employee {

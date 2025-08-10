@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { Employee } from './employee.type';
+import { Employee } from '../../employee/types/employee.type';
 
 @ObjectType()
 export class Wallet {

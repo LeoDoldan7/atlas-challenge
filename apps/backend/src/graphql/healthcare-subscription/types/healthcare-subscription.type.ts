@@ -1,8 +1,8 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { SubscriptionType, SubscriptionStatus } from './enums';
-import { Company } from './company.type';
-import { Employee } from './employee.type';
-import { HealthcarePlan } from './healthcare-plan.type';
+import { SubscriptionType, SubscriptionStatus } from '../../shared/enums';
+import { Company } from '../../company/types/company.type';
+import { Employee } from '../../employee/types/employee.type';
+import { HealthcarePlan } from '../../healthcare-plan/types/healthcare-plan.type';
 import { HealthcareSubscriptionItem } from './healthcare-subscription-item.type';
 import { HealthcareSubscriptionFile } from './healthcare-subscription-file.type';
 

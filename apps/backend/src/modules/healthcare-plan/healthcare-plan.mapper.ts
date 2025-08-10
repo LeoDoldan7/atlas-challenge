@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthcarePlan } from '../../graphql/types/healthcare-plan.type';
+import { HealthcarePlan } from '../../graphql/healthcare-plan/types/healthcare-plan.type';
 import { HealthcarePlanSelect } from './healthcare-plan.repository';
 
 @Injectable()

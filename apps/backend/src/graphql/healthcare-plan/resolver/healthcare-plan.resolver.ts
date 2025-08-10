@@ -1,6 +1,6 @@
 import { Resolver, Query } from '@nestjs/graphql';
 import { HealthcarePlan } from '../types/healthcare-plan.type';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Resolver(() => HealthcarePlan)
 export class HealthcarePlanResolver {

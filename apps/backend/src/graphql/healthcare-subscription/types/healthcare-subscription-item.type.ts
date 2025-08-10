@@ -1,7 +1,7 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { ItemRole } from './enums';
+import { ItemRole } from '../../shared/enums';
 import { HealthcareSubscription } from './healthcare-subscription.type';
-import { Demographic } from './demographic.type';
+import { Demographic } from '../../demographic/types/demographic.type';
 
 @ObjectType()
 export class HealthcareSubscriptionItem {

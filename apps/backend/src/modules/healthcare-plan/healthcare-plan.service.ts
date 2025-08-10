@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HealthcarePlanRepository } from './healthcare-plan.repository';
 import { HealthcarePlanMapper } from './healthcare-plan.mapper';
-import { HealthcarePlan } from '../../graphql/types/healthcare-plan.type';
+import { HealthcarePlan } from '../../graphql/healthcare-plan/types/healthcare-plan.type';
 
 @Injectable()
 export class HealthcarePlanService {

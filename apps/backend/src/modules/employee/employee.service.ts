@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EmployeeRepository } from './employee.repository';
 import { EmployeeMapper } from './employee.mapper';
-import { Employee } from '../../graphql/types/employee.type';
+import { Employee } from '../../graphql/employee/types/employee.type';
 
 @Injectable()
 export class EmployeeService {

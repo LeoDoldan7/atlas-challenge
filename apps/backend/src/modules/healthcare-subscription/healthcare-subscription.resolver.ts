@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { HealthcareSubscription } from '../../graphql/types/healthcare-subscription.type';
+import { HealthcareSubscription } from '../../graphql/healthcare-subscription/types/healthcare-subscription.type';
 import { HealthcareSubscriptionService } from './healthcare-subscription.service';
 import { CreateSubscriptionInput } from './dtos/create-subscription.input';
 import { UploadFamilyDemographicsInput } from './dtos/upload-family-demographics.input';

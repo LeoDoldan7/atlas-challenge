@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthcareSubscription } from '../../graphql/types/healthcare-subscription.type';
+import { HealthcareSubscription } from '../../graphql/healthcare-subscription/types/healthcare-subscription.type';
 import { HealthcareSubscriptionWithRelations } from './healthcare-subscription.repository';
 import { HealthcarePlanMapper } from '../healthcare-plan/healthcare-plan.mapper';
 import { EmployeeMapper } from '../employee/employee.mapper';
@@ -12,9 +12,9 @@ import {
   SubscriptionType,
   SubscriptionStatus,
   ItemRole,
-} from '../../graphql/types/enums';
-import { HealthcareSubscriptionItem } from '../../graphql/types/healthcare-subscription-item.type';
-import { HealthcareSubscriptionFile } from '../../graphql/types/healthcare-subscription-file.type';
+} from '../../graphql/shared/enums';
+import { HealthcareSubscriptionItem } from '../../graphql/healthcare-subscription/types/healthcare-subscription-item.type';
+import { HealthcareSubscriptionFile } from '../../graphql/healthcare-subscription/types/healthcare-subscription-file.type';
 
 @Injectable()
 export class HealthcareSubscriptionMapper {

@@ -4,7 +4,7 @@ import {
   UploadFamilyDemographicsInput,
   FamilyMemberInput,
 } from '../healthcare-subscription/dtos/upload-family-demographics.input';
-import { ItemRole, SubscriptionStatus } from '../../graphql/types/enums';
+import { ItemRole, SubscriptionStatus } from '../../graphql/shared/enums';
 import { HealthcareSubscriptionItem } from '@prisma/client';
 
 @Injectable()

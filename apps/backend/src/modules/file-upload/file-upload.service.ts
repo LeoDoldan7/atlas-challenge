@@ -5,7 +5,7 @@ import {
   UploadFilesInput,
   FileInput,
 } from '../healthcare-subscription/dtos/upload-files.input';
-import { SubscriptionStatus } from '../../graphql/types/enums';
+import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()
 export class FileUploadService {

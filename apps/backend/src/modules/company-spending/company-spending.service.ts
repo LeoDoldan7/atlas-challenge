@@ -8,7 +8,7 @@ import {
   CompanySpendingStatistics,
   EmployeeSpendingStatistics,
   PlanSpendingStatistics,
-} from '../../graphql/types/company-spending-statistics.type';
+} from '../../graphql/company/types/company-spending-statistics.type';
 
 @Injectable()
 export class CompanySpendingService {

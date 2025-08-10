@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HealthcareSubscriptionRepository } from './healthcare-subscription.repository';
 import { HealthcareSubscriptionMapper } from './healthcare-subscription.mapper';
-import { HealthcareSubscription } from '../../graphql/types/healthcare-subscription.type';
+import { HealthcareSubscription } from '../../graphql/healthcare-subscription/types/healthcare-subscription.type';
 import { FamilyDemographicsService } from '../family-demographics/family-demographics.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
 import { PlanActivationService } from '../plan-activation/plan-activation.service';
@@ -9,7 +9,7 @@ import { CreateSubscriptionInput } from './dtos/create-subscription.input';
 import { UploadFamilyDemographicsInput } from './dtos/upload-family-demographics.input';
 import { UploadFilesInput } from './dtos/upload-files.input';
 import { ActivatePlanInput } from './dtos/activate-plan.input';
-import { SubscriptionStatus } from '../../graphql/types/enums';
+import { SubscriptionStatus } from '../../graphql/shared/enums';
 import { getHealthcareSubscriptionType } from '../../utils/healthcare-subscription.utils';
 import { Prisma } from '@prisma/client';
 

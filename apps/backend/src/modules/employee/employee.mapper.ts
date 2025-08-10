@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Employee } from '../../graphql/types/employee.type';
-import { MaritalStatus } from '../../graphql/types/enums';
+import { Employee } from '../../graphql/employee/types/employee.type';
+import { MaritalStatus } from '../../graphql/shared/enums';
 import { EmployeeWithDemographics } from './employee.repository';
 import { MaritalStatus as PrismaMaritalStatus } from '@prisma/client';
 

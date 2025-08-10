@@ -1,7 +1,7 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Employee } from '../types/employee.type';
-import { MaritalStatus } from '../types/enums';
-import { PrismaService } from '../../prisma/prisma.service';
+import { MaritalStatus } from '../../shared/enums';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 @Resolver(() => Employee)
 export class EmployeeResolver {

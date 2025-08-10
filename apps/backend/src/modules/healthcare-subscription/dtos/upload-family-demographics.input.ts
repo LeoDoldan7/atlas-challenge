@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { ItemRole } from 'src/graphql/types';
+import { ItemRole } from '../../../graphql/shared/enums';
 
 @InputType()
 export class DemographicInput {

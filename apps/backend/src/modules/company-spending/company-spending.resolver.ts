@@ -1,6 +1,6 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { CompanySpendingService } from './company-spending.service';
-import { CompanySpendingStatistics } from '../../graphql/types/company-spending-statistics.type';
+import { CompanySpendingStatistics } from '../../graphql/company/types/company-spending-statistics.type';
 
 @Resolver()
 export class CompanySpendingResolver {

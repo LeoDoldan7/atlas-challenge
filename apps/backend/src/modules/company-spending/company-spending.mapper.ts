@@ -3,7 +3,7 @@ import {
   CompanySpendingStatistics,
   EmployeeSpendingStatistics,
   PlanSpendingStatistics,
-} from '../../graphql/types/company-spending-statistics.type';
+} from '../../graphql/company/types/company-spending-statistics.type';
 
 import { CompanySelect } from './company-spending.repository';
 
