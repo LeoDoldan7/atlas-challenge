@@ -8,3 +8,4 @@ export * from './healthcare-plan.type';
 export * from './healthcare-subscription.type';
 export * from './healthcare-subscription-item.type';
 export * from './healthcare-subscription-file.type';
+export * from './company-spending-statistics.type';

@@ -15,6 +15,16 @@ type Company {
   subscriptions: [HealthcareSubscription!]
 }
 
+type CompanySpendingStatistics {
+  companyId: ID!
+  companyMonthlyCostCents: Float!
+  companyName: String!
+  employeeBreakdown: [EmployeeSpendingStatistics!]!
+  employeeMonthlyCostCents: Float!
+  planBreakdown: [PlanSpendingStatistics!]!
+  totalMonthlyCostCents: Float!
+}
+
 input CreateSubscriptionInput {
   employeeId: Float!
   includeSpouse: Boolean!
@@ -53,6 +63,14 @@ type Employee {
   email: String!
   id: ID!
   maritalStatus: MaritalStatus!
+}
+
+type EmployeeSpendingStatistics {
+  companyMonthlyCostCents: Float!
+  employeeId: ID!
+  employeeMonthlyCostCents: Float!
+  employeeName: String!
+  totalMonthlyCostCents: Float!
 }
 
 input FamilyMemberInput {
@@ -140,9 +158,19 @@ type Mutation {
   uploadFiles(uploadFilesInput: UploadFilesInput!): HealthcareSubscription!
 }
 
+type PlanSpendingStatistics {
+  companyMonthlyCostCents: Float!
+  employeeMonthlyCostCents: Float!
+  planId: ID!
+  planName: String!
+  subscriptionCount: Float!
+  totalMonthlyCostCents: Float!
+}
+
 type Query {
   """Get employees by company ID"""
   employeesByCompany(companyId: String!): [Employee!]!
+  getCompanySpendingStatistics(companyId: String!): CompanySpendingStatistics!
 
   """Get all healthcare subscriptions"""
   getSubscriptions: [HealthcareSubscription!]!

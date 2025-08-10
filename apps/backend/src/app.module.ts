@@ -8,7 +8,9 @@ import { PrismaService } from './prisma/prisma.service';
 import { EmployeeResolver } from './graphql/resolvers/employee.resolver';
 import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.resolver';
 import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-subscription.resolver';
+import { CompanySpendingResolver } from './graphql/resolvers/company-spending.resolver';
 import { FamilyDemographicsService } from './services/family-demographics.service';
+import { CompanySpendingService } from './services/company-spending.service';
 import { MinioService } from './services/minio.service';
 import { FileUploadService } from './services/file-upload.service';
 import { PlanActivationService } from './services/plan-activation.service';
@@ -38,12 +40,14 @@ import { PlanActivationService } from './services/plan-activation.service';
     AppService,
     PrismaService,
     FamilyDemographicsService,
+    CompanySpendingService,
     MinioService,
     FileUploadService,
     PlanActivationService,
     EmployeeResolver,
     HealthcarePlanResolver,
     HealthcareSubscriptionResolver,
+    CompanySpendingResolver,
   ],
 })
 export class AppModule {}
