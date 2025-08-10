@@ -22,6 +22,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 // Form validation schema
 const subscriptionSchema = z.object({
   employeeId: z.string().min(1, 'Please select an employee'),
+  planId: z.string().min(1, 'Please select a healthcare plan'),
   spouseIncluded: z.boolean(),
   childrenCount: z.number().min(0).max(7),
 });
@@ -50,6 +51,7 @@ const NewSubscription: React.FC = () => {
     resolver: zodResolver(subscriptionSchema),
     defaultValues: {
       employeeId: '',
+      planId: '',
       spouseIncluded: false,
       childrenCount: 0,
     },
@@ -58,6 +60,7 @@ const NewSubscription: React.FC = () => {
 
   // Watch form values for dynamic updates
   const employeeId = watch('employeeId');
+  const planId = watch('planId');
   const spouseIncluded = watch('spouseIncluded');
   const childrenCount = watch('childrenCount');
 
@@ -65,8 +68,9 @@ const NewSubscription: React.FC = () => {
   const subscriptionType: SubscriptionType =
     !spouseIncluded && childrenCount === 0 ? 'INDIVIDUAL' : 'FAMILY';
 
-  // Find selected employee
+  // Find selected employee and plan
   const selectedEmployee = employees.find(emp => emp.id === employeeId);
+  const selectedPlan = plans.find(plan => plan.id === planId);
 
   // Loading and error states
   const isLoading = employeesLoading || plansLoading;
@@ -82,10 +86,8 @@ const NewSubscription: React.FC = () => {
       return;
     }
 
-    // Use the first available plan for now
-    const firstPlan = plans[0];
-    if (!firstPlan) {
-      toast.error('No healthcare plans available');
+    if (!selectedPlan) {
+      toast.error('Please select a healthcare plan');
       return;
     }
 
@@ -94,7 +96,7 @@ const NewSubscription: React.FC = () => {
         employeeId: parseInt(data.employeeId),
         includeSpouse: data.spouseIncluded,
         numOfChildren: data.childrenCount,
-        planId: parseInt(firstPlan.id),
+        planId: parseInt(data.planId),
       });
 
       toast.success(`Subscription created successfully for ${selectedEmployee.demographic.firstName} ${selectedEmployee.demographic.lastName}!`);
@@ -217,6 +219,70 @@ const NewSubscription: React.FC = () => {
                 </Select>
                 {errors.employeeId && (
                   <p className="text-sm text-red-600">{errors.employeeId.message}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Healthcare Plan Selection */}
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+            <CardHeader className="pb-6">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                Healthcare Plan
+              </CardTitle>
+              <CardDescription className="text-base">
+                Select the healthcare plan for this subscription
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="space-y-3">
+                <Label htmlFor="plan-select" className="text-sm font-medium text-slate-700">Healthcare Plan *</Label>
+                <Select
+                  value={planId}
+                  onValueChange={(value) => setValue('planId', value, { shouldValidate: true })}
+                >
+                  <SelectTrigger id="plan-select" className={`h-12 ${errors.planId ? 'border-red-500' : 'border-slate-300'}`}>
+                    <SelectValue placeholder="Select a healthcare plan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id}>
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium text-slate-900">
+                            {plan.name}
+                          </span>
+                          <span className="text-sm text-slate-500">
+                            Employee: ${(parseInt(plan.costEmployeeCents) / 100).toFixed(2)}/month
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.planId && (
+                  <p className="text-sm text-red-600">{errors.planId.message}</p>
+                )}
+                {selectedPlan && (
+                  <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <h4 className="font-medium text-slate-900 mb-2">Plan Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p><span className="font-medium">Employee Cost:</span> ${(parseInt(selectedPlan.costEmployeeCents) / 100).toFixed(2)}/month</p>
+                          <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctEmployeePaidByCompany}%</p>
+                        </div>
+                        <div>
+                          <p><span className="font-medium">Spouse Cost:</span> ${(parseInt(selectedPlan.costSpouseCents) / 100).toFixed(2)}/month</p>
+                          <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctSpousePaidByCompany}%</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p><span className="font-medium">Child Cost:</span> ${(parseInt(selectedPlan.costChildCents) / 100).toFixed(2)}/month (per child)</p>
+                        <p><span className="font-medium">Company Covers:</span> {selectedPlan.pctChildPaidByCompany}%</p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             </CardContent>
