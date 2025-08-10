@@ -270,6 +270,56 @@ export const ACTIVATE_PLAN_MUTATION = gql`
   }
 `;
 
+export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
+  query GetSubscriptionStatus($subscriptionId: String!) {
+    getSubscriptionStatus(subscriptionId: $subscriptionId) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
+      files {
+        id
+        healthcareSubscriptionId
+        path
+        originalName
+        fileSizeBytes
+        mimeType
+        createdAt
+      }
+    }
+  }
+`;
+
 export const COMPANY_SPENDING_STATISTICS_QUERY = gql`
   query GetCompanySpendingStatistics($companyId: String!) {
     getCompanySpendingStatistics(companyId: $companyId) {

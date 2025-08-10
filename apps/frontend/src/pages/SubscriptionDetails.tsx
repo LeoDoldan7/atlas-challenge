@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {
   IconArrowLeft,
   IconFileText,
@@ -34,8 +34,7 @@ import {
   ThemeIcon,
   SimpleGrid,
 } from '@mantine/core';
-import { useSubscriptions } from '../hooks/useSubscriptions';
-import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
+import { GET_SUBSCRIPTION_STATUS_QUERY, UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
 
 // Form validation schema for demographic data
 const demographicSchema = z.object({
@@ -55,9 +54,13 @@ type DemographicForm = z.infer<typeof demographicFormSchema>;
 const SubscriptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { subscriptions, loading, error, refetch } = useSubscriptions();
+  
+  const { data, loading, error, refetch } = useQuery(GET_SUBSCRIPTION_STATUS_QUERY, {
+    variables: { subscriptionId: id! },
+    skip: !id,
+  });
 
-  const subscription = subscriptions.find(sub => sub.id === id);
+  const subscription = data?.getSubscriptionStatus;
   const [isSubmittingDemographics, setIsSubmittingDemographics] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
