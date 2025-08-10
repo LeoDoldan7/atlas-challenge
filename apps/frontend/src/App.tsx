@@ -7,12 +7,14 @@ import Subscriptions from './pages/Subscriptions';
 import NewSubscription from './pages/NewSubscription';
 import SubscriptionDetails from './pages/SubscriptionDetails';
 import Dashboard from './pages/Dashboard';
+import Navbar from './components/Navbar';
 
 const App: React.FC = () => {
   return (
     <ApolloProvider client={apolloClient}>
       <Router>
         <div>
+          <Navbar />
           <Routes>
             <Route path="/" element={<Navigate to="/subscriptions" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
