@@ -172,8 +172,11 @@ type Query {
   employeesByCompany(companyId: String!): [Employee!]!
   getCompanySpendingStatistics(companyId: String!): CompanySpendingStatistics!
 
-  """Get all healthcare subscriptions"""
-  getSubscriptions: [HealthcareSubscription!]!
+  """Get subscription details and enrollment progress"""
+  getSubscriptionStatus(subscriptionId: String!): HealthcareSubscription!
+
+  """Get healthcare subscriptions, optionally filtered by employee ID"""
+  getSubscriptions(employeeId: String): [HealthcareSubscription!]!
 
   """Get all healthcare plans without relations"""
   healthcarePlans: [HealthcarePlan!]!

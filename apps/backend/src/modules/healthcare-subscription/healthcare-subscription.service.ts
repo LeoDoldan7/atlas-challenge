@@ -30,6 +30,28 @@ export class HealthcareSubscriptionService {
     );
   }
 
+  async getSubscriptions(
+    employeeId?: string,
+  ): Promise<HealthcareSubscription[]> {
+    const subscriptions = employeeId
+      ? await this.repository.findByEmployeeId(employeeId)
+      : await this.repository.findAllWithRelations();
+    return subscriptions.map((subscription) =>
+      this.mapper.toGraphQL(subscription),
+    );
+  }
+
+  async getSubscriptionStatus(
+    subscriptionId: string,
+  ): Promise<HealthcareSubscription> {
+    const subscription =
+      await this.repository.findByIdWithRelations(subscriptionId);
+    if (!subscription) {
+      throw new Error('Subscription not found');
+    }
+    return this.mapper.toGraphQL(subscription);
+  }
+
   async createSubscription(
     input: CreateSubscriptionInput,
   ): Promise<HealthcareSubscription> {

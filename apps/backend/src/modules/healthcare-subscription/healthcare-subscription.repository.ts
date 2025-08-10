@@ -37,6 +37,15 @@ export class HealthcareSubscriptionRepository {
     });
   }
 
+  async findByEmployeeId(
+    employeeId: string,
+  ): Promise<HealthcareSubscriptionWithRelations[]> {
+    return this.prisma.healthcareSubscription.findMany({
+      where: { employee_id: BigInt(employeeId) },
+      include: subscriptionWithRelationsInclude,
+    });
+  }
+
   async create(
     data: Prisma.HealthcareSubscriptionCreateInput,
   ): Promise<HealthcareSubscriptionWithRelations> {

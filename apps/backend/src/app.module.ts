@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { Request } from 'express';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { HealthcarePlanModule } from './modules/healthcare-plan/healthcare-plan.module';
 import { HealthcareSubscriptionModule } from './modules/healthcare-subscription/healthcare-subscription.module';
@@ -15,7 +16,7 @@ import { CompanySpendingModule } from './modules/company-spending/company-spendi
       sortSchema: true,
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
-      context: ({ req }) => ({ req }),
+      context: ({ req }: { req: Request }) => ({ req }),
       formatError: (error) => {
         return {
           message: error.message,

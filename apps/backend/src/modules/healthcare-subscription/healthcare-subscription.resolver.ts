@@ -12,10 +12,23 @@ export class HealthcareSubscriptionResolver {
 
   @Query(() => [HealthcareSubscription], {
     name: 'getSubscriptions',
-    description: 'Get all healthcare subscriptions',
+    description:
+      'Get healthcare subscriptions, optionally filtered by employee ID',
   })
-  async getSubscriptions(): Promise<HealthcareSubscription[]> {
-    return this.service.getAllSubscriptions();
+  async getSubscriptions(
+    @Args('employeeId', { nullable: true }) employeeId?: string,
+  ): Promise<HealthcareSubscription[]> {
+    return this.service.getSubscriptions(employeeId);
+  }
+
+  @Query(() => HealthcareSubscription, {
+    name: 'getSubscriptionStatus',
+    description: 'Get subscription details and enrollment progress',
+  })
+  async getSubscriptionStatus(
+    @Args('subscriptionId') subscriptionId: string,
+  ): Promise<HealthcareSubscription> {
+    return this.service.getSubscriptionStatus(subscriptionId);
   }
 
   @Mutation(() => HealthcareSubscription)
