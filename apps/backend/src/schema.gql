@@ -2,6 +2,10 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ActivatePlanInput {
+  subscriptionId: String!
+}
+
 type Company {
   countryIsoCode: String!
   createdAt: DateTime!
@@ -130,6 +134,7 @@ enum MaritalStatus {
 }
 
 type Mutation {
+  activatePlan(activatePlanInput: ActivatePlanInput!): HealthcareSubscription!
   createSubscription(createSubscriptionInput: CreateSubscriptionInput!): HealthcareSubscription!
   uploadFamilyDemographics(uploadFamilyDemographicsInput: UploadFamilyDemographicsInput!): HealthcareSubscription!
   uploadFiles(uploadFilesInput: UploadFilesInput!): HealthcareSubscription!

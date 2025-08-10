@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useSubscriptions } from '../hooks/useSubscriptions';
-import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION } from '../lib/queries';
+import { UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
 
 // Form validation schema for demographic data
 const demographicSchema = z.object({
@@ -50,9 +50,11 @@ const SubscriptionDetails: React.FC = () => {
   const [isSubmittingDemographics, setIsSubmittingDemographics] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [isActivatingPlan, setIsActivatingPlan] = useState(false);
 
   const [uploadFamilyDemographics] = useMutation(UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION);
   const [uploadFiles] = useMutation(UPLOAD_FILES_MUTATION);
+  const [activatePlan] = useMutation(ACTIVATE_PLAN_MUTATION);
 
 
   console.log('### subscription', subscription)
@@ -242,6 +244,33 @@ const SubscriptionDetails: React.FC = () => {
     setSelectedFile(null);
     const fileInput = document.getElementById('file-input') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
+  };
+
+  const handlePlanActivation = async () => {
+    if (!subscription?.id) return;
+
+    setIsActivatingPlan(true);
+    try {
+      await activatePlan({
+        variables: {
+          activatePlanInput: {
+            subscriptionId: subscription.id,
+          },
+        },
+      });
+
+      toast.success('Plan activated successfully! Your subscription is now active.');
+      
+      // Refetch subscriptions to get updated data
+      await refetch();
+      
+    } catch (error: unknown) {
+      console.error('Error activating plan:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsActivatingPlan(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -666,15 +695,19 @@ const SubscriptionDetails: React.FC = () => {
                   <div className="bg-orange-50 p-6 rounded-lg">
                     <div className="flex items-start gap-4">
                       <Clock className="h-6 w-6 text-orange-500 mt-0.5" />
-                      <div>
-                        <h3 className="font-medium text-orange-900 mb-2">Under Review</h3>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-orange-900 mb-2">Ready for Activation</h3>
                         <p className="text-orange-800 mb-4">
-                          Our team is reviewing your submitted documents and demographic information. 
-                          This process typically takes 2-3 business days.
+                          Your documents and demographic information have been reviewed and approved. 
+                          You can now activate your healthcare plan.
                         </p>
-                        <p className="text-sm text-orange-700">
-                          You will receive an email notification once your plan is activated.
-                        </p>
+                        <Button
+                          onClick={handlePlanActivation}
+                          disabled={isActivatingPlan}
+                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                        >
+                          {isActivatingPlan ? 'Activating...' : 'Activate Plan'}
+                        </Button>
                       </div>
                     </div>
                   </div>

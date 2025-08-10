@@ -219,3 +219,53 @@ export const UPLOAD_FILES_MUTATION = gql`
     }
   }
 `;
+
+export const ACTIVATE_PLAN_MUTATION = gql`
+  mutation ActivatePlan($activatePlanInput: ActivatePlanInput!) {
+    activatePlan(activatePlanInput: $activatePlanInput) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
+      files {
+        id
+        healthcareSubscriptionId
+        path
+        originalName
+        fileSizeBytes
+        mimeType
+        createdAt
+      }
+    }
+  }
+`;

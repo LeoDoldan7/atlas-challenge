@@ -11,6 +11,7 @@ import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-s
 import { FamilyDemographicsService } from './services/family-demographics.service';
 import { MinioService } from './services/minio.service';
 import { FileUploadService } from './services/file-upload.service';
+import { PlanActivationService } from './services/plan-activation.service';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FileUploadService } from './services/file-upload.service';
     FamilyDemographicsService,
     MinioService,
     FileUploadService,
+    PlanActivationService,
     EmployeeResolver,
     HealthcarePlanResolver,
     HealthcareSubscriptionResolver,
