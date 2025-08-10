@@ -1,33 +1,40 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Configure Express middleware for larger payloads
-  const express = require('express');
-  
+
   // Increase payload size limits and timeout for all routes
-  app.use(express.json({ 
-    limit: '50mb',
-    verify: (req: any, res: any, buf: any, encoding: string) => {
-      // Custom verification if needed
-    }
-  }));
-  
-  app.use(express.urlencoded({ 
-    limit: '50mb', 
-    extended: true,
-    parameterLimit: 50000
-  }));
+  app.use(
+    express.json({
+      limit: '50mb',
+    }),
+  );
+
+  app.use(
+    express.urlencoded({
+      limit: '50mb',
+      extended: true,
+      parameterLimit: 50000,
+    }),
+  );
 
   // Set request timeout
-  app.use((req: any, res: any, next: any) => {
-    req.setTimeout(300000); // 5 minutes
-    res.setTimeout(300000); // 5 minutes
-    next();
-  });
+  app.use(
+    (
+      req: { setTimeout: (timeout: number) => void },
+      res: { setTimeout: (timeout: number) => void },
+      next: () => void,
+    ) => {
+      req.setTimeout(300000); // 5 minutes
+      res.setTimeout(300000); // 5 minutes
+      next();
+    },
+  );
 
   // Enable CORS for frontend development
   app.enableCors({

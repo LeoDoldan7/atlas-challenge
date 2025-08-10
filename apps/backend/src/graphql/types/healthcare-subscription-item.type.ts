@@ -20,9 +20,9 @@ export class HealthcareSubscriptionItem {
   @Field()
   createdAt: Date;
 
-  @Field(() => HealthcareSubscription)
-  subscription: HealthcareSubscription;
+  @Field(() => HealthcareSubscription, { nullable: true })
+  subscription?: HealthcareSubscription;
 
-  @Field(() => Demographic)
-  demographic: Demographic;
+  @Field(() => Demographic, { nullable: true })
+  demographic?: Demographic;
 }

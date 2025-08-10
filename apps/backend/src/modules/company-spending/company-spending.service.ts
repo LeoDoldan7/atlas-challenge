@@ -1,57 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  CompanySpendingRepository,
+  SubscriptionWithRelations,
+} from './company-spending.repository';
+import { CompanySpendingMapper } from './company-spending.mapper';
 import {
   CompanySpendingStatistics,
   EmployeeSpendingStatistics,
   PlanSpendingStatistics,
-} from '../graphql/types/company-spending-statistics.type';
-import { Prisma } from '@prisma/client';
-
-type SubscriptionWithIncludes = Prisma.HealthcareSubscriptionGetPayload<{
-  include: {
-    plan: true;
-    employee: {
-      include: {
-        demographics: true;
-      };
-    };
-    items: true;
-  };
-}>;
+} from '../../graphql/types/company-spending-statistics.type';
 
 @Injectable()
 export class CompanySpendingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly repository: CompanySpendingRepository,
+    private readonly mapper: CompanySpendingMapper,
+  ) {}
 
   async getCompanySpendingStatistics(
     companyId: string,
   ): Promise<CompanySpendingStatistics> {
     // Get company info
-    const company = await this.prisma.company.findUnique({
-      where: { id: BigInt(companyId) },
-      select: { id: true, name: true },
-    });
+    const company = await this.repository.findCompanyById(companyId);
 
     if (!company) {
       throw new Error(`Company with ID ${companyId} not found`);
     }
 
     // Get all active subscriptions for the company with plan and item details
-    const subscriptions = await this.prisma.healthcareSubscription.findMany({
-      where: {
-        company_id: BigInt(companyId),
-        status: 'active',
-      },
-      include: {
-        plan: true,
-        employee: {
-          include: {
-            demographics: true,
-          },
-        },
-        items: true,
-      },
-    });
+    const subscriptions =
+      await this.repository.findSubscriptionsByCompanyId(companyId);
 
     // Calculate employee breakdown
     const employeeBreakdown = this.calculateEmployeeBreakdown(subscriptions);
@@ -73,19 +51,18 @@ export class CompanySpendingService {
       0,
     );
 
-    return {
-      companyId: company.id.toString(),
-      companyName: company.name,
+    return this.mapper.toGraphQL({
+      company,
       totalMonthlyCostCents,
       companyMonthlyCostCents,
       employeeMonthlyCostCents,
       employeeBreakdown,
       planBreakdown,
-    };
+    });
   }
 
   private calculateEmployeeBreakdown(
-    subscriptions: SubscriptionWithIncludes[],
+    subscriptions: SubscriptionWithRelations[],
   ): EmployeeSpendingStatistics[] {
     const employeeMap = new Map<string, EmployeeSpendingStatistics>();
 
@@ -116,7 +93,7 @@ export class CompanySpendingService {
   }
 
   private calculatePlanBreakdown(
-    subscriptions: SubscriptionWithIncludes[],
+    subscriptions: SubscriptionWithRelations[],
   ): PlanSpendingStatistics[] {
     const planMap = new Map<string, PlanSpendingStatistics>();
 
@@ -148,7 +125,7 @@ export class CompanySpendingService {
     return Array.from(planMap.values());
   }
 
-  private calculateSubscriptionCosts(subscription: SubscriptionWithIncludes) {
+  private calculateSubscriptionCosts(subscription: SubscriptionWithRelations) {
     const plan = subscription.plan;
     const items = subscription.items;
 

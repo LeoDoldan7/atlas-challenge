@@ -21,7 +21,6 @@ export class Demographic {
   @Field()
   createdAt: Date;
 
-
   @Field(() => [HealthcareSubscriptionItem], { nullable: true })
   subItems?: HealthcareSubscriptionItem[];
 }

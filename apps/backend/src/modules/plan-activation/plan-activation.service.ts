@@ -1,26 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ActivatePlanInput } from '../graphql/dto/activate-plan.input';
-import { SubscriptionStatus } from '../graphql/types/enums';
+import { PlanActivationRepository } from './plan-activation.repository';
+import { ActivatePlanInput } from '../healthcare-subscription/dtos/activate-plan.input';
+import { SubscriptionStatus } from '../../graphql/types/enums';
 
 @Injectable()
 export class PlanActivationService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: PlanActivationRepository) {}
 
   async activatePlan(input: ActivatePlanInput) {
     // Validate subscription exists and is in correct status
-    const subscription = await this.prisma.healthcareSubscription.findUnique({
-      where: { id: BigInt(input.subscriptionId) },
-      include: {
-        items: true,
-        files: true,
-        employee: {
-          include: {
-            demographics: true,
-          },
-        },
-      },
-    });
+    const subscription = await this.repository.findSubscriptionForActivation(
+      input.subscriptionId,
+    );
 
     if (!subscription) {
       throw new Error('Healthcare subscription not found');
@@ -48,22 +39,20 @@ export class PlanActivationService {
       );
     }
 
+    // Calculate end date - one year from start date as default
+    const endDate =
+      subscription.end_date ||
+      new Date(
+        new Date(subscription.start_date).setFullYear(
+          new Date(subscription.start_date).getFullYear() + 1,
+        ),
+      );
+
     // Activate the plan
-    const activatedSubscription =
-      await this.prisma.healthcareSubscription.update({
-        where: { id: subscription.id },
-        data: {
-          status: SubscriptionStatus.ACTIVE,
-          // Set end date to one year from start date as default
-          end_date:
-            subscription.end_date ||
-            new Date(
-              new Date(subscription.start_date).setFullYear(
-                new Date(subscription.start_date).getFullYear() + 1,
-              ),
-            ),
-        },
-      });
+    const activatedSubscription = await this.repository.activateSubscription(
+      subscription.id,
+      endDate,
+    );
 
     return {
       subscription: activatedSubscription,

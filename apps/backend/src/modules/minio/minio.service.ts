@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as Minio from 'minio';
-import { minioConfig } from '../config/minio.config';
+import { minioConfig } from '../../config/minio.config';
 import { Readable } from 'stream';
 
 @Injectable()
@@ -23,9 +23,14 @@ export class MinioService implements OnModuleInit {
   }
 
   private async ensureBucketExists(): Promise<void> {
-    const bucketExists = await this.minioClient.bucketExists(minioConfig.bucketName);
+    const bucketExists = await this.minioClient.bucketExists(
+      minioConfig.bucketName,
+    );
     if (!bucketExists) {
-      await this.minioClient.makeBucket(minioConfig.bucketName, minioConfig.region);
+      await this.minioClient.makeBucket(
+        minioConfig.bucketName,
+        minioConfig.region,
+      );
       console.log(`✅ Created MinIO bucket: ${minioConfig.bucketName}`);
     }
   }
@@ -56,14 +61,14 @@ export class MinioService implements OnModuleInit {
       buffer.length,
       {
         'Content-Type': mimeType,
-      }
+      },
     );
 
     // Generate presigned URL for file access (valid for 24 hours)
     const url = await this.minioClient.presignedGetObject(
       minioConfig.bucketName,
       filePath,
-      24 * 60 * 60 // 24 hours
+      24 * 60 * 60, // 24 hours
     );
 
     return {
@@ -76,17 +81,24 @@ export class MinioService implements OnModuleInit {
     await this.minioClient.removeObject(minioConfig.bucketName, filePath);
   }
 
-  async getFileUrl(filePath: string, expiry: number = 24 * 60 * 60): Promise<string> {
+  async getFileUrl(
+    filePath: string,
+    expiry: number = 24 * 60 * 60,
+  ): Promise<string> {
     return await this.minioClient.presignedGetObject(
       minioConfig.bucketName,
       filePath,
-      expiry
+      expiry,
     );
   }
 
   async listFiles(prefix: string): Promise<string[]> {
     const files: string[] = [];
-    const objectsStream = this.minioClient.listObjects(minioConfig.bucketName, prefix, true);
+    const objectsStream = this.minioClient.listObjects(
+      minioConfig.bucketName,
+      prefix,
+      true,
+    );
 
     return new Promise((resolve, reject) => {
       objectsStream.on('data', (obj) => {

@@ -2,18 +2,10 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { PrismaService } from './prisma/prisma.service';
-import { EmployeeResolver } from './graphql/resolvers/employee.resolver';
-import { HealthcarePlanResolver } from './graphql/resolvers/healthcare-plan.resolver';
-import { HealthcareSubscriptionResolver } from './graphql/resolvers/healthcare-subscription.resolver';
-import { CompanySpendingResolver } from './graphql/resolvers/company-spending.resolver';
-import { FamilyDemographicsService } from './services/family-demographics.service';
-import { CompanySpendingService } from './services/company-spending.service';
-import { MinioService } from './services/minio.service';
-import { FileUploadService } from './services/file-upload.service';
-import { PlanActivationService } from './services/plan-activation.service';
+import { EmployeeModule } from './modules/employee/employee.module';
+import { HealthcarePlanModule } from './modules/healthcare-plan/healthcare-plan.module';
+import { HealthcareSubscriptionModule } from './modules/healthcare-subscription/healthcare-subscription.module';
+import { CompanySpendingModule } from './modules/company-spending/company-spending.module';
 
 @Module({
   imports: [
@@ -34,20 +26,10 @@ import { PlanActivationService } from './services/plan-activation.service';
       // Increase limits for file uploads
       persistedQueries: false,
     }),
-  ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-    PrismaService,
-    FamilyDemographicsService,
-    CompanySpendingService,
-    MinioService,
-    FileUploadService,
-    PlanActivationService,
-    EmployeeResolver,
-    HealthcarePlanResolver,
-    HealthcareSubscriptionResolver,
-    CompanySpendingResolver,
+    EmployeeModule,
+    HealthcarePlanModule,
+    HealthcareSubscriptionModule,
+    CompanySpendingModule,
   ],
 })
 export class AppModule {}

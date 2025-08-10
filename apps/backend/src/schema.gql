@@ -98,7 +98,7 @@ type HealthcarePlan {
 
 type HealthcareSubscription {
   billingAnchor: Float!
-  company: Company!
+  company: Company
   companyId: ID!
   createdAt: DateTime!
   employee: Employee
@@ -127,12 +127,12 @@ type HealthcareSubscriptionFile {
 
 type HealthcareSubscriptionItem {
   createdAt: DateTime!
-  demographic: Demographic!
+  demographic: Demographic
   demographicId: ID
   healthcareSubscriptionId: ID!
   id: ID!
   role: ItemRole!
-  subscription: HealthcareSubscription!
+  subscription: HealthcareSubscription
 }
 
 """Role of person in healthcare subscription"""

@@ -38,8 +38,8 @@ export class HealthcareSubscription {
   @Field()
   createdAt: Date;
 
-  @Field(() => Company)
-  company: Company;
+  @Field(() => Company, { nullable: true })
+  company?: Company;
 
   @Field(() => Employee, { nullable: true })
   employee?: Employee;
