@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { IconChartBar, IconFileText, IconPlus } from '@tabler/icons-react';
+import { IconChartBar, IconFileText, IconPlus, IconUsers } from '@tabler/icons-react';
 import { Container, Group, Title, Anchor } from '@mantine/core';
 
 const Navbar: React.FC = () => {
@@ -9,6 +9,11 @@ const Navbar: React.FC = () => {
       to: '/dashboard',
       label: 'Dashboard',
       icon: IconChartBar,
+    },
+    {
+      to: '/employees',
+      label: 'Employees',
+      icon: IconUsers,
     },
     {
       to: '/subscriptions',

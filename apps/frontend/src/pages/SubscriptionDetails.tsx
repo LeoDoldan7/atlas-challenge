@@ -35,6 +35,7 @@ import {
   SimpleGrid,
 } from '@mantine/core';
 import { GET_SUBSCRIPTION_STATUS_QUERY, UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
+import type { HealthcareSubscription, HealthcareSubscriptionItem, HealthcareSubscriptionFile } from '../types';
 
 // Form validation schema for demographic data
 const demographicSchema = z.object({
@@ -55,7 +56,7 @@ const SubscriptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const { data, loading, error, refetch } = useQuery(GET_SUBSCRIPTION_STATUS_QUERY, {
+  const { data, loading, error, refetch } = useQuery<{ getSubscriptionStatus: HealthcareSubscription }>(GET_SUBSCRIPTION_STATUS_QUERY, {
     variables: { subscriptionId: id! },
     skip: !id,
   });
@@ -76,8 +77,8 @@ const SubscriptionDetails: React.FC = () => {
   const getSubscriptionItemCounts = () => {
     if (!subscription?.items) return { spouseCount: 0, childrenCount: 0 };
 
-    const spouseCount = subscription.items.filter(item => item.role === 'SPOUSE').length;
-    const childrenCount = subscription.items.filter(item => item.role === 'CHILD').length;
+    const spouseCount = subscription.items.filter((item: HealthcareSubscriptionItem) => item.role === 'SPOUSE').length;
+    const childrenCount = subscription.items.filter((item: HealthcareSubscriptionItem) => item.role === 'CHILD').length;
 
     return { spouseCount, childrenCount };
   };
@@ -762,7 +763,7 @@ const SubscriptionDetails: React.FC = () => {
                       <Stack gap="md">
                         <Title order={5} fw={500}>Submitted Documents:</Title>
                         <Stack gap="xs">
-                          {subscription.files.map((file) => (
+                          {subscription.files.map((file: HealthcareSubscriptionFile) => (
                             <Card key={file.id} p="md" radius="md" bg="gray.1">
                               <Group gap="md">
                                 <ThemeIcon size={40} radius="md" color="gray" variant="light">
@@ -833,7 +834,7 @@ const SubscriptionDetails: React.FC = () => {
                     <Stack gap="md">
                       <Title order={5} fw={500}>Covered Members:</Title>
                       <Stack gap="xs">
-                        {subscription.items?.map((item) => (
+                        {subscription.items?.map((item: HealthcareSubscriptionItem) => (
                           <Card key={item.id} p="md" radius="md" bg="gray.1">
                             <Group gap="md">
                               <ThemeIcon size={40} radius="md" color="gray" variant="light">

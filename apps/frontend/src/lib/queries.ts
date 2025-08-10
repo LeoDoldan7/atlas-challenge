@@ -88,6 +88,56 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
   }
 `;
 
+export const GET_EMPLOYEE_SUBSCRIPTIONS_QUERY = gql`
+  query GetEmployeeSubscriptions($employeeId: String!) {
+    getSubscriptions(employeeId: $employeeId) {
+      id
+      companyId
+      employeeId
+      planId
+      type
+      status
+      startDate
+      endDate
+      billingAnchor
+      createdAt
+      employee {
+        id
+        email
+        birthDate
+        maritalStatus
+        demographic {
+          id
+          firstName
+          lastName
+          governmentId
+          birthDate
+          createdAt
+        }
+      }
+      plan {
+        id
+        name
+      }
+      items {
+        id
+        role
+        demographicId
+        createdAt
+      }
+      files {
+        id
+        healthcareSubscriptionId
+        path
+        originalName
+        fileSizeBytes
+        mimeType
+        createdAt
+      }
+    }
+  }
+`;
+
 export const CREATE_SUBSCRIPTION_MUTATION = gql`
   mutation CreateSubscription($createSubscriptionInput: CreateSubscriptionInput!) {
     createSubscription(createSubscriptionInput: $createSubscriptionInput) {
