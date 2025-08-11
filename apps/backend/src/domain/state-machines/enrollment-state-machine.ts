@@ -19,7 +19,6 @@ export class SubscriptionEnrollmentStateMachine
     this.context = {
       subscriptionId,
       currentStatus: initialStatus,
-      metadata: {},
       transitionHistory: [],
     };
 
@@ -37,10 +36,7 @@ export class SubscriptionEnrollmentStateMachine
     return transition.guard ? transition.guard() : true;
   }
 
-  async transition(
-    event: EnrollmentEvent,
-    context?: Record<string, any>,
-  ): Promise<boolean> {
+  async transition(event: EnrollmentEvent): Promise<boolean> {
     const transition = this.findTransition(this.context.currentStatus, event);
 
     if (!transition) {
@@ -61,10 +57,6 @@ export class SubscriptionEnrollmentStateMachine
       }
 
       this.context.currentStatus = transition.to;
-
-      if (context) {
-        this.context.metadata = { ...this.context.metadata, ...context };
-      }
 
       this.context.transitionHistory.push({
         from: previousState,

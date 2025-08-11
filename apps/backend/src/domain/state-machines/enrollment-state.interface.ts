@@ -32,7 +32,6 @@ export interface EnrollmentTransition {
 export interface EnrollmentContext {
   subscriptionId: string;
   currentStatus: EnrollmentStatus;
-  metadata: Record<string, any>;
   transitionHistory: Array<{
     from: EnrollmentStatus;
     to: EnrollmentStatus;

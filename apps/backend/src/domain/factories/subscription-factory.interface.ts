@@ -17,7 +17,6 @@ export interface SubscriptionConfig {
   planId: string;
   period: SubscriptionPeriod;
   members?: SubscriptionMemberConfig[];
-  metadata?: Record<string, any>;
 }
 
 export interface SubscriptionTemplate {

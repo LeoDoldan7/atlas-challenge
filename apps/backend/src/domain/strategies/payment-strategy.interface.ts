@@ -13,7 +13,6 @@ export interface PaymentStrategy {
   processPayment(
     allocation: PaymentAllocation,
     employeeWalletBalance: Money,
-    metadata?: Record<string, any>,
   ): PaymentResult;
   validatePayment(
     allocation: PaymentAllocation,

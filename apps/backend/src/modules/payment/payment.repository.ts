@@ -235,10 +235,6 @@ export class PaymentRepository {
           const paymentResult = this.paymentProcessor.processPayment(
             subscriptionAllocation,
             currentWalletBalance,
-            {
-              subscriptionId: subscription.id.toString(),
-              employeeId: employee.id.toString(),
-            },
           );
 
           if (!paymentResult.success) {

@@ -22,7 +22,6 @@ export class PaymentProcessorService {
   processPayment(
     allocation: PaymentAllocation,
     employeeWalletBalance: Money,
-    metadata?: Record<string, any>,
   ): PaymentResult {
     const strategy = this.findStrategy(allocation);
 
@@ -34,7 +33,7 @@ export class PaymentProcessorService {
       };
     }
 
-    return strategy.processPayment(allocation, employeeWalletBalance, metadata);
+    return strategy.processPayment(allocation, employeeWalletBalance);
   }
 
   validatePayment(

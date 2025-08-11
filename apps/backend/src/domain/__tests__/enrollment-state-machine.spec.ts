@@ -219,34 +219,4 @@ describe('SubscriptionEnrollmentStateMachine', () => {
       ).rejects.toThrow('Invalid transition');
     });
   });
-
-  describe('Context and Metadata', () => {
-    it('should store transition context', async () => {
-      const metadata: Record<string, string> = {
-        userId: 'user123',
-        reason: 'enrollment started',
-      };
-
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT, metadata);
-
-      const context = stateMachine.getContext();
-      expect(context.metadata).toEqual(metadata);
-    });
-
-    it('should accumulate metadata across transitions', async () => {
-      const step1Context: Record<string, number> = { step: 1 };
-      const step2Context: Record<string, number> = { step: 2 };
-      await stateMachine.transition(
-        EnrollmentEvent.START_ENROLLMENT,
-        step1Context,
-      );
-      await stateMachine.transition(
-        EnrollmentEvent.PROCESS_PAYMENT,
-        step2Context,
-      );
-
-      const context = stateMachine.getContext();
-      expect(context.metadata).toEqual({ step: 2 });
-    });
-  });
 });

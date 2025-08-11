@@ -112,13 +112,8 @@ describe('PaymentProcessorService', () => {
     it('should handle strategy processing errors gracefully', () => {
       const allocation = PaymentAllocation.companyPaid(usd100);
       const walletBalance = Money.zero('USD');
-      const metadata = { simulateFailure: true };
 
-      const result = paymentProcessor.processPayment(
-        allocation,
-        walletBalance,
-        metadata,
-      );
+      const result = paymentProcessor.processPayment(allocation, walletBalance);
 
       expect(result.success).toBe(false);
       expect(result.errorMessage).toContain(
@@ -143,13 +138,8 @@ describe('PaymentProcessorService', () => {
     it('should handle partial failures in hybrid payments', () => {
       const allocation = PaymentAllocation.hybrid(usd100, usd50);
       const walletBalance = usd200;
-      const metadata = { simulateWalletFailure: true };
 
-      const result = paymentProcessor.processPayment(
-        allocation,
-        walletBalance,
-        metadata,
-      );
+      const result = paymentProcessor.processPayment(allocation, walletBalance);
 
       expect(result.success).toBe(false);
       expect(result.errorMessage).toContain('Wallet payment portion failed');

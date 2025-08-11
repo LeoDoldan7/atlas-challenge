@@ -44,7 +44,6 @@ interface EnrollmentStep {
   type: EnrollmentStepType;
   status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
   completedAt?: Date;
-  metadata?: Record<string, any>;
 }
 
 export class Subscription {
@@ -136,10 +135,7 @@ export class Subscription {
     this.updatedAt = new Date();
   }
 
-  async completeEnrollmentStep(
-    stepType: EnrollmentStepType,
-    metadata?: Record<string, any>,
-  ): Promise<void> {
+  async completeEnrollmentStep(stepType: EnrollmentStepType): Promise<void> {
     this.validateCanCompleteEnrollmentStep();
 
     const step = this.findEnrollmentStep(stepType);
@@ -148,7 +144,6 @@ export class Subscription {
 
     step.status = 'COMPLETED';
     step.completedAt = new Date();
-    step.metadata = metadata;
 
     // Progress to next enrollment status
     if (stepType === EnrollmentStepType.DEMOGRAPHIC_VERIFICATION) {
@@ -178,29 +173,18 @@ export class Subscription {
       const result = this.paymentProcessor.processPayment(
         this.aggregatePaymentAllocation,
         employeeWalletBalance,
-        { subscriptionId: this.id },
       );
 
       if (result.success) {
-        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS, {
-          transactionId: result.transactionId,
-          processedAt: result.processedAt,
-        });
+        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       } else {
-        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED, {
-          errorMessage: result.errorMessage,
-          processedAt: result.processedAt,
-        });
+        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED);
       }
 
       this.updatedAt = new Date();
       return result;
     } catch (error) {
-      await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED, {
-        errorMessage:
-          error instanceof Error ? error.message : 'Unknown payment error',
-        processedAt: new Date(),
-      });
+      await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED);
 
       throw error;
     }

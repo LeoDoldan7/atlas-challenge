@@ -24,7 +24,6 @@ export class CompanyPaymentStrategy implements PaymentStrategy {
   processPayment(
     allocation: PaymentAllocation,
     employeeWalletBalance: Money,
-    metadata?: Record<string, any>,
   ): PaymentResult {
     if (!this.canHandle(allocation)) {
       return {
@@ -46,7 +45,7 @@ export class CompanyPaymentStrategy implements PaymentStrategy {
     try {
       const transactionId = `comp_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      this.processCompanyPayment(allocation.companyContribution, metadata);
+      this.processCompanyPayment(allocation.companyContribution);
 
       return {
         success: true,
@@ -65,12 +64,8 @@ export class CompanyPaymentStrategy implements PaymentStrategy {
     }
   }
 
-  private processCompanyPayment(
-    _amount: Money,
-    metadata?: Record<string, any>,
-  ): void {
-    if (metadata?.simulateFailure) {
-      throw new Error('Simulated company payment failure');
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private processCompanyPayment(_amount: Money): void {
+    // TODO: TBD
   }
 }

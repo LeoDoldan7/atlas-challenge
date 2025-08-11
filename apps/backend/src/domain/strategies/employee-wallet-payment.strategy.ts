@@ -24,7 +24,6 @@ export class EmployeeWalletPaymentStrategy implements PaymentStrategy {
   processPayment(
     allocation: PaymentAllocation,
     employeeWalletBalance: Money,
-    metadata?: Record<string, any>,
   ): PaymentResult {
     if (!this.canHandle(allocation)) {
       return {
@@ -49,7 +48,6 @@ export class EmployeeWalletPaymentStrategy implements PaymentStrategy {
       this.processWalletDeduction(
         allocation.employeeContribution,
         employeeWalletBalance,
-        metadata,
       );
 
       return {
@@ -69,15 +67,7 @@ export class EmployeeWalletPaymentStrategy implements PaymentStrategy {
     }
   }
 
-  private processWalletDeduction(
-    amount: Money,
-    walletBalance: Money,
-    metadata?: Record<string, any>,
-  ): void {
-    if (metadata?.simulateFailure) {
-      throw new Error('Simulated wallet payment failure');
-    }
-
+  private processWalletDeduction(amount: Money, walletBalance: Money): void {
     if (!walletBalance.isGreaterThanOrEqualTo(amount)) {
       throw new Error('Insufficient wallet balance');
     }

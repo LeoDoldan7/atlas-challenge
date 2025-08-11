@@ -25,7 +25,6 @@ export class HybridPaymentStrategy implements PaymentStrategy {
   processPayment(
     allocation: PaymentAllocation,
     employeeWalletBalance: Money,
-    metadata?: Record<string, any>,
   ): PaymentResult {
     if (!this.canHandle(allocation)) {
       return {
@@ -48,12 +47,11 @@ export class HybridPaymentStrategy implements PaymentStrategy {
     try {
       const transactionId = `hybrid_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 
-      this.processCompanyPayment(allocation.companyContribution, metadata);
+      this.processCompanyPayment(allocation.companyContribution);
 
       this.processWalletDeduction(
         allocation.employeeContribution,
         employeeWalletBalance,
-        metadata,
       );
 
       return {
@@ -73,24 +71,12 @@ export class HybridPaymentStrategy implements PaymentStrategy {
     }
   }
 
-  private processCompanyPayment(
-    amount: Money,
-    metadata?: Record<string, any>,
-  ): void {
-    if (metadata?.simulateCompanyFailure) {
-      throw new Error('Company payment portion failed');
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private processCompanyPayment(amount: Money): void {
+    // TODO: TBD
   }
 
-  private processWalletDeduction(
-    amount: Money,
-    walletBalance: Money,
-    metadata?: Record<string, any>,
-  ): void {
-    if (metadata?.simulateWalletFailure) {
-      throw new Error('Wallet payment portion failed');
-    }
-
+  private processWalletDeduction(amount: Money, walletBalance: Money): void {
     if (!walletBalance.isGreaterThanOrEqualTo(amount)) {
       throw new Error('Insufficient wallet balance for employee portion');
     }

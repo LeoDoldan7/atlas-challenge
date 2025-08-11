@@ -244,9 +244,6 @@ describe('Subscription Aggregate', () => {
       it('should complete demographic verification step', async () => {
         await subscription.completeEnrollmentStep(
           EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
-          {
-            verified: true,
-          },
         );
 
         expect(subscription.getStatus()).toBe('document_upload_pending');
@@ -255,7 +252,6 @@ describe('Subscription Aggregate', () => {
           (s) => s.type === EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
         );
         expect(demoStep?.status).toBe('COMPLETED');
-        expect(demoStep?.metadata).toEqual({ verified: true });
       });
 
       it('should progress through all enrollment steps', async () => {
