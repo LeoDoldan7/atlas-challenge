@@ -2,10 +2,10 @@ import { PaymentAllocation } from '../value-objects/payment-allocation.value-obj
 import { Money } from '../value-objects/money.value-object';
 
 describe('PaymentAllocation Value Object', () => {
-  const usd100 = new Money(100, 'USD');
-  const usd50 = new Money(50, 'USD');
+  const usd100 = Money.fromAmount(100, 'USD');
+  const usd50 = Money.fromAmount(50, 'USD');
   const usd0 = Money.zero('USD');
-  const eur100 = new Money(100, 'EUR');
+  const eur100 = Money.fromAmount(100, 'EUR');
 
   describe('Construction', () => {
     it('should create allocation with valid contributions', () => {
@@ -20,7 +20,7 @@ describe('PaymentAllocation Value Object', () => {
 
     it('should throw error for contributions with invalid currencies', () => {
       expect(() => {
-        const invalidCurrency = new Money(100, '');
+        const invalidCurrency = Money.fromAmount(100, '');
         new PaymentAllocation({
           companyContribution: invalidCurrency,
           employeeContribution: usd50,
@@ -71,7 +71,7 @@ describe('PaymentAllocation Value Object', () => {
     });
 
     it('should create allocation from percentage', () => {
-      const total = new Money(200, 'USD');
+      const total = Money.fromAmount(200, 'USD');
       const allocation = PaymentAllocation.fromPercentage(total, 75);
 
       expect(allocation.companyContribution.amount).toBe(150);
@@ -161,7 +161,7 @@ describe('PaymentAllocation Value Object', () => {
         companyContribution: usd50,
         employeeContribution: usd50,
       });
-      const walletBalance = new Money(100, 'USD');
+      const walletBalance = Money.fromAmount(100, 'USD');
       expect(allocation.canBeProcessed(walletBalance)).toBe(true);
     });
 
@@ -170,7 +170,7 @@ describe('PaymentAllocation Value Object', () => {
         companyContribution: usd50,
         employeeContribution: usd50,
       });
-      const walletBalance = new Money(50, 'USD');
+      const walletBalance = Money.fromAmount(50, 'USD');
       expect(allocation.canBeProcessed(walletBalance)).toBe(true);
     });
 
@@ -179,7 +179,7 @@ describe('PaymentAllocation Value Object', () => {
         companyContribution: usd50,
         employeeContribution: usd100,
       });
-      const walletBalance = new Money(50, 'USD');
+      const walletBalance = Money.fromAmount(50, 'USD');
       expect(allocation.canBeProcessed(walletBalance)).toBe(false);
     });
 
@@ -252,8 +252,8 @@ describe('PaymentAllocation Value Object', () => {
 
   describe('Edge Cases', () => {
     it('should handle very small amounts', () => {
-      const small1 = new Money(0.01, 'USD');
-      const small2 = new Money(0.02, 'USD');
+      const small1 = Money.fromAmount(0.01, 'USD');
+      const small2 = Money.fromAmount(0.02, 'USD');
       const allocation = new PaymentAllocation({
         companyContribution: small1,
         employeeContribution: small2,
@@ -264,8 +264,8 @@ describe('PaymentAllocation Value Object', () => {
     });
 
     it('should handle large amounts', () => {
-      const large1 = new Money(999999, 'USD');
-      const large2 = new Money(1, 'USD');
+      const large1 = Money.fromAmount(999999, 'USD');
+      const large2 = Money.fromAmount(1, 'USD');
       const allocation = new PaymentAllocation({
         companyContribution: large1,
         employeeContribution: large2,
@@ -275,8 +275,8 @@ describe('PaymentAllocation Value Object', () => {
     });
 
     it('should handle different currency cases', () => {
-      const eur50 = new Money(50, 'EUR');
-      const eur25 = new Money(25, 'EUR');
+      const eur50 = Money.fromAmount(50, 'EUR');
+      const eur25 = Money.fromAmount(25, 'EUR');
       const allocation = new PaymentAllocation({
         companyContribution: eur50,
         employeeContribution: eur25,

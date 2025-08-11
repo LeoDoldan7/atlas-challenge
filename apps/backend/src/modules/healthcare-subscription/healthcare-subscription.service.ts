@@ -88,10 +88,7 @@ export class HealthcareSubscriptionService {
       throw new Error('Healthcare plan not found');
     }
 
-    const employeePrice = new Money(
-      Number(plan.cost_employee_cents) / 100,
-      'USD',
-    );
+    const employeePrice = Money.fromCents(plan.cost_employee_cents, 'USD');
     const companyPercentage = Number(plan.pct_employee_paid_by_company);
 
     let domainSubscription: Subscription;
@@ -107,11 +104,11 @@ export class HealthcareSubscriptionService {
         });
     } else {
       const spousePrice = input.includeSpouse
-        ? new Money(Number(plan.cost_spouse_cents) / 100, 'USD')
+        ? Money.fromCents(plan.cost_spouse_cents, 'USD')
         : undefined;
       const childPrice =
         input.numOfChildren > 0
-          ? new Money(Number(plan.cost_child_cents) / 100, 'USD')
+          ? Money.fromCents(plan.cost_child_cents, 'USD')
           : undefined;
 
       domainSubscription = this.subscriptionFactory.createFamilySubscription(
@@ -251,8 +248,8 @@ export class HealthcareSubscriptionService {
       throw new Error('Employee wallet not found');
     }
 
-    const walletBalance = new Money(
-      Number(employee.wallet.balance_cents) / 100,
+    const walletBalance = Money.fromCents(
+      employee.wallet.balance_cents,
       employee.wallet.currency_code,
     );
     const paymentAllocation =
@@ -381,7 +378,7 @@ export class HealthcareSubscriptionService {
           ? plan.cost_spouse_cents
           : plan.cost_child_cents;
 
-    return new Money(Number(costCents) / 100, 'USD');
+    return Money.fromCents(costCents, 'USD');
   }
 
   private calculatePaymentAllocation(

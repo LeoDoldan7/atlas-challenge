@@ -1,50 +1,66 @@
 export class Money {
-  readonly amount: number;
+  private readonly cents: number;
   readonly currency: string;
 
-  constructor(amount: number, currency = 'USD') {
-    if (amount < 0) {
+  private constructor(cents: number, currency: string) {
+    if (cents < 0) {
       throw new Error('Money amount cannot be negative');
     }
     if (!currency || currency.length !== 3) {
       throw new Error('Invalid currency code');
     }
-    this.amount = Math.round(amount * 100) / 100;
+    this.cents = cents;
     this.currency = currency.toUpperCase();
   }
 
+  static fromAmount(amount: number, currency = 'USD'): Money {
+    return new Money(Math.round(amount * 100), currency);
+  }
+
   static zero(currency = 'USD'): Money {
-    return new Money(0, currency);
+    return Money.fromAmount(0, currency);
+  }
+
+  static fromCents(cents: number | bigint, currency = 'USD'): Money {
+    return new Money(Number(cents), currency);
+  }
+
+  get amount(): number {
+    return this.cents / 100;
+  }
+
+  toCents(): number {
+    return this.cents;
   }
 
   add(other: Money): Money {
     if (this.currency !== other.currency) {
       throw new Error('Cannot add money with different currencies');
     }
-    return new Money(this.amount + other.amount, this.currency);
+    return Money.fromCents(this.cents + other.cents, this.currency);
   }
 
   subtract(other: Money): Money {
     if (this.currency !== other.currency) {
       throw new Error('Cannot subtract money with different currencies');
     }
-    const result = this.amount - other.amount;
-    if (result < 0) {
+    const resultCents = this.cents - other.cents;
+    if (resultCents < 0) {
       throw new Error('Insufficient funds');
     }
-    return new Money(result, this.currency);
+    return Money.fromCents(resultCents, this.currency);
   }
 
   multiply(factor: number): Money {
     if (factor < 0) {
       throw new Error('Cannot multiply money by negative factor');
     }
-    return new Money(this.amount * factor, this.currency);
+    return Money.fromCents(Math.round(this.cents * factor), this.currency);
   }
 
   isGreaterThanOrEqualTo(other: Money): boolean {
     this.assertSameCurrency(other);
-    return this.amount >= other.amount;
+    return this.cents >= other.cents;
   }
 
   private assertSameCurrency(other: Money): void {

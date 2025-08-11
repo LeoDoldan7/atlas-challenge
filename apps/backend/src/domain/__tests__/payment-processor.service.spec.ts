@@ -7,9 +7,9 @@ import { Money } from '../value-objects/money.value-object';
 
 describe('PaymentProcessorService', () => {
   let paymentProcessor: PaymentProcessorService;
-  const usd100 = new Money(100, 'USD');
-  const usd50 = new Money(50, 'USD');
-  const usd200 = new Money(200, 'USD');
+  const usd100 = Money.fromAmount(100, 'USD');
+  const usd50 = Money.fromAmount(50, 'USD');
+  const usd200 = Money.fromAmount(200, 'USD');
 
   beforeEach(() => {
     paymentProcessor = new PaymentProcessorService();
@@ -96,7 +96,7 @@ describe('PaymentProcessorService', () => {
     it('should validate hybrid payments correctly', () => {
       const allocation = PaymentAllocation.hybrid(usd100, usd50);
       const sufficientBalance = usd100;
-      const insufficientBalance = new Money(25, 'USD');
+      const insufficientBalance = Money.fromAmount(25, 'USD');
 
       expect(
         paymentProcessor.validatePayment(allocation, sufficientBalance),

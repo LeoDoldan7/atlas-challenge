@@ -214,7 +214,7 @@ export class PaymentRepository {
             this.calculateSubscriptionPaymentAllocation(subscription);
 
           // Validate payment can be processed
-          const currentWalletBalance = new Money(
+          const currentWalletBalance = Money.fromAmount(
             Number(employee.wallet.balance_cents) - Number(totalAmountPaid),
             'USD',
           );
@@ -355,8 +355,8 @@ export class PaymentRepository {
       totalEmployeeContribution += employeePortion;
     }
 
-    const companyAmount = new Money(totalCompanyContribution, 'USD');
-    const employeeAmount = new Money(totalEmployeeContribution, 'USD');
+    const companyAmount = Money.fromAmount(totalCompanyContribution, 'USD');
+    const employeeAmount = Money.fromAmount(totalEmployeeContribution, 'USD');
 
     if (totalEmployeeContribution === 0) {
       return PaymentAllocation.companyPaid(companyAmount);

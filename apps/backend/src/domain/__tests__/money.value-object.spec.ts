@@ -3,34 +3,40 @@ import { Money } from '../value-objects/money.value-object';
 describe('Money Value Object', () => {
   describe('Construction', () => {
     it('should create money with positive amount', () => {
-      const money = new Money(100.5, 'USD');
+      const money = Money.fromAmount(100.5, 'USD');
       expect(money.amount).toBe(100.5);
       expect(money.currency).toBe('USD');
     });
 
     it('should round amount to 2 decimal places', () => {
-      const money = new Money(100.999, 'USD');
+      const money = Money.fromAmount(100.999, 'USD');
       expect(money.amount).toBe(101);
     });
 
     it('should convert currency to uppercase', () => {
-      const money = new Money(100, 'usd');
+      const money = Money.fromAmount(100, 'usd');
       expect(money.currency).toBe('USD');
     });
 
     it('should default to USD currency', () => {
-      const money = new Money(100);
+      const money = Money.fromAmount(100);
       expect(money.currency).toBe('USD');
     });
 
     it('should throw error for negative amount', () => {
-      expect(() => new Money(-10)).toThrow('Money amount cannot be negative');
+      expect(() => Money.fromAmount(-10)).toThrow(
+        'Money amount cannot be negative',
+      );
     });
 
     it('should throw error for invalid currency', () => {
-      expect(() => new Money(100, '')).toThrow('Invalid currency code');
-      expect(() => new Money(100, 'US')).toThrow('Invalid currency code');
-      expect(() => new Money(100, 'USDD')).toThrow('Invalid currency code');
+      expect(() => Money.fromAmount(100, '')).toThrow('Invalid currency code');
+      expect(() => Money.fromAmount(100, 'US')).toThrow(
+        'Invalid currency code',
+      );
+      expect(() => Money.fromAmount(100, 'USDD')).toThrow(
+        'Invalid currency code',
+      );
     });
   });
 
@@ -49,9 +55,9 @@ describe('Money Value Object', () => {
   });
 
   describe('Arithmetic Operations', () => {
-    const usd100 = new Money(100, 'USD');
-    const usd50 = new Money(50, 'USD');
-    const eur100 = new Money(100, 'EUR');
+    const usd100 = Money.fromAmount(100, 'USD');
+    const usd50 = Money.fromAmount(50, 'USD');
+    const eur100 = Money.fromAmount(100, 'EUR');
 
     it('should add money with same currency', () => {
       const result = usd100.add(usd50);
@@ -95,10 +101,10 @@ describe('Money Value Object', () => {
   });
 
   describe('Comparison Operations', () => {
-    const usd100 = new Money(100, 'USD');
-    const usd150 = new Money(150, 'USD');
-    const usd100Copy = new Money(100, 'USD');
-    const eur100 = new Money(100, 'EUR');
+    const usd100 = Money.fromAmount(100, 'USD');
+    const usd150 = Money.fromAmount(150, 'USD');
+    const usd100Copy = Money.fromAmount(100, 'USD');
+    const eur100 = Money.fromAmount(100, 'EUR');
 
     it('should compare greater than correctly', () => {
       expect(usd150.isGreaterThanOrEqualTo(usd100)).toBe(true);
@@ -118,7 +124,7 @@ describe('Money Value Object', () => {
   });
 
   describe('Utility Methods', () => {
-    const money = new Money(123.45, 'USD');
+    const money = Money.fromAmount(123.45, 'USD');
 
     it('should convert to string', () => {
       expect(money.toString()).toBe('USD 123.45');
@@ -135,17 +141,17 @@ describe('Money Value Object', () => {
 
   describe('Edge Cases', () => {
     it('should handle zero amounts', () => {
-      const zero = new Money(0);
+      const zero = Money.fromAmount(0);
       expect(zero.amount).toBe(0);
     });
 
     it('should handle very small amounts', () => {
-      const small = new Money(0.01);
+      const small = Money.fromAmount(0.01);
       expect(small.amount).toBe(0.01);
     });
 
     it('should handle large amounts', () => {
-      const large = new Money(999999.99);
+      const large = Money.fromAmount(999999.99);
       expect(large.amount).toBe(999999.99);
     });
   });
