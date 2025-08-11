@@ -28,7 +28,6 @@ import {
   IconUsers,
   IconCheck,
   IconClock,
-  IconX
 } from '@tabler/icons-react';
 import { GET_EMPLOYEE_SUBSCRIPTIONS_QUERY, EMPLOYEES_BY_COMPANY_QUERY } from '../lib/queries';
 import type { Employee, HealthcareSubscription, EmployeesByCompanyResponse, SubscriptionsResponse } from '../types';
