@@ -114,10 +114,15 @@ const Subscriptions: React.FC = () => {
     switch (status) {
       case 'ACTIVE':
         return 'green';
-      case 'CANCELED':
-        return 'red';
+      case 'CANCELLED':
       case 'TERMINATED':
+        return 'red';
+      case 'PENDING':
+        return 'blue';
+      case 'DRAFT':
         return 'gray';
+      case 'EXPIRED':
+        return 'orange';
       default:
         return 'yellow';
     }

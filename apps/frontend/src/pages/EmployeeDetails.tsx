@@ -66,8 +66,6 @@ const EmployeeDetails: React.FC = () => {
         return 'green';
       case 'CANCELED':
         return 'red';
-      case 'TERMINATED':
-        return 'gray';
       case 'DEMOGRAPHIC_VERIFICATION_PENDING':
         return 'blue';
       case 'DOCUMENT_UPLOAD_PENDING':
@@ -84,8 +82,6 @@ const EmployeeDetails: React.FC = () => {
       case 'ACTIVE':
         return IconCheck;
       case 'CANCELED':
-      case 'TERMINATED':
-        return IconX;
       case 'DEMOGRAPHIC_VERIFICATION_PENDING':
       case 'DOCUMENT_UPLOAD_PENDING':
       case 'PLAN_ACTIVATION_PENDING':
