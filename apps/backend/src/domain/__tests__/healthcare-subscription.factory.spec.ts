@@ -90,13 +90,13 @@ describe('HealthcareSubscriptionFactory', () => {
 
   describe('Convenience Factory Methods', () => {
     it('should create employee-only subscription using convenience method', () => {
-      const subscription = factory.createEmployeeOnlySubscription(
-        'comp_123',
-        'emp_456',
-        'plan_789',
-        usd100,
-        80, // 80% company contribution
-      );
+      const subscription = factory.createEmployeeOnlySubscription({
+        companyId: 'comp_123',
+        employeeId: 'emp_456',
+        planId: 'plan_789',
+        monthlyPrice: usd100,
+        companyContributionPercentage: 80,
+      });
 
       expect(subscription.getItems()).toHaveLength(1);
       expect(subscription.getTotalMonthlyAmount().amount).toBe(100);

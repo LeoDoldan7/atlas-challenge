@@ -110,13 +110,19 @@ export class HealthcareSubscriptionFactory implements SubscriptionFactory {
     };
   }
 
-  createEmployeeOnlySubscription(
-    companyId: string,
-    employeeId: string,
-    planId: string,
-    monthlyPrice: Money,
-    companyContributionPercentage: number = 75,
-  ): Subscription {
+  createEmployeeOnlySubscription({
+    companyId,
+    employeeId,
+    planId,
+    monthlyPrice,
+    companyContributionPercentage = 75,
+  }: {
+    companyId: string;
+    employeeId: string;
+    planId: string;
+    monthlyPrice: Money;
+    companyContributionPercentage?: number;
+  }): Subscription {
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setFullYear(startDate.getFullYear() + 1);
