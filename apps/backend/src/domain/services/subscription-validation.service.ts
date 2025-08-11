@@ -23,7 +23,7 @@ interface EnrollmentStep {
 
 export class SubscriptionValidationService {
   validateCanModifyItems(status: SubscriptionStatus): void {
-    if (status !== SubscriptionStatus.DRAFT) {
+    if (status !== SubscriptionStatus.PENDING) {
       throw new Error('Cannot modify items after enrollment has started');
     }
   }

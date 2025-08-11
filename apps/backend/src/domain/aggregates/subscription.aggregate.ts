@@ -53,7 +53,7 @@ export class Subscription {
     paymentCoordinator?: SubscriptionPaymentCoordinator,
     validationService?: SubscriptionValidationService,
   ) {
-    this.status = SubscriptionStatus.DRAFT;
+    this.status = SubscriptionStatus.PENDING;
     this.enrollmentSteps = EnrollmentStepManager.initializeSteps();
     this.totalMonthlyAmount = Money.zero();
     this.aggregatePaymentAllocation = new PaymentAllocation({
@@ -63,7 +63,7 @@ export class Subscription {
     this.updatedAt = new Date();
     this.stateMachine = new SubscriptionEnrollmentStateMachine(
       id,
-      EnrollmentStatus.DRAFT,
+      EnrollmentStatus.ENROLLMENT_STARTED,
     );
     this.validationService =
       validationService || new SubscriptionValidationService();
