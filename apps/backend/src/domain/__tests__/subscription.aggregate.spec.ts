@@ -172,14 +172,14 @@ describe('Subscription Aggregate', () => {
         }).toThrow('Maximum 10 children allowed per subscription');
       });
 
-      it('should prevent modification after enrollment starts', () => {
+      it('should prevent modification after enrollment starts', async () => {
         subscription.addSubscriptionItem({
           memberType: ItemRole.employee,
           memberId: 'emp_123',
           monthlyPrice,
           paymentAllocation,
         });
-        subscription.startEnrollment();
+        await subscription.startEnrollment();
 
         expect(() => {
           subscription.addSubscriptionItem({
@@ -206,14 +206,14 @@ describe('Subscription Aggregate', () => {
     });
 
     describe('Starting Enrollment', () => {
-      it('should start enrollment successfully', () => {
-        subscription.startEnrollment();
+      it('should start enrollment successfully', async () => {
+        await subscription.startEnrollment();
         expect(subscription.getStatus()).toBe(
           'demographic_verification_pending',
         );
       });
 
-      it('should require items before starting enrollment', () => {
+      it('should require items before starting enrollment', async () => {
         const emptySubscription = new Subscription(
           'sub_empty',
           companyId,
@@ -222,27 +222,27 @@ describe('Subscription Aggregate', () => {
           subscriptionPeriod,
         );
 
-        expect(() => {
-          emptySubscription.startEnrollment();
-        }).toThrow('Cannot start enrollment without subscription items');
+        await expect(emptySubscription.startEnrollment()).rejects.toThrow(
+          'Cannot start enrollment without subscription items',
+        );
       });
 
-      it('should only allow starting from DRAFT status', () => {
-        subscription.startEnrollment();
+      it('should only allow starting from DRAFT status', async () => {
+        await subscription.startEnrollment();
 
-        expect(() => {
-          subscription.startEnrollment();
-        }).toThrow('Can only start enrollment from DRAFT status');
+        await expect(subscription.startEnrollment()).rejects.toThrow(
+          'Cannot start enrollment in current state',
+        );
       });
     });
 
     describe('Completing Enrollment Steps', () => {
-      beforeEach(() => {
-        subscription.startEnrollment();
+      beforeEach(async () => {
+        await subscription.startEnrollment();
       });
 
-      it('should complete demographic verification step', () => {
-        subscription.completeEnrollmentStep(
+      it('should complete demographic verification step', async () => {
+        await subscription.completeEnrollmentStep(
           EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
           {
             verified: true,
@@ -258,50 +258,58 @@ describe('Subscription Aggregate', () => {
         expect(demoStep?.metadata).toEqual({ verified: true });
       });
 
-      it('should progress through all enrollment steps', () => {
+      it('should progress through all enrollment steps', async () => {
         // Complete demographic verification
-        subscription.completeEnrollmentStep(
+        await subscription.completeEnrollmentStep(
           EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
         );
         expect(subscription.getStatus()).toBe('document_upload_pending');
 
         // Complete document upload
-        subscription.completeEnrollmentStep(EnrollmentStepType.DOCUMENT_UPLOAD);
+        await subscription.completeEnrollmentStep(
+          EnrollmentStepType.DOCUMENT_UPLOAD,
+        );
         expect(subscription.getStatus()).toBe('plan_activation_pending');
 
         // Complete plan activation
-        subscription.completeEnrollmentStep(EnrollmentStepType.PLAN_ACTIVATION);
+        await subscription.completeEnrollmentStep(
+          EnrollmentStepType.PLAN_ACTIVATION,
+        );
         expect(subscription.getStatus()).toBe('active');
       });
 
-      it('should enforce step completion order', () => {
-        expect(() => {
+      it('should enforce step completion order', async () => {
+        await expect(
           subscription.completeEnrollmentStep(
             EnrollmentStepType.DOCUMENT_UPLOAD,
-          );
-        }).toThrow(
+          ),
+        ).rejects.toThrow(
           'Must complete DEMOGRAPHIC_VERIFICATION before DOCUMENT_UPLOAD',
         );
       });
 
-      it('should prevent completing already completed steps', () => {
-        subscription.completeEnrollmentStep(
+      it('should prevent completing already completed steps', async () => {
+        await subscription.completeEnrollmentStep(
           EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
         );
 
-        expect(() => {
+        await expect(
           subscription.completeEnrollmentStep(
             EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
-          );
-        }).toThrow('Step DEMOGRAPHIC_VERIFICATION is already completed');
+          ),
+        ).rejects.toThrow('Step DEMOGRAPHIC_VERIFICATION is already completed');
       });
 
-      it('should activate subscription when all steps completed', () => {
-        subscription.completeEnrollmentStep(
+      it('should activate subscription when all steps completed', async () => {
+        await subscription.completeEnrollmentStep(
           EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
         );
-        subscription.completeEnrollmentStep(EnrollmentStepType.DOCUMENT_UPLOAD);
-        subscription.completeEnrollmentStep(EnrollmentStepType.PLAN_ACTIVATION);
+        await subscription.completeEnrollmentStep(
+          EnrollmentStepType.DOCUMENT_UPLOAD,
+        );
+        await subscription.completeEnrollmentStep(
+          EnrollmentStepType.PLAN_ACTIVATION,
+        );
 
         expect(subscription.getStatus()).toBe('active');
       });

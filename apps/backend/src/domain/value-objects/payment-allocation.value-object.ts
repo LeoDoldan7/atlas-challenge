@@ -1,6 +1,6 @@
 import { Money } from './money.value-object';
 
-enum PaymentSource {
+export enum PaymentSource {
   COMPANY = 'COMPANY',
   EMPLOYEE_WALLET = 'EMPLOYEE_WALLET',
   HYBRID = 'HYBRID',

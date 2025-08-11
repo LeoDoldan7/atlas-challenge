@@ -1,6 +1,13 @@
 import { Money } from '../value-objects/money.value-object';
 import { SubscriptionPeriod } from '../value-objects/subscription-period.value-object';
 import { PaymentAllocation } from '../value-objects/payment-allocation.value-object';
+import { PaymentProcessorService } from '../services/payment-processor.service';
+import { PaymentResult } from '../strategies/payment-strategy.interface';
+import { SubscriptionEnrollmentStateMachine } from '../state-machines/enrollment-state-machine';
+import {
+  EnrollmentStatus,
+  EnrollmentEvent,
+} from '../state-machines/enrollment-state.interface';
 import { ItemRole } from '@prisma/client';
 
 // Domain status enum - includes states not in database (DRAFT, SUSPENDED, EXPIRED)
@@ -47,6 +54,8 @@ export class Subscription {
   private totalMonthlyAmount: Money;
   private aggregatePaymentAllocation: PaymentAllocation;
   private updatedAt: Date;
+  private stateMachine: SubscriptionEnrollmentStateMachine;
+  private paymentProcessor: PaymentProcessorService;
   readonly createdAt: Date = new Date();
 
   constructor(
@@ -55,6 +64,7 @@ export class Subscription {
     readonly employeeId: string,
     readonly planId: string,
     private period: SubscriptionPeriod,
+    paymentProcessor?: PaymentProcessorService,
   ) {
     this.status = DomainSubscriptionStatus.DRAFT;
     this.enrollmentSteps = this.initializeEnrollmentSteps();
@@ -64,6 +74,11 @@ export class Subscription {
       employeeContribution: Money.zero(),
     });
     this.updatedAt = new Date();
+    this.stateMachine = new SubscriptionEnrollmentStateMachine(
+      id,
+      EnrollmentStatus.DRAFT,
+    );
+    this.paymentProcessor = paymentProcessor || new PaymentProcessorService();
   }
 
   private initializeEnrollmentSteps(): EnrollmentStep[] {
@@ -104,23 +119,27 @@ export class Subscription {
     this.recalculateTotals();
   }
 
-  startEnrollment(): void {
-    if (this.status !== DomainSubscriptionStatus.DRAFT) {
-      throw new Error('Can only start enrollment from DRAFT status');
-    }
-
+  async startEnrollment(): Promise<void> {
     if (this.items.length === 0) {
       throw new Error('Cannot start enrollment without subscription items');
     }
 
+    const canTransition = this.stateMachine.canTransition(
+      EnrollmentEvent.START_ENROLLMENT,
+    );
+    if (!canTransition) {
+      throw new Error('Cannot start enrollment in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
     this.status = DomainSubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING;
     this.updatedAt = new Date();
   }
 
-  completeEnrollmentStep(
+  async completeEnrollmentStep(
     stepType: EnrollmentStepType,
     metadata?: Record<string, any>,
-  ): void {
+  ): Promise<void> {
     this.validateCanCompleteEnrollmentStep();
 
     const step = this.findEnrollmentStep(stepType);
@@ -142,18 +161,111 @@ export class Subscription {
 
     // Check if all steps completed
     if (this.enrollmentSteps.every((s) => s.status === 'COMPLETED')) {
-      this.activate();
+      if (this.stateMachine.canTransition(EnrollmentEvent.ACTIVATE)) {
+        await this.activate();
+      }
     }
   }
 
-  private activate(): void {
+  async processPayment(employeeWalletBalance: Money): Promise<PaymentResult> {
+    if (!this.stateMachine.canTransition(EnrollmentEvent.PROCESS_PAYMENT)) {
+      throw new Error('Cannot process payment in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
+
+    try {
+      const result = this.paymentProcessor.processPayment(
+        this.aggregatePaymentAllocation,
+        employeeWalletBalance,
+        { subscriptionId: this.id },
+      );
+
+      if (result.success) {
+        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS, {
+          transactionId: result.transactionId,
+          processedAt: result.processedAt,
+        });
+      } else {
+        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED, {
+          errorMessage: result.errorMessage,
+          processedAt: result.processedAt,
+        });
+      }
+
+      this.updatedAt = new Date();
+      return result;
+    } catch (error) {
+      await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED, {
+        errorMessage:
+          error instanceof Error ? error.message : 'Unknown payment error',
+        processedAt: new Date(),
+      });
+
+      throw error;
+    }
+  }
+
+  validatePayment(employeeWalletBalance: Money): boolean {
+    return this.paymentProcessor.validatePayment(
+      this.aggregatePaymentAllocation,
+      employeeWalletBalance,
+    );
+  }
+
+  async activate(): Promise<void> {
     if (!this.period.isActive()) {
       throw new Error(
         'Cannot activate subscription outside of subscription period',
       );
     }
 
+    if (!this.stateMachine.canTransition(EnrollmentEvent.ACTIVATE)) {
+      throw new Error('Cannot activate subscription in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.ACTIVATE);
     this.status = DomainSubscriptionStatus.ACTIVE;
+    this.updatedAt = new Date();
+  }
+
+  async suspend(): Promise<void> {
+    if (!this.stateMachine.canTransition(EnrollmentEvent.SUSPEND)) {
+      throw new Error('Cannot suspend subscription in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.SUSPEND);
+    this.status = DomainSubscriptionStatus.SUSPENDED;
+    this.updatedAt = new Date();
+  }
+
+  async resume(): Promise<void> {
+    if (!this.stateMachine.canTransition(EnrollmentEvent.RESUME)) {
+      throw new Error('Cannot resume subscription in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.RESUME);
+    this.status = DomainSubscriptionStatus.ACTIVE;
+    this.updatedAt = new Date();
+  }
+
+  async cancel(): Promise<void> {
+    if (!this.stateMachine.canTransition(EnrollmentEvent.CANCEL)) {
+      throw new Error('Cannot cancel subscription in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.CANCEL);
+    this.status = DomainSubscriptionStatus.CANCELLED;
+    this.updatedAt = new Date();
+  }
+
+  async expire(): Promise<void> {
+    if (!this.stateMachine.canTransition(EnrollmentEvent.EXPIRE)) {
+      throw new Error('Cannot expire subscription in current state');
+    }
+
+    await this.stateMachine.transition(EnrollmentEvent.EXPIRE);
+    this.status = DomainSubscriptionStatus.EXPIRED;
     this.updatedAt = new Date();
   }
 
@@ -275,5 +387,17 @@ export class Subscription {
 
   getPeriod(): SubscriptionPeriod {
     return this.period;
+  }
+
+  getStateMachine(): SubscriptionEnrollmentStateMachine {
+    return this.stateMachine;
+  }
+
+  getPaymentProcessor(): PaymentProcessorService {
+    return this.paymentProcessor;
+  }
+
+  getCurrentEnrollmentState(): EnrollmentStatus {
+    return this.stateMachine.getCurrentState();
   }
 }
