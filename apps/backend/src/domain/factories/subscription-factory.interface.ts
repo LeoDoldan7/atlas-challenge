@@ -19,13 +19,6 @@ export interface SubscriptionConfig {
   members?: SubscriptionMemberConfig[];
 }
 
-export interface SubscriptionTemplate {
-  name: string;
-  description: string;
-  defaultMembers: Omit<SubscriptionMemberConfig, 'memberId'>[];
-  businessRules: SubscriptionBusinessRules;
-}
-
 export interface SubscriptionBusinessRules {
   requiresSpouseForChildren?: boolean;
   maxChildren?: number;
@@ -36,15 +29,4 @@ export interface SubscriptionBusinessRules {
 
 export interface SubscriptionFactory {
   createSubscription(config: SubscriptionConfig): Subscription;
-  createFromTemplate(
-    template: SubscriptionTemplate,
-    config: Omit<SubscriptionConfig, 'members'>,
-  ): Subscription;
-  validateConfiguration(config: SubscriptionConfig): ValidationResult;
-}
-
-export interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
 }

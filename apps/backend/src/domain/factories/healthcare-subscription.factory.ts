@@ -1,8 +1,6 @@
 import {
   SubscriptionFactory,
   SubscriptionConfig,
-  SubscriptionTemplate,
-  ValidationResult,
   SubscriptionBusinessRules,
   SubscriptionMemberConfig,
 } from './subscription-factory.interface';
@@ -31,13 +29,6 @@ export class HealthcareSubscriptionFactory implements SubscriptionFactory {
   }
 
   createSubscription(config: SubscriptionConfig): Subscription {
-    const validation = this.validateConfiguration(config);
-    if (!validation.isValid) {
-      throw new Error(
-        `Invalid subscription configuration: ${validation.errors.join(', ')}`,
-      );
-    }
-
     const subscription = new Subscription(
       this.generateSubscriptionId(),
       config.companyId,
@@ -61,53 +52,6 @@ export class HealthcareSubscriptionFactory implements SubscriptionFactory {
     }
 
     return subscription;
-  }
-
-  createFromTemplate(
-    template: SubscriptionTemplate,
-    config: Omit<SubscriptionConfig, 'members'>,
-  ): Subscription {
-    const members: SubscriptionMemberConfig[] = template.defaultMembers.map(
-      (memberTemplate, index) => ({
-        ...memberTemplate,
-        memberId: this.generateMemberId(memberTemplate.memberType, index),
-      }),
-    );
-
-    const fullConfig: SubscriptionConfig = {
-      ...config,
-      members,
-    };
-
-    this.businessRules = { ...this.businessRules, ...template.businessRules };
-
-    return this.createSubscription(fullConfig);
-  }
-
-  validateConfiguration(config: SubscriptionConfig): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (!config.companyId) errors.push('Company ID is required');
-    if (!config.employeeId) errors.push('Employee ID is required');
-    if (!config.planId) errors.push('Plan ID is required');
-    if (!config.period) errors.push('Subscription period is required');
-
-    if (config.members) {
-      const memberValidation = this.validateMembers(config.members);
-      errors.push(...memberValidation.errors);
-      warnings.push(...memberValidation.warnings);
-    }
-
-    const paymentValidation = this.validatePaymentConfiguration(config);
-    errors.push(...paymentValidation.errors);
-    warnings.push(...paymentValidation.warnings);
-
-    return {
-      isValid: errors.length === 0,
-      errors,
-      warnings,
-    };
   }
 
   createEmployeeOnlySubscription({
@@ -224,87 +168,6 @@ export class HealthcareSubscriptionFactory implements SubscriptionFactory {
     return this.createSubscription(config);
   }
 
-  private validateMembers(
-    members: SubscriptionMemberConfig[],
-  ): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    const employeeCount = members.filter(
-      (m) => m.memberType === ItemRole.employee,
-    ).length;
-    const spouseCount = members.filter(
-      (m) => m.memberType === ItemRole.spouse,
-    ).length;
-    const childrenCount = members.filter(
-      (m) => m.memberType === ItemRole.child,
-    ).length;
-
-    if (employeeCount === 0) {
-      errors.push('At least one employee must be included');
-    }
-
-    if (employeeCount > 1) {
-      errors.push('Only one employee allowed per subscription');
-    }
-
-    if (spouseCount > 1) {
-      errors.push('Only one spouse allowed per subscription');
-    }
-
-    if (
-      this.businessRules.maxChildren &&
-      childrenCount > this.businessRules.maxChildren
-    ) {
-      errors.push(`Maximum ${this.businessRules.maxChildren} children allowed`);
-    }
-
-    if (
-      this.businessRules.requiresSpouseForChildren &&
-      childrenCount > 0 &&
-      spouseCount === 0
-    ) {
-      errors.push('Spouse is required when adding children');
-    }
-
-    const memberIds = members.map((m) => m.memberId);
-    const uniqueIds = new Set(memberIds);
-    if (memberIds.length !== uniqueIds.size) {
-      errors.push('Duplicate member IDs found');
-    }
-
-    return { isValid: errors.length === 0, errors, warnings };
-  }
-
-  private validatePaymentConfiguration(
-    config: SubscriptionConfig,
-  ): ValidationResult {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-
-    if (config.members) {
-      for (const member of config.members) {
-        if (
-          !this.businessRules.allowedPaymentSources?.includes(
-            member.paymentAllocation.source,
-          )
-        ) {
-          errors.push(
-            `Payment source ${member.paymentAllocation.source} not allowed for member ${member.memberId}`,
-          );
-        }
-
-        if (member.monthlyPrice.amount <= 0) {
-          errors.push(
-            `Monthly price must be positive for member ${member.memberId}`,
-          );
-        }
-      }
-    }
-
-    return { isValid: errors.length === 0, errors, warnings };
-  }
-
   private sortMembersByPriority(
     members: SubscriptionMemberConfig[],
   ): SubscriptionMemberConfig[] {
@@ -321,9 +184,5 @@ export class HealthcareSubscriptionFactory implements SubscriptionFactory {
 
   private generateSubscriptionId(): string {
     return `sub_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-  }
-
-  private generateMemberId(memberType: ItemRole, index: number): string {
-    return `${memberType.toLowerCase()}_${Date.now()}_${index}`;
   }
 }

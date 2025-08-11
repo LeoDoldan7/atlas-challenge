@@ -27,8 +27,8 @@ interface SubscriptionItem {
   memberId: string;
   monthlyPrice: Money;
   paymentAllocation: PaymentAllocation;
-  customCompanyPercent?: number; // Custom percentage override
-  customEmployeePercent?: number; // Custom percentage override
+  customCompanyPercent?: number;
+  customEmployeePercent?: number;
   createdAt: Date;
 }
 
@@ -111,23 +111,6 @@ export class Subscription {
     this.recalculateTotals();
   }
 
-  async startEnrollment(): Promise<void> {
-    if (this.items.length === 0) {
-      throw new Error('Cannot start enrollment without subscription items');
-    }
-
-    const canTransition = this.stateMachine.canTransition(
-      EnrollmentEvent.START_ENROLLMENT,
-    );
-    if (!canTransition) {
-      throw new Error('Cannot start enrollment in current state');
-    }
-
-    await this.stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
-    this.status = SubscriptionStatus.PENDING;
-    this.updatedAt = new Date();
-  }
-
   async completeEnrollmentStep(stepType: SubscriptionStepType): Promise<void> {
     this.validationService.validateCanCompleteEnrollmentStep(this.status);
 
@@ -147,16 +130,12 @@ export class Subscription {
     );
     this.updatedAt = new Date();
 
-    // Check if all steps completed
     if (EnrollmentStepManager.areAllStepsCompleted(this.enrollmentSteps)) {
-      // All steps completed, go through payment processing flow before activation
       if (this.stateMachine.canTransition(EnrollmentEvent.PROCESS_PAYMENT)) {
         await this.stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
-        // Simulate immediate payment success for step-based workflow
         if (this.stateMachine.canTransition(EnrollmentEvent.PAYMENT_SUCCESS)) {
           await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
         }
-        // Now activate
         if (this.stateMachine.canTransition(EnrollmentEvent.ACTIVATE)) {
           await this.activate();
         }
@@ -192,41 +171,10 @@ export class Subscription {
       throw new Error('Cannot activate subscription in current state');
     }
 
-    // Ensure all steps are completed before activation
     this.validationService.validateAllStepsCompleted(this.enrollmentSteps);
 
     await this.stateMachine.transition(EnrollmentEvent.ACTIVATE);
     this.status = SubscriptionStatus.ACTIVE;
-    this.updatedAt = new Date();
-  }
-
-  async resume(): Promise<void> {
-    if (!this.stateMachine.canTransition(EnrollmentEvent.RESUME)) {
-      throw new Error('Cannot resume subscription in current state');
-    }
-
-    await this.stateMachine.transition(EnrollmentEvent.RESUME);
-    this.status = SubscriptionStatus.ACTIVE;
-    this.updatedAt = new Date();
-  }
-
-  async cancel(): Promise<void> {
-    if (!this.stateMachine.canTransition(EnrollmentEvent.CANCEL)) {
-      throw new Error('Cannot cancel subscription in current state');
-    }
-
-    await this.stateMachine.transition(EnrollmentEvent.CANCEL);
-    this.status = SubscriptionStatus.CANCELLED;
-    this.updatedAt = new Date();
-  }
-
-  async expire(): Promise<void> {
-    if (!this.stateMachine.canTransition(EnrollmentEvent.EXPIRE)) {
-      throw new Error('Cannot expire subscription in current state');
-    }
-
-    await this.stateMachine.transition(EnrollmentEvent.EXPIRE);
-    this.status = SubscriptionStatus.EXPIRED;
     this.updatedAt = new Date();
   }
 
