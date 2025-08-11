@@ -26,15 +26,24 @@ export type ItemRole =
 
 export type SubscriptionStatus = 
   | 'ACTIVE'
-  | 'CANCELED'
-  | 'DEMOGRAPHIC_VERIFICATION_PENDING'
-  | 'DOCUMENT_UPLOAD_PENDING'
-  | 'PLAN_ACTIVATION_PENDING'
+  | 'CANCELLED'
+  | 'DRAFT'
+  | 'EXPIRED'
+  | 'PENDING'
   | 'TERMINATED';
 
 export type SubscriptionType = 
   | 'FAMILY'
   | 'INDIVIDUAL';
+
+export type SubscriptionStepType = 
+  | 'DEMOGRAPHIC_VERIFICATION'
+  | 'DOCUMENT_UPLOAD'
+  | 'PLAN_ACTIVATION';
+
+export type StepStatus = 
+  | 'PENDING'
+  | 'COMPLETED';
 
 // Main entity types
 export interface Demographic {
@@ -94,6 +103,15 @@ export interface HealthcareSubscriptionFile {
   createdAt: string; // DateTime as ISO string
 }
 
+export interface SubscriptionStep {
+  id: string;
+  healthcareSubscriptionId: string;
+  type: SubscriptionStepType;
+  status: StepStatus;
+  createdAt: string; // DateTime as ISO string
+  completedAt?: string; // DateTime as ISO string
+}
+
 export interface HealthcareSubscription {
   id: string;
   companyId: string;
@@ -110,6 +128,7 @@ export interface HealthcareSubscription {
   plan?: HealthcarePlan;
   items?: HealthcareSubscriptionItem[];
   files?: HealthcareSubscriptionFile[];
+  steps?: SubscriptionStep[];
 }
 
 // GraphQL query response types
