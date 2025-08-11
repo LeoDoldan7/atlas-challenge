@@ -12,7 +12,7 @@ enum SubscriptionType {
   family
 }
 
-enum SubscriptionStatus {
+enum SubscriptionStepType {
   demographic_verification_pending
   document_upload_pending
   plan_activation_pending
@@ -114,7 +114,7 @@ model HealthcareSubscription {
   company_id          BigInt
   employee_id         BigInt
   type                SubscriptionType
-  status              SubscriptionStatus
+  status              SubscriptionStepType
   plan_id             BigInt
   start_date          DateTime              @db.Date
   end_date            DateTime?             @db.Date
@@ -129,6 +129,7 @@ model HealthcareSubscription {
   items               HealthcareSubscriptionItem[]
   files               HealthcareSubscriptionFile[] 
   transactions        Transaction[]
+  steps               SubscriptionStep[]
 
   @@index([company_id])
   @@index([employee_id])
@@ -164,6 +165,25 @@ model HealthcareSubscriptionFile {
 
   @@index([healthcare_subscription_id])
   @@map("healthcare_subscription_files")
+}
+
+model SubscriptionStep {
+  id                         BigInt              @id @default(autoincrement()) @db.BigInt
+  healthcare_subscription_id BigInt
+  type                       SubscriptionStepType
+  status                     StepStatus          @default(PENDING)
+  created_at                 DateTime            @default(now())
+  completed_at               DateTime?
+
+  subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)
+
+  @@index([healthcare_subscription_id])
+  @@map("subscription_steps")
+}
+
+enum StepStatus {
+  PENDING
+  SUCCESS
 }
 
 enum TransactionType {
