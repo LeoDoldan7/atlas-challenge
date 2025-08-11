@@ -1,6 +1,7 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { MaritalStatus } from '../../shared/enums';
 import { Demographic } from '../../demographic/types/demographic.type';
+import { Wallet } from '../../wallet/types/wallet.type';
 
 @ObjectType()
 export class Employee {
@@ -27,4 +28,7 @@ export class Employee {
 
   @Field(() => Demographic)
   demographic: Demographic;
+
+  @Field(() => Wallet, { nullable: true })
+  wallet?: Wallet;
 }

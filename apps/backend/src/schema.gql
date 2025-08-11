@@ -63,6 +63,13 @@ type Employee {
   email: String!
   id: ID!
   maritalStatus: MaritalStatus!
+  wallet: Wallet
+}
+
+type EmployeePaymentResult {
+  amountPaid: String!
+  employeeId: String!
+  subscriptionsPaid: Float!
 }
 
 type EmployeeSpendingStatistics {
@@ -107,6 +114,7 @@ type HealthcareSubscription {
   files: [HealthcareSubscriptionFile!]
   id: ID!
   items: [HealthcareSubscriptionItem!]
+  lastPaymentAt: DateTime
   plan: HealthcarePlan
   planId: ID!
   startDate: DateTime!
@@ -154,8 +162,15 @@ enum MaritalStatus {
 type Mutation {
   activatePlan(activatePlanInput: ActivatePlanInput!): HealthcareSubscription!
   createSubscription(createSubscriptionInput: CreateSubscriptionInput!): HealthcareSubscription!
+  processCompanyPayments(processPaymentsInput: ProcessPaymentsInput!): PaymentResult!
   uploadFamilyDemographics(uploadFamilyDemographicsInput: UploadFamilyDemographicsInput!): HealthcareSubscription!
   uploadFiles(uploadFilesInput: UploadFilesInput!): HealthcareSubscription!
+}
+
+type PaymentResult {
+  employeePayments: [EmployeePaymentResult!]!
+  success: Boolean!
+  totalAmountProcessed: String!
 }
 
 type PlanSpendingStatistics {
@@ -165,6 +180,10 @@ type PlanSpendingStatistics {
   planName: String!
   subscriptionCount: Float!
   totalMonthlyCostCents: Float!
+}
+
+input ProcessPaymentsInput {
+  companyId: String!
 }
 
 type Query {
@@ -206,4 +225,13 @@ input UploadFamilyDemographicsInput {
 input UploadFilesInput {
   files: [FileInput!]!
   subscriptionId: String!
+}
+
+type Wallet {
+  balanceCents: String!
+  createdAt: DateTime!
+  currencyCode: String!
+  employee: Employee!
+  employeeId: ID!
+  id: ID!
 }

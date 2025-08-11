@@ -8,6 +8,7 @@ const subscriptionWithRelationsInclude = {
   employee: {
     include: {
       demographics: true,
+      wallet: true,
     },
   },
   plan: true,

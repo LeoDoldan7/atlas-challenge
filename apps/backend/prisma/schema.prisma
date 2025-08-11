@@ -75,6 +75,7 @@ model Employee {
   demographics     Demographic                @relation(fields: [demographics_id], references: [id], onDelete: Restrict)
   wallet           Wallet?
   subscriptions    HealthcareSubscription[]
+  transactions     Transaction[]
 
   @@index([company_id])
   @@index([demographics_id])
@@ -109,23 +110,25 @@ model HealthcarePlan {
 }
 
 model HealthcareSubscription {
-  id             BigInt                @id @default(autoincrement()) @db.BigInt
-  company_id     BigInt
-  employee_id    BigInt
-  type           SubscriptionType
-  status         SubscriptionStatus
-  plan_id        BigInt
-  start_date     DateTime              @db.Date
-  end_date       DateTime?             @db.Date
-  billing_anchor Int                   @db.SmallInt
-  created_at     DateTime              @default(now())
+  id                  BigInt                @id @default(autoincrement()) @db.BigInt
+  company_id          BigInt
+  employee_id         BigInt
+  type                SubscriptionType
+  status              SubscriptionStatus
+  plan_id             BigInt
+  start_date          DateTime              @db.Date
+  end_date            DateTime?             @db.Date
+  billing_anchor      Int                   @db.SmallInt
+  last_payment_at     DateTime?             @db.Date
+  created_at          DateTime              @default(now())
 
-  company        Company               @relation(fields: [company_id], references: [id], onDelete: Restrict)
-  employee       Employee              @relation(fields: [employee_id], references: [id], onDelete: Restrict)
-  plan           HealthcarePlan        @relation(fields: [plan_id], references: [id], onDelete: Restrict)
+  company             Company               @relation(fields: [company_id], references: [id], onDelete: Restrict)
+  employee            Employee              @relation(fields: [employee_id], references: [id], onDelete: Restrict)
+  plan                HealthcarePlan        @relation(fields: [plan_id], references: [id], onDelete: Restrict)
 
-  items          HealthcareSubscriptionItem[]
-  files          HealthcareSubscriptionFile[] 
+  items               HealthcareSubscriptionItem[]
+  files               HealthcareSubscriptionFile[] 
+  transactions        Transaction[]
 
   @@index([company_id])
   @@index([employee_id])
@@ -161,4 +164,28 @@ model HealthcareSubscriptionFile {
 
   @@index([healthcare_subscription_id])
   @@map("healthcare_subscription_files")
+}
+
+enum TransactionType {
+  subscription_payment
+  wallet_credit
+  wallet_debit
+}
+
+model Transaction {
+  id                         BigInt         @id @default(autoincrement()) @db.BigInt
+  employee_id                BigInt
+  healthcare_subscription_id BigInt?
+  type                       TransactionType
+  amount_cents               BigInt         @db.BigInt
+  currency_code              String         @db.Char(3)
+  description                String?
+  created_at                 DateTime       @default(now())
+
+  employee                   Employee                  @relation(fields: [employee_id], references: [id], onDelete: Restrict)
+  subscription               HealthcareSubscription?   @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Restrict)
+
+  @@index([employee_id])
+  @@index([healthcare_subscription_id])
+  @@map("transactions")
 }

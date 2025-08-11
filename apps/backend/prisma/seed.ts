@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, MaritalStatus } from '@prisma/client';
+import { PrismaClient, Prisma, MaritalStatus, ItemRole } from '@prisma/client';
 import { dollarsToCents } from '../src/utils';
 
 const prisma = new PrismaClient();
@@ -122,6 +122,20 @@ async function main() {
     },
   ];
 
+  interface EmployeeWithDemographic {
+    employee: {
+      id: bigint;
+      demographics_id: bigint;
+      [key: string]: unknown;
+    };
+    demographic: {
+      first_name: string;
+      last_name: string;
+      [key: string]: unknown;
+    };
+  }
+
+  const employees: EmployeeWithDemographic[] = [];
   for (const data of employeesData) {
     // Create demographic record
     const demographic = await prisma.demographic.create({
@@ -137,108 +151,130 @@ async function main() {
       },
     });
 
-    // Create wallet for employee
-    await prisma.wallet.create({
-      data: {
-        employee_id: employee.id,
-        balance_cents: BigInt(Math.floor(Math.random() * dollarsToCents(1000))), // $0–$1,000
-        currency_code: 'USD',
-      },
-    });
-
+    employees.push({ employee, demographic });
     console.log(
       `✅ Created employee: ${data.demographic.first_name} ${data.demographic.last_name}`,
     );
   }
 
-  // -------------------- Seed healthcare subscriptions --------------------
-  // Get first plan for testing
+  // -------------------- Seed healthcare subscriptions with proper costs --------------------
   const basicPlan = await prisma.healthcarePlan.findFirst();
   if (!basicPlan) {
     throw new Error('No healthcare plans found');
   }
 
-  // Get first employee for testing
-  const firstEmployee = await prisma.employee.findFirst();
-  if (!firstEmployee) {
-    throw new Error('No employees found');
-  }
-
-  // Create a family subscription for the first employee
-  const familySubscription = await prisma.healthcareSubscription.create({
-    data: {
-      employee_id: firstEmployee.id,
-      billing_anchor: new Date().getDate(),
-      company_id: company.id,
-      plan_id: basicPlan.id,
-      start_date: new Date(),
-      status: 'demographic_verification_pending',
-      type: 'family',
+  const subscriptionPlans = [
+    // Employee 0: John Smith - Family subscription (employee + spouse + 1 child) - ACTIVE
+    {
+      employeeIndex: 0,
+      type: 'family' as const,
+      status: 'active' as const,
+      items: ['employee', 'spouse', 'child'],
     },
-  });
+    // Employee 1: Sarah Johnson - Individual subscription - ACTIVE
+    {
+      employeeIndex: 1,
+      type: 'individual' as const,
+      status: 'active' as const,
+      items: ['employee'],
+    },
+    // Employee 2: Michael Davis - Individual subscription - ACTIVE
+    {
+      employeeIndex: 2,
+      type: 'individual' as const,
+      status: 'active' as const,
+      items: ['employee'],
+    },
+    // Employee 3: Emily Rodriguez - Family subscription - PENDING (for testing workflow)
+    {
+      employeeIndex: 3,
+      type: 'family' as const,
+      status: 'demographic_verification_pending' as const,
+      items: ['employee', 'spouse'],
+    },
+    // Employee 4: David Wilson - Individual subscription - PENDING
+    {
+      employeeIndex: 4,
+      type: 'individual' as const,
+      status: 'document_upload_pending' as const,
+      items: ['employee'],
+    },
+  ];
 
-  // Create subscription items for family members (employee, spouse, 1 child)
-  await prisma.healthcareSubscriptionItem.createMany({
-    data: [
-      {
-        role: 'employee',
-        healthcare_subscription_id: familySubscription.id,
-        demographic_id: firstEmployee.demographics_id,
-      },
-      {
-        role: 'spouse',
-        healthcare_subscription_id: familySubscription.id,
-      },
-      {
-        role: 'child',
-        healthcare_subscription_id: familySubscription.id,
-      },
-    ],
-  });
+  for (const plan of subscriptionPlans) {
+    const employeeData = employees[plan.employeeIndex];
+    if (!employeeData) {
+      throw new Error(`Employee at index ${plan.employeeIndex} not found`);
+    }
+    const { employee, demographic } = employeeData;
 
-  console.log(`✅ Created family subscription for ${firstEmployee.email}`);
-  console.log(
-    `📋 Subscription ID: ${familySubscription.id} (status: ${familySubscription.status})`,
-  );
-  console.log(
-    '💡 Use the uploadFamilyDemographics mutation to add spouse and child demographics',
-  );
+    // Calculate monthly cost for this subscription
+    let monthlyCost = BigInt(0);
+    for (const roleString of plan.items) {
+      switch (roleString) {
+        case 'employee':
+          monthlyCost += basicPlan.cost_employee_cents;
+          break;
+        case 'spouse':
+          monthlyCost += basicPlan.cost_spouse_cents;
+          break;
+        case 'child':
+          monthlyCost += basicPlan.cost_child_cents;
+          break;
+      }
+    }
 
-  // -------------------- Create second subscription for file upload testing --------------------
-  // Get second employee for testing file upload
-  const secondEmployee = await prisma.employee.findFirst({
-    where: { id: { not: firstEmployee.id } },
-  });
-
-  if (secondEmployee) {
-    const fileUploadSubscription = await prisma.healthcareSubscription.create({
+    // Create subscription
+    const subscription = await prisma.healthcareSubscription.create({
       data: {
-        employee_id: secondEmployee.id,
+        employee_id: employee.id,
         billing_anchor: new Date().getDate(),
         company_id: company.id,
         plan_id: basicPlan.id,
         start_date: new Date(),
-        status: 'document_upload_pending',
-        type: 'individual',
+        status: plan.status,
+        type: plan.type,
       },
     });
 
-    // Create subscription item for employee only
-    await prisma.healthcareSubscriptionItem.create({
+    // Create subscription items
+    for (const roleString of plan.items) {
+      const role = roleString as keyof typeof ItemRole;
+      await prisma.healthcareSubscriptionItem.create({
+        data: {
+          role: ItemRole[role],
+          healthcare_subscription_id: subscription.id,
+          demographic_id: role === 'employee' ? employee.demographics_id : null,
+        },
+      });
+    }
+
+    // Create wallet with sufficient balance for active subscriptions
+    let walletBalance: bigint;
+    if (plan.status === 'active') {
+      // For active subscriptions, provide 3-6 months of payments
+      const monthsOfPayment = 3 + Math.floor(Math.random() * 4); // 3-6 months
+      walletBalance = monthlyCost * BigInt(monthsOfPayment);
+      console.log(
+        `💰 Wallet for ${demographic.first_name} ${demographic.last_name}: $${Number(walletBalance) / 100} (${monthsOfPayment} months of $${Number(monthlyCost) / 100})`,
+      );
+    } else {
+      // For pending subscriptions, provide random amount
+      walletBalance = BigInt(Math.floor(Math.random() * dollarsToCents(500))); // $0-$500
+    }
+
+    // Create wallet for employee
+    await prisma.wallet.create({
       data: {
-        role: 'employee',
-        healthcare_subscription_id: fileUploadSubscription.id,
-        demographic_id: secondEmployee.demographics_id,
+        employee_id: employee.id,
+        balance_cents: walletBalance,
+        currency_code: 'USD',
       },
     });
 
     console.log(
-      `✅ Created individual subscription for file upload testing: ${secondEmployee.email}`,
+      `✅ Created ${plan.type} subscription for ${demographic.first_name} ${demographic.last_name} (${plan.status})`,
     );
-    console.log(
-      `📋 Subscription ID: ${fileUploadSubscription.id} (status: ${fileUploadSubscription.status})`,
-    );
-    console.log('💡 Use the uploadFiles mutation to add documents');
   }
 
   console.log('🎉 Database seeded successfully!');

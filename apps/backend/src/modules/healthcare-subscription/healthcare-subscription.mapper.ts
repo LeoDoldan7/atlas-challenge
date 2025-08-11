@@ -36,6 +36,7 @@ export class HealthcareSubscriptionMapper {
       startDate: subscription.start_date,
       endDate: subscription.end_date || undefined,
       billingAnchor: subscription.billing_anchor,
+      lastPaymentAt: subscription.last_payment_at || undefined,
       createdAt: subscription.created_at,
       employee: subscription.employee
         ? this.employeeMapper.toGraphQL(subscription.employee)

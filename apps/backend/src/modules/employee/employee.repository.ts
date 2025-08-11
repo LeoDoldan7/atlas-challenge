@@ -20,6 +20,14 @@ const employeeWithDemographicsSelect = {
       created_at: true,
     },
   },
+  wallet: {
+    select: {
+      id: true,
+      balance_cents: true,
+      currency_code: true,
+      created_at: true,
+    },
+  },
 } as const;
 
 export type EmployeeWithDemographics = Prisma.EmployeeGetPayload<{

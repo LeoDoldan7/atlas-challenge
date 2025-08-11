@@ -21,7 +21,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:generate": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts",
-    "db:reset": "prisma migrate reset && pnpm db:seed"
+    "db:reset": "prisma migrate reset -f && pnpm db:seed"
   },
   "dependencies": {
     "@nestjs/apollo": "^13.1.0",

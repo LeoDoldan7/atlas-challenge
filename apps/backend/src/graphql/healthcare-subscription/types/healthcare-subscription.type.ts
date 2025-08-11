@@ -35,6 +35,9 @@ export class HealthcareSubscription {
   @Field()
   billingAnchor: number;
 
+  @Field({ nullable: true })
+  lastPaymentAt?: Date;
+
   @Field()
   createdAt: Date;
 

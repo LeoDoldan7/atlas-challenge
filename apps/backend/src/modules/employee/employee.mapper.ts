@@ -23,6 +23,14 @@ export class EmployeeMapper {
         birthDate: employee.demographics.birth_date,
         createdAt: employee.demographics.created_at,
       },
+      wallet: employee.wallet ? {
+        id: employee.wallet.id.toString(),
+        employeeId: employee.id.toString(),
+        balanceCents: employee.wallet.balance_cents.toString(),
+        currencyCode: employee.wallet.currency_code,
+        createdAt: employee.wallet.created_at,
+        employee: null as any, // Avoid circular reference
+      } : undefined,
     };
   }
 
