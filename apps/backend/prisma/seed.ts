@@ -231,12 +231,41 @@ async function main() {
 
     for (const roleString of plan.items) {
       const role = roleString as keyof typeof ItemRole;
+      // Set different percentages for different subscriptions for testing
+      const companyPct = plan.status === SubscriptionStatus.ACTIVE ? 75 : 50;
+      const employeePct = 100 - companyPct;
+      
       await prisma.healthcareSubscriptionItem.create({
         data: {
           role: ItemRole[role],
           healthcare_subscription_id: subscription.id,
           demographic_id: role === 'employee' ? employee.demographics_id : null,
+          company_pct: companyPct,
+          employee_pct: employeePct,
         },
+      });
+    }
+
+    // Create enrollment steps for PENDING subscriptions
+    if (plan.status === SubscriptionStatus.PENDING) {
+      await prisma.subscriptionStep.createMany({
+        data: [
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'DEMOGRAPHIC_VERIFICATION',
+            status: 'PENDING',
+          },
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'DOCUMENT_UPLOAD',
+            status: 'PENDING',
+          },
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'PLAN_ACTIVATION',
+            status: 'PENDING',
+          },
+        ],
       });
     }
 
