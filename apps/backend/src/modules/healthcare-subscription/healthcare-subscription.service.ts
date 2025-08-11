@@ -91,7 +91,15 @@ export class HealthcareSubscriptionService {
     }
 
     const employeePrice = Money.fromCents(plan.cost_employee_cents, 'USD');
-    const companyPercentage = Number(plan.pct_employee_paid_by_company);
+    const defaultCompanyPercentage = Number(plan.pct_employee_paid_by_company);
+
+    // Use custom percentages if provided, otherwise use plan defaults
+    const employeeCompanyPct =
+      input.employeePercentages?.companyPercent ?? defaultCompanyPercentage;
+    const spouseCompanyPct =
+      input.spousePercentages?.companyPercent ?? defaultCompanyPercentage;
+    const childCompanyPct =
+      input.childPercentages?.companyPercent ?? defaultCompanyPercentage;
 
     let domainSubscription: Subscription;
 
@@ -102,7 +110,7 @@ export class HealthcareSubscriptionService {
           employeeId: input.employeeId.toString(),
           planId: input.planId.toString(),
           monthlyPrice: employeePrice,
-          companyContributionPercentage: companyPercentage,
+          companyContributionPercentage: employeeCompanyPct,
         });
     } else {
       const spousePrice = input.includeSpouse
@@ -113,22 +121,60 @@ export class HealthcareSubscriptionService {
           ? Money.fromCents(plan.cost_child_cents, 'USD')
           : undefined;
 
-      domainSubscription = this.subscriptionFactory.createFamilySubscription(
-        '1',
-        input.employeeId.toString(),
-        input.planId.toString(),
-        {
+      // Create with custom percentages for each member type
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setFullYear(startDate.getFullYear() + 1);
+      const period = new SubscriptionPeriod(startDate, endDate);
+
+      const members: any[] = [];
+
+      // Add employee with their custom percentage
+      members.push({
+        memberType: 'employee',
+        memberId: input.employeeId.toString(),
+        monthlyPrice: employeePrice,
+        paymentAllocation: PaymentAllocation.fromPercentage(
           employeePrice,
-          spousePrice,
-          childPrice,
-          spouseId: input.includeSpouse ? 'spouse_placeholder' : undefined,
-          childrenIds: Array.from(
-            { length: input.numOfChildren },
-            (_, i) => `child_${i}`,
+          employeeCompanyPct,
+        ),
+      });
+
+      // Add spouse with their custom percentage
+      if (input.includeSpouse && spousePrice) {
+        members.push({
+          memberType: 'spouse',
+          memberId: 'spouse_placeholder',
+          monthlyPrice: spousePrice,
+          paymentAllocation: PaymentAllocation.fromPercentage(
+            spousePrice,
+            spouseCompanyPct,
           ),
-          companyContributionPercentage: companyPercentage,
-        },
-      );
+        });
+      }
+
+      // Add children with their custom percentage
+      if (input.numOfChildren > 0 && childPrice) {
+        for (let i = 0; i < input.numOfChildren; i++) {
+          members.push({
+            memberType: 'child',
+            memberId: `child_${i}`,
+            monthlyPrice: childPrice,
+            paymentAllocation: PaymentAllocation.fromPercentage(
+              childPrice,
+              childCompanyPct,
+            ),
+          });
+        }
+      }
+
+      domainSubscription = this.subscriptionFactory.createSubscription({
+        companyId: '1',
+        employeeId: input.employeeId.toString(),
+        planId: input.planId.toString(),
+        period,
+        members,
+      });
     }
 
     const savedSubscription = await this.saveDomainSubscription(
