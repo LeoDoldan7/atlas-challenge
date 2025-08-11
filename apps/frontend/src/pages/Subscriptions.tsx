@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from '@apollo/client';
 import {
   IconPlus,
   IconActivity,
@@ -7,6 +8,10 @@ import {
   IconUser,
   IconCalendar,
   IconBuilding,
+  IconCreditCard,
+  IconCheck,
+  IconX,
+  IconCoin,
 } from "@tabler/icons-react";
 
 import {
@@ -22,16 +27,65 @@ import {
   SimpleGrid,
   ThemeIcon,
 } from "@mantine/core";
+import { notifications } from '@mantine/notifications';
 import { useSubscriptions } from "../hooks/useSubscriptions";
-import type { HealthcareSubscription } from "../types";
+import { PROCESS_COMPANY_PAYMENTS_MUTATION } from '../lib/queries';
+import type { HealthcareSubscription, ProcessPaymentsResponse } from "../types";
 
 const Subscriptions: React.FC = () => {
   const navigate = useNavigate();
-  const { subscriptions, loading, error } = useSubscriptions();
+  const { subscriptions, loading, error, refetch } = useSubscriptions();
+  const [isProcessingPayments, setIsProcessingPayments] = useState(false);
+  
   const handleNewSubscription = () => navigate("/subscriptions/new");
+  
+  const [processPayments] = useMutation<ProcessPaymentsResponse>(PROCESS_COMPANY_PAYMENTS_MUTATION);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatCurrency = (cents: string) => {
+    const dollars = parseInt(cents) / 100;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(dollars);
+  };
+
+  const handleProcessPayments = async () => {
+    setIsProcessingPayments(true);
+    try {
+      const result = await processPayments({
+        variables: {
+          processPaymentsInput: {
+            companyId: '1'
+          }
+        }
+      });
+
+      if (result.data?.processCompanyPayments.success) {
+        notifications.show({
+          title: 'Payments Processed',
+          message: `Successfully processed ${formatCurrency(result.data.processCompanyPayments.totalAmountProcessed)} in payments for ${result.data.processCompanyPayments.employeePayments.length} employees`,
+          color: 'green',
+          icon: <IconCheck size={16} />,
+        });
+        
+        // Refresh subscription data to show updated payment status
+        await refetch();
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payments. Please try again.';
+      notifications.show({
+        title: 'Payment Failed',
+        message: errorMessage,
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
+    } finally {
+      setIsProcessingPayments(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -59,15 +113,27 @@ const Subscriptions: React.FC = () => {
             Manage, monitor, and analyze your organization's healthcare benefits from a single, modern dashboard.
           </Text>
 
-          <Button
-            onClick={handleNewSubscription}
-            size="lg"
-            radius="xl"
-            leftSection={<IconPlus size={20} />}
-            mt="md"
-          >
-            Create New Subscription
-          </Button>
+          <Group gap="md" mt="md">
+            <Button
+              onClick={handleNewSubscription}
+              size="lg"
+              radius="xl"
+              leftSection={<IconPlus size={20} />}
+            >
+              Create New Subscription
+            </Button>
+            
+            <Button
+              onClick={handleProcessPayments}
+              loading={isProcessingPayments}
+              leftSection={<IconCreditCard size={20} />}
+              size="lg"
+              radius="xl"
+              color="green"
+            >
+              {isProcessingPayments ? 'Processing...' : 'Pay All Subscriptions'}
+            </Button>
+          </Group>
         </Stack>
 
         {/* Main Content */}
@@ -136,7 +202,7 @@ const Subscriptions: React.FC = () => {
                 <Stack gap="md">
                   <Group justify="apart">
                     <Title order={4} fw={600}>
-                      {subscription.type === 'INDIVIDUAL' ? 'Individual' : 'Family'} Plan
+                      {subscription.employee?.demographic.firstName} {subscription.employee?.demographic.lastName} – {subscription.plan?.name || 'Healthcare Plan'}
                     </Title>
                     <Group gap="xs">
                       <Badge color={getStatusColor(subscription.status)} variant="light">
@@ -145,20 +211,14 @@ const Subscriptions: React.FC = () => {
                       <IconArrowRight size={16} style={{ opacity: 0.6 }} />
                     </Group>
                   </Group>
-                  
-                  <Text c="dimmed">
-                    {subscription.plan?.name || 'Healthcare Plan'}
-                  </Text>
 
                   <Stack gap="xs">
-                    {subscription.employee && (
-                      <Group gap="sm">
-                        <IconUser size={16} style={{ opacity: 0.6 }} />
-                        <Text size="sm" c="dimmed">
-                          {subscription.employee.demographic.firstName} {subscription.employee.demographic.lastName}
-                        </Text>
-                      </Group>
-                    )}
+                    <Group gap="sm">
+                      <IconUser size={16} style={{ opacity: 0.6 }} />
+                      <Text size="sm" c="dimmed">
+                        {subscription.type === 'INDIVIDUAL' ? 'Individual' : 'Family'} Plan
+                      </Text>
+                    </Group>
                     
                     <Group gap="sm">
                       <IconCalendar size={16} style={{ opacity: 0.6 }} />
@@ -168,6 +228,13 @@ const Subscriptions: React.FC = () => {
                     <Group gap="sm">
                       <IconBuilding size={16} style={{ opacity: 0.6 }} />
                       <Text size="sm" c="dimmed">ID: {subscription.id}</Text>
+                    </Group>
+
+                    <Group gap="sm">
+                      <IconCoin size={16} style={{ opacity: 0.6 }} />
+                      <Text size="sm" c="dimmed">
+                        Last payment: {subscription.lastPaymentAt ? formatDate(subscription.lastPaymentAt) : 'Never'}
+                      </Text>
                     </Group>
 
                     {subscription.endDate && (

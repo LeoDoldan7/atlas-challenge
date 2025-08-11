@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Container, 
@@ -12,20 +12,27 @@ import {
   ThemeIcon,
   SimpleGrid,
   Breadcrumbs,
-  Anchor
+  Anchor,
+  Select,
+  TextInput
 } from '@mantine/core';
 import { 
   IconUser, 
   IconAlertCircle, 
   IconMail, 
   IconCalendar,
-  IconUsers
+  IconUsers,
+  IconWallet,
+  IconSearch
 } from '@tabler/icons-react';
 import { useEmployees } from '../hooks/useEmployees';
+import type { Employee } from '../types';
 
 const Employees: React.FC = () => {
   const navigate = useNavigate();
   const { employees, loading, error } = useEmployees('1');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<'all' | 'overdue' | 'sufficient'>('all');
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -34,6 +41,37 @@ const Employees: React.FC = () => {
       day: 'numeric',
     });
   };
+
+  const formatCurrency = (cents: string) => {
+    const dollars = parseInt(cents) / 100;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(dollars);
+  };
+
+  const getWalletStatus = (employee: Employee) => {
+    if (!employee.wallet) return 'no-wallet';
+    const balance = parseInt(employee.wallet.balanceCents);
+    // Simplified check - in reality, you'd calculate actual subscription costs
+    return balance >= 10000 ? 'sufficient' : 'overdue'; // $100 threshold
+  };
+
+  const filteredEmployees = employees.filter((employee) => {
+    const matchesSearch = !searchTerm || 
+      employee.demographic.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.demographic.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    if (paymentFilter === 'all') return true;
+    if (paymentFilter === 'overdue') return getWalletStatus(employee) === 'overdue';
+    if (paymentFilter === 'sufficient') return getWalletStatus(employee) === 'sufficient';
+    
+    return true;
+  });
+
 
   const getMaritalStatusColor = (status: string) => {
     switch (status) {
@@ -99,16 +137,14 @@ const Employees: React.FC = () => {
             <Text fw={500}>Employees</Text>
           </Breadcrumbs>
 
-          <Group justify="apart">
-            <Stack gap="xs">
-              <Title order={1} size={36} fw={700}>
-                Employees
-              </Title>
-              <Text size="lg" c="dimmed">
-                Manage company employees and their healthcare subscriptions
-              </Text>
-            </Stack>
-          </Group>
+          <Stack gap="xs">
+            <Title order={1} size={36} fw={700}>
+              Employees
+            </Title>
+            <Text size="lg" c="dimmed">
+              Manage company employees and their healthcare subscriptions
+            </Text>
+          </Stack>
         </Stack>
 
         {/* Stats Card */}
@@ -124,8 +160,34 @@ const Employees: React.FC = () => {
           </Group>
         </Card>
 
+        {/* Search and Filter Controls */}
+        <Card p="lg" radius="xl" shadow="md">
+          <Group gap="lg">
+            <TextInput
+              placeholder="Search employees by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              leftSection={<IconSearch size={16} />}
+              style={{ flex: 1 }}
+              radius="md"
+            />
+            <Select
+              placeholder="Filter by payment status"
+              value={paymentFilter}
+              onChange={(value) => setPaymentFilter(value as 'all' | 'overdue' | 'sufficient')}
+              data={[
+                { value: 'all', label: 'All Employees' },
+                { value: 'sufficient', label: 'Sufficient Funds' },
+                { value: 'overdue', label: 'Insufficient Funds' },
+              ]}
+              radius="md"
+              style={{ minWidth: 200 }}
+            />
+          </Group>
+        </Card>
+
         {/* Employee Grid */}
-        {employees.length === 0 ? (
+        {filteredEmployees.length === 0 ? (
           <Card p="xl" radius="xl" shadow="md">
             <Stack align="center" gap="md">
               <ThemeIcon size={64} radius="xl" color="gray" variant="light">
@@ -142,7 +204,9 @@ const Employees: React.FC = () => {
             cols={{ base: 1, sm: 2, lg: 3 }} 
             spacing="lg"
           >
-            {employees.map((employee) => (
+            {filteredEmployees.map((employee) => {
+              const walletStatus = getWalletStatus(employee);
+              return (
               <Card
                 key={employee.id}
                 p="lg"
@@ -193,6 +257,23 @@ const Employees: React.FC = () => {
                       <Text size="sm">Born: {formatDate(employee.birthDate)}</Text>
                     </Group>
 
+                    {/* Wallet Information */}
+                    <Group gap="xs">
+                      <IconWallet size={16} style={{ opacity: 0.6 }} />
+                      <Text size="sm">
+                        {employee.wallet ? formatCurrency(employee.wallet.balanceCents) : 'No wallet'}
+                      </Text>
+                      {employee.wallet && (
+                        <Badge 
+                          color={walletStatus === 'sufficient' ? 'green' : 'red'} 
+                          variant="light"
+                          size="xs"
+                        >
+                          {walletStatus === 'sufficient' ? 'Sufficient' : 'Low'}
+                        </Badge>
+                      )}
+                    </Group>
+
                     <Group justify="space-between" mt="xs">
                       <Badge 
                         color={getMaritalStatusColor(employee.maritalStatus)} 
@@ -208,7 +289,8 @@ const Employees: React.FC = () => {
                   </Stack>
                 </Stack>
               </Card>
-            ))}
+            );
+            })}
           </SimpleGrid>
         )}
       </Stack>

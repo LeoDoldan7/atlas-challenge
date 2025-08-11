@@ -19,6 +19,13 @@ export const EMPLOYEES_BY_COMPANY_QUERY = gql`
         birthDate
         createdAt
       }
+      wallet {
+        id
+        employeeId
+        balanceCents
+        currencyCode
+        createdAt
+      }
     }
   }
 `;
@@ -50,6 +57,7 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -100,6 +108,7 @@ export const GET_EMPLOYEE_SUBSCRIPTIONS_QUERY = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -150,6 +159,7 @@ export const CREATE_SUBSCRIPTION_MUTATION = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -191,6 +201,7 @@ export const UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -232,6 +243,7 @@ export const UPLOAD_FILES_MUTATION = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -282,6 +294,7 @@ export const ACTIVATE_PLAN_MUTATION = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -332,6 +345,7 @@ export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
       startDate
       endDate
       billingAnchor
+      lastPaymentAt
       createdAt
       employee {
         id
@@ -365,6 +379,20 @@ export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
         fileSizeBytes
         mimeType
         createdAt
+      }
+    }
+  }
+`;
+
+export const PROCESS_COMPANY_PAYMENTS_MUTATION = gql`
+  mutation ProcessCompanyPayments($processPaymentsInput: ProcessPaymentsInput!) {
+    processCompanyPayments(processPaymentsInput: $processPaymentsInput) {
+      success
+      totalAmountProcessed
+      employeePayments {
+        employeeId
+        amountPaid
+        subscriptionsPaid
       }
     }
   }

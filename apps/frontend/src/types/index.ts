@@ -46,6 +46,14 @@ export interface Demographic {
   createdAt: string; // DateTime as ISO string
 }
 
+export interface Wallet {
+  id: string;
+  employeeId: string;
+  balanceCents: string;
+  currencyCode: string;
+  createdAt: string; // DateTime as ISO string
+}
+
 export interface Employee {
   id: string;
   companyId: string;
@@ -55,6 +63,7 @@ export interface Employee {
   maritalStatus: MaritalStatus;
   createdAt: string; // DateTime as ISO string
   demographic: Demographic;
+  wallet?: Wallet;
 }
 
 export interface HealthcarePlan {
@@ -95,6 +104,7 @@ export interface HealthcareSubscription {
   startDate: string; // DateTime as ISO string
   endDate?: string; // DateTime as ISO string
   billingAnchor: number;
+  lastPaymentAt?: string; // DateTime as ISO string
   createdAt: string; // DateTime as ISO string
   employee?: Employee;
   plan?: HealthcarePlan;
@@ -113,6 +123,22 @@ export interface HealthcarePlansResponse {
 
 export interface SubscriptionsResponse {
   getSubscriptions: HealthcareSubscription[];
+}
+
+export interface EmployeePaymentResult {
+  employeeId: string;
+  amountPaid: string;
+  subscriptionsPaid: number;
+}
+
+export interface PaymentResult {
+  success: boolean;
+  totalAmountProcessed: string;
+  employeePayments: EmployeePaymentResult[];
+}
+
+export interface ProcessPaymentsResponse {
+  processCompanyPayments: PaymentResult;
 }
 
 // API error type compatible with Apollo Client
