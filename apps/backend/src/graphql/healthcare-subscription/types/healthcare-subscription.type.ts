@@ -5,6 +5,7 @@ import { Employee } from '../../employee/types/employee.type';
 import { HealthcarePlan } from '../../healthcare-plan/types/healthcare-plan.type';
 import { HealthcareSubscriptionItem } from './healthcare-subscription-item.type';
 import { HealthcareSubscriptionFile } from './healthcare-subscription-file.type';
+import { SubscriptionStep } from './subscription-step.type';
 
 @ObjectType()
 export class HealthcareSubscription {
@@ -55,4 +56,7 @@ export class HealthcareSubscription {
 
   @Field(() => [HealthcareSubscriptionFile], { nullable: true })
   files?: HealthcareSubscriptionFile[];
+
+  @Field(() => [SubscriptionStep], { nullable: true })
+  steps?: SubscriptionStep[];
 }

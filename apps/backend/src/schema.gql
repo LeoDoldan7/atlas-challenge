@@ -122,6 +122,7 @@ type HealthcareSubscription {
   planId: ID!
   startDate: DateTime!
   status: SubscriptionStatus!
+  steps: [SubscriptionStep!]
   type: SubscriptionType!
 }
 
@@ -207,14 +208,35 @@ type Query {
   healthcarePlans: [HealthcarePlan!]!
 }
 
+"""The status of a subscription step"""
+enum StepStatus {
+  COMPLETED
+  PENDING
+}
+
 """Healthcare subscription status"""
 enum SubscriptionStatus {
   ACTIVE
-  CANCELED
-  DEMOGRAPHIC_VERIFICATION_PENDING
-  DOCUMENT_UPLOAD_PENDING
-  PLAN_ACTIVATION_PENDING
-  TERMINATED
+  CANCELLED
+  DRAFT
+  EXPIRED
+  PENDING
+}
+
+type SubscriptionStep {
+  completedAt: DateTime
+  createdAt: DateTime!
+  healthcareSubscriptionId: ID!
+  id: ID!
+  status: StepStatus!
+  type: SubscriptionStepType!
+}
+
+"""The type of subscription step"""
+enum SubscriptionStepType {
+  DEMOGRAPHIC_VERIFICATION
+  DOCUMENT_UPLOAD
+  PLAN_ACTIVATION
 }
 
 """Healthcare subscription type"""

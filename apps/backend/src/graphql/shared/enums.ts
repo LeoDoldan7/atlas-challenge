@@ -6,12 +6,11 @@ export enum SubscriptionType {
 }
 
 export enum SubscriptionStatus {
-  DEMOGRAPHIC_VERIFICATION_PENDING = 'demographic_verification_pending',
-  DOCUMENT_UPLOAD_PENDING = 'document_upload_pending',
-  PLAN_ACTIVATION_PENDING = 'plan_activation_pending',
-  ACTIVE = 'active',
-  CANCELED = 'canceled',
-  TERMINATED = 'terminated',
+  DRAFT = 'DRAFT',
+  PENDING = 'PENDING',
+  ACTIVE = 'ACTIVE',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
 }
 
 export enum ItemRole {
