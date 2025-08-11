@@ -384,5 +384,142 @@ describe('HealthcareSubscriptionService', () => {
         }),
       );
     });
+
+    it('should use custom percentages from input instead of plan defaults', async () => {
+      // Plan has default percentages
+      const planWithDefaults = {
+        ...mockPlan,
+        pct_employee_paid_by_company: 50,
+        pct_spouse_paid_by_company: 40,
+        pct_child_paid_by_company: 30,
+      };
+
+      repository.findEmployeeById.mockResolvedValue(mockEmployee as any);
+      repository.findPlanById.mockResolvedValue(planWithDefaults as any);
+      repository.createSubscriptionWithItems.mockResolvedValue({
+        ...mockSubscription,
+        type: 'family',
+        items: [
+          {
+            id: BigInt(1),
+            healthcare_subscription_id: BigInt(1),
+            role: 'employee' as const,
+            demographic_id: BigInt(100),
+            company_pct: 100,
+            employee_pct: 0,
+            created_at: new Date(),
+          },
+          {
+            id: BigInt(2),
+            healthcare_subscription_id: BigInt(1),
+            role: 'spouse' as const,
+            demographic_id: null,
+            company_pct: 75,
+            employee_pct: 25,
+            created_at: new Date(),
+          },
+          {
+            id: BigInt(3),
+            healthcare_subscription_id: BigInt(1),
+            role: 'child' as const,
+            demographic_id: null,
+            company_pct: 90,
+            employee_pct: 10,
+            created_at: new Date(),
+          },
+        ],
+      } as any);
+      mapper.toGraphQL.mockReturnValue({ id: '1' } as any);
+
+      // Input with custom percentages that override plan defaults
+      const input: CreateSubscriptionInput = {
+        employeeId: 1,
+        planId: 1,
+        includeSpouse: true,
+        numOfChildren: 1,
+        employeePercentages: {
+          companyPercent: 100, // Override plan's 50%
+          employeePercent: 0,
+        },
+        spousePercentages: {
+          companyPercent: 75, // Override plan's 40%
+          employeePercent: 25,
+        },
+        childPercentages: {
+          companyPercent: 90, // Override plan's 30%
+          employeePercent: 10,
+        },
+      };
+
+      await service.createSubscription(input);
+
+      // Verify that custom percentages were used, not plan defaults
+      expect(repository.createSubscriptionWithItems).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            role: 'employee',
+            company_pct: 100, // Custom, not plan's 50%
+            employee_pct: 0,
+          }),
+          expect.objectContaining({
+            role: 'spouse',
+            company_pct: 75, // Custom, not plan's 40%
+            employee_pct: 25,
+          }),
+          expect.objectContaining({
+            role: 'child',
+            company_pct: 90, // Custom, not plan's 30%
+            employee_pct: 10,
+          }),
+        ]),
+      );
+    });
+
+    it('should handle 100% company payment for all family members', async () => {
+      repository.findEmployeeById.mockResolvedValue(mockEmployee as any);
+      repository.findPlanById.mockResolvedValue({
+        ...mockPlan,
+        pct_employee_paid_by_company: 50, // Plan defaults to 50%
+        pct_spouse_paid_by_company: 50,
+        pct_child_paid_by_company: 50,
+      } as any);
+      repository.createSubscriptionWithItems.mockResolvedValue({
+        ...mockSubscription,
+        type: 'family',
+      } as any);
+      mapper.toGraphQL.mockReturnValue({ id: '1' } as any);
+
+      const input: CreateSubscriptionInput = {
+        employeeId: 1,
+        planId: 1,
+        includeSpouse: true,
+        numOfChildren: 2,
+        employeePercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+        spousePercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+        childPercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+      };
+
+      await service.createSubscription(input);
+
+      // Verify all members have 100% company payment
+      const callArgs = repository.createSubscriptionWithItems.mock.calls[0];
+      const items = callArgs[1];
+
+      expect(items).toHaveLength(4); // Employee + Spouse + 2 Children
+      items.forEach((item: any) => {
+        expect(item.company_pct).toBe(100);
+        expect(item.employee_pct).toBe(0);
+      });
+    });
   });
 });
