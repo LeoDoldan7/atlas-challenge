@@ -20,24 +20,19 @@ export class CompanySpendingService {
   async getCompanySpendingStatistics(
     companyId: string,
   ): Promise<CompanySpendingStatistics> {
-    // Get company info
     const company = await this.repository.findCompanyById(companyId);
 
     if (!company) {
       throw new Error(`Company with ID ${companyId} not found`);
     }
 
-    // Get all active subscriptions for the company with plan and item details
     const subscriptions =
       await this.repository.findSubscriptionsByCompanyId(companyId);
 
-    // Calculate employee breakdown
     const employeeBreakdown = this.calculateEmployeeBreakdown(subscriptions);
 
-    // Calculate plan breakdown
     const planBreakdown = this.calculatePlanBreakdown(subscriptions);
 
-    // Calculate company totals
     const totalMonthlyCostCents = employeeBreakdown.reduce(
       (sum, emp) => sum + emp.totalMonthlyCostCents,
       0,
@@ -70,7 +65,6 @@ export class CompanySpendingService {
       const employeeId = subscription.employee.id.toString();
       const employeeName = `${subscription.employee.demographics.first_name} ${subscription.employee.demographics.last_name}`;
 
-      // Calculate costs for this subscription
       const costs = this.calculateSubscriptionCosts(subscription);
 
       if (employeeMap.has(employeeId)) {
@@ -101,7 +95,6 @@ export class CompanySpendingService {
       const planId = subscription.plan.id.toString();
       const planName = subscription.plan.name;
 
-      // Calculate costs for this subscription
       const costs = this.calculateSubscriptionCosts(subscription);
 
       if (planMap.has(planId)) {
@@ -132,7 +125,6 @@ export class CompanySpendingService {
     let totalMonthlyCostCents = 0;
     let companyMonthlyCostCents = 0;
 
-    // Calculate costs based on subscription items
     for (const item of items) {
       let itemCostCents = 0;
       let companyPaidPercentage = 0;
@@ -140,15 +132,18 @@ export class CompanySpendingService {
       switch (item.role) {
         case 'employee':
           itemCostCents = Number(plan.cost_employee_cents);
-          companyPaidPercentage = Number(plan.pct_employee_paid_by_company);
+          companyPaidPercentage =
+            item.company_pct ?? Number(plan.pct_employee_paid_by_company);
           break;
         case 'spouse':
           itemCostCents = Number(plan.cost_spouse_cents);
-          companyPaidPercentage = Number(plan.pct_spouse_paid_by_company);
+          companyPaidPercentage =
+            item.company_pct ?? Number(plan.pct_spouse_paid_by_company);
           break;
         case 'child':
           itemCostCents = Number(plan.cost_child_cents);
-          companyPaidPercentage = Number(plan.pct_child_paid_by_company);
+          companyPaidPercentage =
+            item.company_pct ?? Number(plan.pct_child_paid_by_company);
           break;
       }
 
