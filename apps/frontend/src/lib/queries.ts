@@ -92,6 +92,14 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
         mimeType
         createdAt
       }
+      steps {
+        id
+        healthcareSubscriptionId
+        type
+        status
+        createdAt
+        completedAt
+      }
     }
   }
 `;
@@ -142,6 +150,14 @@ export const GET_EMPLOYEE_SUBSCRIPTIONS_QUERY = gql`
         fileSizeBytes
         mimeType
         createdAt
+      }
+      steps {
+        id
+        healthcareSubscriptionId
+        type
+        status
+        createdAt
+        completedAt
       }
     }
   }
@@ -379,6 +395,14 @@ export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
         fileSizeBytes
         mimeType
         createdAt
+      }
+      steps {
+        id
+        healthcareSubscriptionId
+        type
+        status
+        createdAt
+        completedAt
       }
     }
   }
