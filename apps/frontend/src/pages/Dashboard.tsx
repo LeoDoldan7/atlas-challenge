@@ -56,6 +56,7 @@ const Dashboard: React.FC = () => {
 
   const statistics = data?.getCompanySpendingStatistics;
 
+    console.log('### statistics',statistics)
   return (
     <Container size="xl" py={48}>
       <DashboardHero />
