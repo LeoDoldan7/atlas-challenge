@@ -20,20 +20,18 @@ async function bootstrap() {
     }),
   );
 
-  // Set request timeout
   app.use(
     (
       req: { setTimeout: (timeout: number) => void },
       res: { setTimeout: (timeout: number) => void },
       next: () => void,
     ) => {
-      req.setTimeout(300000); // 5 minutes
-      res.setTimeout(300000); // 5 minutes
+      req.setTimeout(300000);
+      res.setTimeout(300000);
       next();
     },
   );
 
-  // Enable CORS for frontend development
   app.enableCors({
     origin: ['http://localhost:5173'],
     credentials: true,

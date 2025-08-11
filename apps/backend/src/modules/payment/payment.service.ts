@@ -27,7 +27,6 @@ export class PaymentService {
     try {
       const result = await this.repository.processPayments(companyId);
 
-      // Transform detailed result into summary
       const employeeResults = [
         ...result.successfulPayments.map((p) => ({
           employeeId: p.employeeId,

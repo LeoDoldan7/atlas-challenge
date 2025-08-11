@@ -14,7 +14,6 @@ export class FileUploadService {
   ) {}
 
   async uploadFiles(input: UploadFilesInput) {
-    // Validate subscription exists and is in correct status
     const subscription = await this.repository.findSubscriptionWithFiles(
       input.subscriptionId,
     );
@@ -37,10 +36,8 @@ export class FileUploadService {
       url: string;
     }> = [];
     for (const file of input.files) {
-      // Convert base64 to buffer
       const buffer = Buffer.from(file.data, 'base64');
 
-      // Upload to MinIO
       const { path, url } = await this.minioService.uploadFile(
         buffer,
         file.filename,
@@ -57,7 +54,6 @@ export class FileUploadService {
       });
     }
 
-    // Save files and update subscription in transaction
     return await this.repository.createFilesTransaction(
       subscription.id,
       processedFiles,
@@ -90,7 +86,6 @@ export class FileUploadService {
         );
       }
 
-      // Validate base64 data and estimated size
       try {
         const buffer = Buffer.from(file.data, 'base64');
         if (buffer.length > maxFileSize) {

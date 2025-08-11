@@ -36,7 +36,6 @@ export class FileUploadRepository {
       }> = [];
 
       for (const file of files) {
-        // Save file record to database
         const fileRecord = await tx.healthcareSubscriptionFile.create({
           data: {
             healthcare_subscription_id: subscriptionId,
@@ -53,7 +52,6 @@ export class FileUploadRepository {
         });
       }
 
-      // Mark the document upload step as completed
       await tx.subscriptionStep.updateMany({
         where: {
           healthcare_subscription_id: subscriptionId,
@@ -65,7 +63,6 @@ export class FileUploadRepository {
         },
       });
 
-      // Get the updated subscription
       const subscription = await tx.healthcareSubscription.findUnique({
         where: { id: subscriptionId },
       });

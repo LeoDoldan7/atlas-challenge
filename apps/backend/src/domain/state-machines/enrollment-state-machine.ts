@@ -79,7 +79,6 @@ export class SubscriptionEnrollmentStateMachine
 
   private defineTransitions(): EnrollmentTransition[] {
     return [
-      // From DRAFT
       {
         from: EnrollmentStatus.DRAFT,
         event: EnrollmentEvent.START_ENROLLMENT,
@@ -91,7 +90,6 @@ export class SubscriptionEnrollmentStateMachine
         to: EnrollmentStatus.CANCELLED,
       },
 
-      // From ENROLLMENT_STARTED
       {
         from: EnrollmentStatus.ENROLLMENT_STARTED,
         event: EnrollmentEvent.PROCESS_PAYMENT,
@@ -103,7 +101,6 @@ export class SubscriptionEnrollmentStateMachine
         to: EnrollmentStatus.CANCELLED,
       },
 
-      // From PAYMENT_PENDING
       {
         from: EnrollmentStatus.PAYMENT_PENDING,
         event: EnrollmentEvent.PAYMENT_SUCCESS,
@@ -120,7 +117,6 @@ export class SubscriptionEnrollmentStateMachine
         to: EnrollmentStatus.CANCELLED,
       },
 
-      // From PAYMENT_PROCESSED
       {
         from: EnrollmentStatus.PAYMENT_PROCESSED,
         event: EnrollmentEvent.ACTIVATE,
@@ -132,7 +128,6 @@ export class SubscriptionEnrollmentStateMachine
         to: EnrollmentStatus.CANCELLED,
       },
 
-      // From ACTIVE
       {
         from: EnrollmentStatus.ACTIVE,
         event: EnrollmentEvent.CANCEL,
@@ -143,7 +138,6 @@ export class SubscriptionEnrollmentStateMachine
         event: EnrollmentEvent.EXPIRE,
         to: EnrollmentStatus.EXPIRED,
       },
-      // Terminal states (CANCELLED, EXPIRED) have no outgoing transitions
     ];
   }
 

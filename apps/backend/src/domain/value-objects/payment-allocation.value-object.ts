@@ -92,7 +92,6 @@ export class PaymentAllocation {
     if (hasCompany) return PaymentSource.COMPANY;
     if (hasEmployee) return PaymentSource.EMPLOYEE_WALLET;
 
-    // Allow zero amounts for initialization (empty subscriptions)
     return PaymentSource.COMPANY;
   }
 

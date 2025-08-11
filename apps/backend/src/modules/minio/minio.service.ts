@@ -44,16 +44,13 @@ export class MinioService implements OnModuleInit {
     path: string;
     url: string;
   }> {
-    // Create a unique file path with subscription ID prefix
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filePath = `subscriptions/${subscriptionId}/${timestamp}-${fileName}`;
 
-    // Convert buffer to stream
     const stream = new Readable();
     stream.push(buffer);
     stream.push(null);
 
-    // Upload file to MinIO
     await this.minioClient.putObject(
       minioConfig.bucketName,
       filePath,
@@ -64,7 +61,6 @@ export class MinioService implements OnModuleInit {
       },
     );
 
-    // Generate presigned URL for file access (valid for 24 hours)
     const url = await this.minioClient.presignedGetObject(
       minioConfig.bucketName,
       filePath,

@@ -27,7 +27,6 @@ export class PlanActivationRepository {
 
   async activateSubscription(subscriptionId: bigint, endDate?: Date) {
     return this.prisma.$transaction(async (tx) => {
-      // Mark the plan activation step as completed
       await tx.subscriptionStep.updateMany({
         where: {
           healthcare_subscription_id: subscriptionId,
@@ -39,7 +38,6 @@ export class PlanActivationRepository {
         },
       });
 
-      // Check if all steps are completed
       const allSteps = await tx.subscriptionStep.findMany({
         where: {
           healthcare_subscription_id: subscriptionId,
@@ -50,7 +48,6 @@ export class PlanActivationRepository {
         (step) => step.status === StepStatus.COMPLETED,
       );
 
-      // Update subscription status to ACTIVE only if all steps are completed
       const newStatus = allCompleted
         ? SubscriptionStatus.ACTIVE
         : SubscriptionStatus.PENDING;

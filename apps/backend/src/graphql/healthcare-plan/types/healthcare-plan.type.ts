@@ -10,22 +10,22 @@ export class HealthcarePlan {
   name: string;
 
   @Field()
-  costEmployeeCents: string; // BigInt as string
+  costEmployeeCents: string;
 
   @Field()
-  pctEmployeePaidByCompany: string; // Decimal as string
+  pctEmployeePaidByCompany: string;
 
   @Field()
-  costSpouseCents: string; // BigInt as string
+  costSpouseCents: string;
 
   @Field()
-  pctSpousePaidByCompany: string; // Decimal as string
+  pctSpousePaidByCompany: string;
 
   @Field()
-  costChildCents: string; // BigInt as string
+  costChildCents: string;
 
   @Field()
-  pctChildPaidByCompany: string; // Decimal as string
+  pctChildPaidByCompany: string;
 
   @Field(() => [HealthcareSubscription], { nullable: true })
   subscriptions?: HealthcareSubscription[];
