@@ -15,7 +15,9 @@ export interface PaymentResult {
 export class PaymentService {
   constructor(private readonly repository: PaymentRepository) {}
 
-  async processCompanySubscriptionPayments(companyId: string): Promise<PaymentResult> {
+  async processCompanySubscriptionPayments(
+    companyId: string,
+  ): Promise<PaymentResult> {
     try {
       return await this.repository.processPayments(companyId);
     } catch (error) {

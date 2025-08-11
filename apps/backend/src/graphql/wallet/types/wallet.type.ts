@@ -18,6 +18,6 @@ export class Wallet {
   @Field()
   createdAt: Date;
 
-  @Field(() => Employee)
-  employee: Employee;
+  @Field(() => Employee, { nullable: true })
+  employee?: Employee;
 }

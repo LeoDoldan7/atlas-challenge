@@ -11,6 +11,8 @@ export class PaymentResolver {
   async processCompanyPayments(
     @Args('processPaymentsInput') input: ProcessPaymentsInput,
   ): Promise<PaymentResult> {
-    return this.paymentService.processCompanySubscriptionPayments(input.companyId);
+    return this.paymentService.processCompanySubscriptionPayments(
+      input.companyId,
+    );
   }
 }

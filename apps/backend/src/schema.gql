@@ -231,7 +231,7 @@ type Wallet {
   balanceCents: String!
   createdAt: DateTime!
   currencyCode: String!
-  employee: Employee!
+  employee: Employee
   employeeId: ID!
   id: ID!
 }

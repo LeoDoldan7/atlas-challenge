@@ -47,8 +47,10 @@ export class PaymentRepository {
       });
 
       const currentDate = new Date();
-      const currentMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
-      
+      const currentMonth = new Date(
+        Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1),
+      );
+
       // Calculate total needed and check if all employees have sufficient funds
       let totalNeeded = BigInt(0);
       const employeePayments: Array<{
@@ -68,8 +70,10 @@ export class PaymentRepository {
 
         for (const subscription of employee.subscriptions) {
           // Skip if already paid this month
-          if (subscription.last_payment_at && 
-              new Date(subscription.last_payment_at) >= currentMonth) {
+          if (
+            subscription.last_payment_at &&
+            new Date(subscription.last_payment_at) >= currentMonth
+          ) {
             continue;
           }
 
@@ -97,7 +101,8 @@ export class PaymentRepository {
             }
 
             // Calculate employee portion (company pays a percentage)
-            const employeePortion = itemCost * BigInt(100 - companyPaidPct) / BigInt(100);
+            const employeePortion =
+              (itemCost * BigInt(100 - companyPaidPct)) / BigInt(100);
             subscriptionCost += employeePortion;
           }
 
@@ -113,7 +118,9 @@ export class PaymentRepository {
         if (employeeTotalCost > 0) {
           // Check if employee has sufficient funds
           if (employee.wallet.balance_cents < employeeTotalCost) {
-            throw new Error(`Insufficient funds for employee ${employee.id}. Required: ${employeeTotalCost}, Available: ${employee.wallet.balance_cents}`);
+            throw new Error(
+              `Insufficient funds for employee ${employee.id}. Required: ${employeeTotalCost}, Available: ${employee.wallet.balance_cents}`,
+            );
           }
 
           employeePayments.push({
@@ -131,7 +138,7 @@ export class PaymentRepository {
         amountPaid: string;
         subscriptionsPaid: number;
       }> = [];
-      
+
       for (const payment of employeePayments) {
         // Deduct from wallet
         await prisma.wallet.update({

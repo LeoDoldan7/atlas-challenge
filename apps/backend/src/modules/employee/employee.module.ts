@@ -4,6 +4,8 @@ import { EmployeeService } from './employee.service';
 import { EmployeeRepository } from './employee.repository';
 import { EmployeeMapper } from './employee.mapper';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DemographicMapper } from '../demographic/demographic.mapper';
+import { WalletMapper } from '../wallet/wallet.mapper';
 
 @Module({
   providers: [
@@ -11,6 +13,8 @@ import { PrismaService } from '../../prisma/prisma.service';
     EmployeeService,
     EmployeeRepository,
     EmployeeMapper,
+    DemographicMapper,
+    WalletMapper,
     PrismaService,
   ],
   exports: [EmployeeService, EmployeeMapper],

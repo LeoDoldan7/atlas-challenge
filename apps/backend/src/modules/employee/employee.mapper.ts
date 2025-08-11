@@ -3,9 +3,15 @@ import { Employee } from '../../graphql/employee/types/employee.type';
 import { MaritalStatus } from '../../graphql/shared/enums';
 import { EmployeeWithDemographics } from './employee.repository';
 import { MaritalStatus as PrismaMaritalStatus } from '@prisma/client';
+import { DemographicMapper } from '../demographic/demographic.mapper';
+import { WalletMapper } from '../wallet/wallet.mapper';
 
 @Injectable()
 export class EmployeeMapper {
+  constructor(
+    private readonly demographicMapper: DemographicMapper,
+    private readonly walletMapper: WalletMapper,
+  ) {}
   toGraphQL(employee: EmployeeWithDemographics): Employee {
     return {
       id: employee.id.toString(),
@@ -15,22 +21,10 @@ export class EmployeeMapper {
       birthDate: employee.birth_date,
       maritalStatus: this.mapPrismaMaritalStatus(employee.marital_status),
       createdAt: employee.created_at,
-      demographic: {
-        id: employee.demographics.id.toString(),
-        firstName: employee.demographics.first_name,
-        lastName: employee.demographics.last_name,
-        governmentId: employee.demographics.government_id,
-        birthDate: employee.demographics.birth_date,
-        createdAt: employee.demographics.created_at,
-      },
-      wallet: employee.wallet ? {
-        id: employee.wallet.id.toString(),
-        employeeId: employee.id.toString(),
-        balanceCents: employee.wallet.balance_cents.toString(),
-        currencyCode: employee.wallet.currency_code,
-        createdAt: employee.wallet.created_at,
-        employee: null as any, // Avoid circular reference
-      } : undefined,
+      demographic: this.demographicMapper.toGraphQL(employee.demographics),
+      wallet: employee.wallet
+        ? this.walletMapper.toGraphQL(employee.wallet, employee.id.toString())
+        : undefined,
     };
   }
 
