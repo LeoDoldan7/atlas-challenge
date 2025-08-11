@@ -1,5 +1,8 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { PaymentService } from '../../../modules/payment/payment.service';
+import {
+  PaymentService,
+  BatchPaymentSummary,
+} from '../../../modules/payment/payment.service';
 import { PaymentResult } from '../types/payment-result.type';
 import { ProcessPaymentsInput } from '../dto/process-payments.input';
 
@@ -10,7 +13,7 @@ export class PaymentResolver {
   @Mutation(() => PaymentResult)
   async processCompanyPayments(
     @Args('processPaymentsInput') input: ProcessPaymentsInput,
-  ): Promise<PaymentResult> {
+  ): Promise<BatchPaymentSummary> {
     return this.paymentService.processCompanySubscriptionPayments(
       input.companyId,
     );

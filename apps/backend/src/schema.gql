@@ -67,9 +67,12 @@ type Employee {
 }
 
 type EmployeePaymentResult {
-  amountPaid: String!
+  amountPaid: String
   employeeId: String!
-  subscriptionsPaid: Float!
+  error: String
+  partialSuccess: Boolean
+  subscriptionsPaid: Float
+  success: Boolean!
 }
 
 type EmployeeSpendingStatistics {
@@ -168,9 +171,12 @@ type Mutation {
 }
 
 type PaymentResult {
-  employeePayments: [EmployeePaymentResult!]!
-  success: Boolean!
+  employeeResults: [EmployeePaymentResult!]!
+  overallSuccess: Boolean!
   totalAmountProcessed: String!
+  totalFailedPayments: Float!
+  totalPartialFailures: Float!
+  totalSuccessfulPayments: Float!
 }
 
 type PlanSpendingStatistics {

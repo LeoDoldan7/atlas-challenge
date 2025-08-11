@@ -6,20 +6,38 @@ export class EmployeePaymentResult {
   employeeId: string;
 
   @Field()
-  amountPaid: string;
+  success: boolean;
 
-  @Field()
-  subscriptionsPaid: number;
+  @Field({ nullable: true })
+  amountPaid?: string;
+
+  @Field({ nullable: true })
+  subscriptionsPaid?: number;
+
+  @Field({ nullable: true })
+  error?: string;
+
+  @Field({ nullable: true })
+  partialSuccess?: boolean;
 }
 
 @ObjectType()
 export class PaymentResult {
   @Field()
-  success: boolean;
+  overallSuccess: boolean;
 
   @Field()
   totalAmountProcessed: string;
 
+  @Field()
+  totalSuccessfulPayments: number;
+
+  @Field()
+  totalFailedPayments: number;
+
+  @Field()
+  totalPartialFailures: number;
+
   @Field(() => [EmployeePaymentResult])
-  employeePayments: EmployeePaymentResult[];
+  employeeResults: EmployeePaymentResult[];
 }

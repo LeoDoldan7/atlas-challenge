@@ -1,13 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentRepository } from './payment.repository';
 
-export interface PaymentResult {
-  success: boolean;
+export interface BatchPaymentSummary {
+  overallSuccess: boolean;
   totalAmountProcessed: string;
-  employeePayments: Array<{
+  totalSuccessfulPayments: number;
+  totalFailedPayments: number;
+  totalPartialFailures: number;
+  employeeResults: Array<{
     employeeId: string;
-    amountPaid: string;
-    subscriptionsPaid: number;
+    success: boolean;
+    amountPaid?: string;
+    subscriptionsPaid?: number;
+    error?: string;
+    partialSuccess?: boolean;
   }>;
 }
 
@@ -17,9 +23,41 @@ export class PaymentService {
 
   async processCompanySubscriptionPayments(
     companyId: string,
-  ): Promise<PaymentResult> {
+  ): Promise<BatchPaymentSummary> {
     try {
-      return await this.repository.processPayments(companyId);
+      const result = await this.repository.processPayments(companyId);
+
+      // Transform detailed result into summary
+      const employeeResults = [
+        ...result.successfulPayments.map((p) => ({
+          employeeId: p.employeeId,
+          success: p.success,
+          amountPaid: p.amountPaid,
+          subscriptionsPaid: p.subscriptionsPaid,
+        })),
+        ...result.failedPayments.map((p) => ({
+          employeeId: p.employeeId,
+          success: p.success,
+          error: p.error,
+        })),
+        ...result.partialFailures.map((p) => ({
+          employeeId: p.employeeId,
+          success: p.success,
+          amountPaid: p.amountPaid,
+          subscriptionsPaid: p.subscriptionsPaid,
+          error: p.error,
+          partialSuccess: p.partialSuccess,
+        })),
+      ];
+
+      return {
+        overallSuccess: result.overallSuccess,
+        totalAmountProcessed: result.totalAmountProcessed,
+        totalSuccessfulPayments: result.successfulPayments.length,
+        totalFailedPayments: result.failedPayments.length,
+        totalPartialFailures: result.partialFailures.length,
+        employeeResults,
+      };
     } catch (error) {
       throw new Error(
         `Payment processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
