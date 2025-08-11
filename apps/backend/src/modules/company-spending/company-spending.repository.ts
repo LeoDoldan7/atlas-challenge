@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, SubscriptionStatus } from '@prisma/client';
 
 const companySelect = {
   id: true,
@@ -43,7 +43,7 @@ export class CompanySpendingRepository {
     return this.prisma.healthcareSubscription.findMany({
       where: {
         company_id: BigInt(companyId),
-        status: 'active',
+        status: SubscriptionStatus.ACTIVE,
       },
       include: subscriptionWithRelationsInclude,
     });

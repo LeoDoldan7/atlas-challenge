@@ -9,9 +9,8 @@ import { CreateSubscriptionInput } from '../../graphql/healthcare-subscription/d
 import { UploadFamilyDemographicsInput } from '../../graphql/healthcare-subscription/dto/upload-family-demographics.input';
 import { UploadFilesInput } from '../../graphql/healthcare-subscription/dto/upload-files.input';
 import { ActivatePlanInput } from '../../graphql/healthcare-subscription/dto/activate-plan.input';
-import { SubscriptionStatus } from '../../graphql/shared/enums';
 import { getHealthcareSubscriptionType } from '../../utils/healthcare-subscription.utils';
-import { Prisma } from '@prisma/client';
+import { Prisma, SubscriptionStatus } from '@prisma/client';
 
 @Injectable()
 export class HealthcareSubscriptionService {
@@ -71,7 +70,7 @@ export class HealthcareSubscriptionService {
       plan: { connect: { id: BigInt(input.planId) } },
       billing_anchor: new Date().getDate(),
       start_date: new Date(),
-      status: SubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING,
+      status: SubscriptionStatus.PENDING,
       type: getHealthcareSubscriptionType(
         input.includeSpouse,
         input.numOfChildren,
@@ -119,6 +118,11 @@ export class HealthcareSubscriptionService {
   ): Promise<HealthcareSubscription> {
     const result =
       await this.familyDemographicsService.uploadFamilyDemographics(input);
+
+    if (!result.subscription) {
+      throw new Error('Family demographics upload failed');
+    }
+
     // Get the updated subscription with full relations
     const updatedSubscription = await this.repository.findByIdWithRelations(
       result.subscription.id.toString(),
@@ -131,6 +135,11 @@ export class HealthcareSubscriptionService {
 
   async uploadFiles(input: UploadFilesInput): Promise<HealthcareSubscription> {
     const result = await this.fileUploadService.uploadFiles(input);
+
+    if (!result.subscription) {
+      throw new Error('File upload failed');
+    }
+
     // Get the updated subscription with full relations
     const updatedSubscription = await this.repository.findByIdWithRelations(
       result.subscription.id.toString(),

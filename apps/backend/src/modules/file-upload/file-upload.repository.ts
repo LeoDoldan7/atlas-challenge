@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SubscriptionStatus } from '../../graphql/shared/enums';
+import { SubscriptionStepType, StepStatus } from '@prisma/client';
 
 @Injectable()
 export class FileUploadRepository {
@@ -53,10 +53,21 @@ export class FileUploadRepository {
         });
       }
 
-      // Update subscription status to next stage
-      const subscription = await tx.healthcareSubscription.update({
+      // Mark the document upload step as completed
+      await tx.subscriptionStep.updateMany({
+        where: {
+          healthcare_subscription_id: subscriptionId,
+          type: SubscriptionStepType.DOCUMENT_UPLOAD,
+        },
+        data: {
+          status: StepStatus.COMPLETED,
+          completed_at: new Date(),
+        },
+      });
+
+      // Get the updated subscription
+      const subscription = await tx.healthcareSubscription.findUnique({
         where: { id: subscriptionId },
-        data: { status: SubscriptionStatus.PLAN_ACTIVATION_PENDING },
       });
 
       return {

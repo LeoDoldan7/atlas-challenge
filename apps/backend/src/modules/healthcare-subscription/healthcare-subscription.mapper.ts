@@ -7,6 +7,8 @@ import {
   SubscriptionType as PrismaSubscriptionType,
   SubscriptionStatus as PrismaSubscriptionStatus,
   ItemRole as PrismaItemRole,
+  SubscriptionStepType as PrismaSubscriptionStepType,
+  StepStatus as PrismaStepStatus,
 } from '@prisma/client';
 import {
   SubscriptionType,
@@ -15,6 +17,11 @@ import {
 } from '../../graphql/shared/enums';
 import { HealthcareSubscriptionItem } from '../../graphql/healthcare-subscription/types/healthcare-subscription-item.type';
 import { HealthcareSubscriptionFile } from '../../graphql/healthcare-subscription/types/healthcare-subscription-file.type';
+import { 
+  SubscriptionStep,
+  SubscriptionStepType,
+  StepStatus,
+} from '../../graphql/healthcare-subscription/types/subscription-step.type';
 
 @Injectable()
 export class HealthcareSubscriptionMapper {
@@ -46,6 +53,7 @@ export class HealthcareSubscriptionMapper {
         : undefined,
       items: subscription.items?.map((item) => this.mapItem(item)) || [],
       files: subscription.files?.map((file) => this.mapFile(file)) || [],
+      steps: subscription.steps?.map((step) => this.mapStep(step)) || [],
     };
   }
 
@@ -64,20 +72,18 @@ export class HealthcareSubscriptionMapper {
     status: PrismaSubscriptionStatus,
   ): SubscriptionStatus {
     switch (status) {
-      case PrismaSubscriptionStatus.demographic_verification_pending:
-        return SubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING;
-      case PrismaSubscriptionStatus.document_upload_pending:
-        return SubscriptionStatus.DOCUMENT_UPLOAD_PENDING;
-      case PrismaSubscriptionStatus.plan_activation_pending:
-        return SubscriptionStatus.PLAN_ACTIVATION_PENDING;
-      case PrismaSubscriptionStatus.active:
+      case PrismaSubscriptionStatus.DRAFT:
+        return SubscriptionStatus.DRAFT;
+      case PrismaSubscriptionStatus.PENDING:
+        return SubscriptionStatus.PENDING;
+      case PrismaSubscriptionStatus.ACTIVE:
         return SubscriptionStatus.ACTIVE;
-      case PrismaSubscriptionStatus.canceled:
-        return SubscriptionStatus.CANCELED;
-      case PrismaSubscriptionStatus.terminated:
-        return SubscriptionStatus.TERMINATED;
+      case PrismaSubscriptionStatus.CANCELLED:
+        return SubscriptionStatus.CANCELLED;
+      case PrismaSubscriptionStatus.EXPIRED:
+        return SubscriptionStatus.EXPIRED;
       default:
-        return SubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING;
+        return SubscriptionStatus.DRAFT;
     }
   }
 
@@ -118,5 +124,44 @@ export class HealthcareSubscriptionMapper {
       mimeType: file.mime_type,
       createdAt: file.created_at,
     };
+  }
+
+  private mapStep(
+    step: HealthcareSubscriptionWithRelations['steps'][0],
+  ): SubscriptionStep {
+    return {
+      id: step.id.toString(),
+      healthcareSubscriptionId: step.healthcare_subscription_id.toString(),
+      type: this.mapSubscriptionStepType(step.type),
+      status: this.mapStepStatus(step.status),
+      createdAt: step.created_at,
+      completedAt: step.completed_at || undefined,
+    };
+  }
+
+  private mapSubscriptionStepType(
+    type: PrismaSubscriptionStepType,
+  ): SubscriptionStepType {
+    switch (type) {
+      case PrismaSubscriptionStepType.DEMOGRAPHIC_VERIFICATION:
+        return SubscriptionStepType.DEMOGRAPHIC_VERIFICATION;
+      case PrismaSubscriptionStepType.DOCUMENT_UPLOAD:
+        return SubscriptionStepType.DOCUMENT_UPLOAD;
+      case PrismaSubscriptionStepType.PLAN_ACTIVATION:
+        return SubscriptionStepType.PLAN_ACTIVATION;
+      default:
+        return SubscriptionStepType.DEMOGRAPHIC_VERIFICATION;
+    }
+  }
+
+  private mapStepStatus(status: PrismaStepStatus): StepStatus {
+    switch (status) {
+      case PrismaStepStatus.PENDING:
+        return StepStatus.PENDING;
+      case PrismaStepStatus.COMPLETED:
+        return StepStatus.COMPLETED;
+      default:
+        return StepStatus.PENDING;
+    }
   }
 }

@@ -4,7 +4,7 @@ import {
   UploadFamilyDemographicsInput,
   FamilyMemberInput,
 } from '../../graphql/healthcare-subscription/dto/upload-family-demographics.input';
-import { ItemRole, SubscriptionStatus } from '../../graphql/shared/enums';
+import { ItemRole } from '../../graphql/shared/enums';
 import { HealthcareSubscriptionItem } from '@prisma/client';
 
 @Injectable()
@@ -27,13 +27,8 @@ export class FamilyDemographicsService {
       throw new Error('Healthcare subscription not found');
     }
 
-    if (
-      subscription.status !==
-      SubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING
-    ) {
-      throw new Error(
-        'Subscription is not in demographic verification pending status',
-      );
+    if (subscription.status !== 'PENDING') {
+      throw new Error('Subscription is not in pending status');
     }
 
     // Validate family members data

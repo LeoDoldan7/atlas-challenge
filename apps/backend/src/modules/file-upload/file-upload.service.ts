@@ -5,7 +5,6 @@ import {
   UploadFilesInput,
   FileInput,
 } from '../../graphql/healthcare-subscription/dto/upload-files.input';
-import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()
 export class FileUploadService {
@@ -24,8 +23,8 @@ export class FileUploadService {
       throw new Error('Healthcare subscription not found');
     }
 
-    if (subscription.status !== SubscriptionStatus.DOCUMENT_UPLOAD_PENDING) {
-      throw new Error('Subscription is not in document upload pending status');
+    if (subscription.status !== 'PENDING') {
+      throw new Error('Subscription is not in pending status');
     }
 
     // Validate files

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, SubscriptionStepType, StepStatus } from '@prisma/client';
 
 const subscriptionWithRelationsInclude = {
   items: true,
   files: true,
+  steps: true,
   employee: {
     include: {
       demographics: true,
@@ -95,11 +96,59 @@ export class HealthcareSubscriptionRepository {
         })),
       });
 
+      // Create subscription steps in PENDING status
+      await tx.subscriptionStep.createMany({
+        data: [
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'DEMOGRAPHIC_VERIFICATION',
+            status: 'PENDING',
+          },
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'DOCUMENT_UPLOAD',
+            status: 'PENDING',
+          },
+          {
+            healthcare_subscription_id: subscription.id,
+            type: 'PLAN_ACTIVATION',
+            status: 'PENDING',
+          },
+        ],
+      });
+
       // Return the subscription with full relations
       return tx.healthcareSubscription.findUnique({
         where: { id: subscription.id },
         include: subscriptionWithRelationsInclude,
       }) as Promise<HealthcareSubscriptionWithRelations>;
     });
+  }
+
+  async updateStepStatus(
+    subscriptionId: string,
+    stepType: SubscriptionStepType,
+    status: StepStatus,
+  ): Promise<void> {
+    await this.prisma.subscriptionStep.updateMany({
+      where: {
+        healthcare_subscription_id: BigInt(subscriptionId),
+        type: stepType,
+      },
+      data: {
+        status,
+        completed_at: status === StepStatus.COMPLETED ? new Date() : null,
+      },
+    });
+  }
+
+  async checkAllStepsCompleted(subscriptionId: string): Promise<boolean> {
+    const steps = await this.prisma.subscriptionStep.findMany({
+      where: {
+        healthcare_subscription_id: BigInt(subscriptionId),
+      },
+    });
+
+    return steps.every((step) => step.status === 'COMPLETED');
   }
 }

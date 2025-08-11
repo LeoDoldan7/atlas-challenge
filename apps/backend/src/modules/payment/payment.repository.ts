@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TransactionType, ItemRole } from '@prisma/client';
+import { TransactionType, ItemRole, SubscriptionStatus } from '@prisma/client';
 import { PaymentProcessorService } from '../../domain/services/payment-processor.service';
 import { PaymentAllocation } from '../../domain/value-objects/payment-allocation.value-object';
 import { Money } from '../../domain/value-objects/money.value-object';
@@ -83,7 +83,7 @@ export class PaymentRepository {
         wallet: true,
         subscriptions: {
           where: {
-            status: 'active',
+            status: SubscriptionStatus.ACTIVE,
           },
           include: {
             plan: true,
@@ -103,7 +103,7 @@ export class PaymentRepository {
         wallet: true,
         subscriptions: {
           where: {
-            status: 'active',
+            status: SubscriptionStatus.ACTIVE,
           },
           include: {
             plan: true,

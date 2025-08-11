@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PlanActivationRepository } from './plan-activation.repository';
 import { ActivatePlanInput } from '../../graphql/healthcare-subscription/dto/activate-plan.input';
-import { SubscriptionStatus } from '../../graphql/shared/enums';
 
 @Injectable()
 export class PlanActivationService {
@@ -17,8 +16,8 @@ export class PlanActivationService {
       throw new Error('Healthcare subscription not found');
     }
 
-    if (subscription.status !== SubscriptionStatus.PLAN_ACTIVATION_PENDING) {
-      throw new Error('Subscription is not in plan activation pending status');
+    if (subscription.status !== 'PENDING') {
+      throw new Error('Subscription is not in pending status');
     }
 
     // Validate that all required items have demographics

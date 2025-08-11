@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { HealthcareSubscriptionItem } from '@prisma/client';
-import { SubscriptionStatus } from '../../graphql/shared/enums';
+import {
+  HealthcareSubscriptionItem,
+  SubscriptionStepType,
+} from '@prisma/client';
 
 @Injectable()
 export class FamilyDemographicsRepository {
@@ -77,10 +79,21 @@ export class FamilyDemographicsRepository {
         updatedItems.push(updatedItem);
       }
 
-      // Update subscription status to next stage
-      const subscription = await tx.healthcareSubscription.update({
+      // Mark the demographic verification step as completed
+      await tx.subscriptionStep.updateMany({
+        where: {
+          healthcare_subscription_id: subscriptionId,
+          type: SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
+        },
+        data: {
+          status: 'COMPLETED',
+          completed_at: new Date(),
+        },
+      });
+
+      // Get the updated subscription
+      const subscription = await tx.healthcareSubscription.findUnique({
         where: { id: subscriptionId },
-        data: { status: SubscriptionStatus.DOCUMENT_UPLOAD_PENDING },
       });
 
       return {
