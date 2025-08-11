@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useMutation, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import {
   IconArrowLeft,
   IconFileText,
@@ -15,7 +12,6 @@ import {
   IconAlertCircle,
   IconX,
 } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 
 import {
   Button,
@@ -34,23 +30,14 @@ import {
   ThemeIcon,
   SimpleGrid,
 } from '@mantine/core';
-import { GET_SUBSCRIPTION_STATUS_QUERY, UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION, UPLOAD_FILES_MUTATION, ACTIVATE_PLAN_MUTATION } from '../lib/queries';
-import type { HealthcareSubscription, HealthcareSubscriptionItem, HealthcareSubscriptionFile } from '../types';
+import { GET_SUBSCRIPTION_STATUS_QUERY } from '../lib/queries';
+import type { HealthcareSubscription, HealthcareSubscriptionFile, HealthcareSubscriptionItem } from '../types';
+import { useSubscriptionWorkflow } from '../hooks/useSubscriptionWorkflow';
+import { useDemographicForm } from '../hooks/useDemographicForm';
+import { useFileUpload } from '../hooks/useFileUpload';
+import { usePlanActivation } from '../hooks/usePlanActivation';
+import { formatDate, getStatusColor, formatStatusText } from '../utils/subscriptionUtils';
 
-// Form validation schema for demographic data
-const demographicSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  governmentId: z.string().min(1, 'Government ID is required'),
-  birthDate: z.string().min(1, 'Birth date is required'),
-});
-
-const demographicFormSchema = z.object({
-  spouse: demographicSchema.optional(),
-  children: z.array(demographicSchema),
-});
-
-type DemographicForm = z.infer<typeof demographicFormSchema>;
 
 const SubscriptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -62,328 +49,28 @@ const SubscriptionDetails: React.FC = () => {
   });
 
   const subscription = data?.getSubscriptionStatus;
-  const [isSubmittingDemographics, setIsSubmittingDemographics] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
-  const [isActivatingPlan, setIsActivatingPlan] = useState(false);
-
-  const [uploadFamilyDemographics] = useMutation(UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION);
-  const [uploadFiles] = useMutation(UPLOAD_FILES_MUTATION);
-  const [activatePlan] = useMutation(ACTIVATE_PLAN_MUTATION);
-
-
-  console.log('### subscription', subscription)
-  // Get the number of spouse and children from subscription items
-  const getSubscriptionItemCounts = () => {
-    if (!subscription?.items) return { spouseCount: 0, childrenCount: 0 };
-
-    const spouseCount = subscription.items.filter((item: HealthcareSubscriptionItem) => item.role === 'SPOUSE').length;
-    const childrenCount = subscription.items.filter((item: HealthcareSubscriptionItem) => item.role === 'CHILD').length;
-
-    return { spouseCount, childrenCount };
-  };
-
-  const { spouseCount, childrenCount } = getSubscriptionItemCounts();
-
-  // Initialize form with default values based on actual subscription items
-  const getDefaultFormValues = (): DemographicForm => {
-    return {
-      spouse: spouseCount > 0 ? { firstName: '', lastName: '', governmentId: '', birthDate: '' } : undefined,
-      children: Array.from({ length: childrenCount }, () => ({ firstName: '', lastName: '', governmentId: '', birthDate: '' })),
-    };
-  };
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<DemographicForm>({
-    resolver: zodResolver(demographicFormSchema),
-    defaultValues: getDefaultFormValues(),
+  
+  const { currentStep, subscriptionItemCounts } = useSubscriptionWorkflow(subscription);
+  const { spouseCount, childrenCount } = subscriptionItemCounts;
+  
+  const demographicForm = useDemographicForm({
+    subscriptionId: id!,
+    spouseCount,
+    childrenCount,
+    onSuccess: () => refetch(),
+  });
+  
+  const fileUpload = useFileUpload({
+    subscriptionId: id!,
+    onSuccess: () => refetch(),
+  });
+  
+  const planActivation = usePlanActivation({
+    subscriptionId: id!,
+    onSuccess: () => refetch(),
   });
 
 
-  // Handle form submission
-  const onSubmitDemographics = async (data: DemographicForm) => {
-    if (!subscription?.id) return;
-
-    setIsSubmittingDemographics(true);
-    try {
-      console.log('Submitting demographic data:', data);
-
-      // Transform form data to match GraphQL input
-      const familyMembers = [];
-
-      // Add spouse if provided
-      if (data.spouse && spouseCount > 0) {
-        familyMembers.push({
-          role: 'SPOUSE',
-          demographic: {
-            firstName: data.spouse.firstName,
-            lastName: data.spouse.lastName,
-            governmentId: data.spouse.governmentId,
-            birthDate: new Date(data.spouse.birthDate).toISOString(),
-          },
-        });
-      }
-
-      // Add children if provided
-      if (data.children && data.children.length > 0) {
-        data.children.forEach(child => {
-          familyMembers.push({
-            role: 'CHILD',
-            demographic: {
-              firstName: child.firstName,
-              lastName: child.lastName,
-              governmentId: child.governmentId,
-              birthDate: new Date(child.birthDate).toISOString(),
-            },
-          });
-        });
-      }
-
-      // Call the mutation
-      await uploadFamilyDemographics({
-        variables: {
-          uploadFamilyDemographicsInput: {
-            subscriptionId: subscription.id,
-            familyMembers,
-          },
-        },
-      });
-
-      notifications.show({
-        title: 'Success',
-        message: 'Demographic data saved successfully! Subscription status updated.',
-        color: 'green',
-        icon: <IconCheck size={16} />,
-      });
-      
-      // Refetch subscriptions to get updated data
-      await refetch();
-      
-      // Reset form after successful submission
-      reset(getDefaultFormValues());
-    } catch (error: unknown) {
-      console.error('Error saving demographic data:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save demographic data. Please try again.';
-      notifications.show({
-        title: 'Error',
-        message: errorMessage,
-        color: 'red',
-        icon: <IconX size={16} />,
-      });
-    } finally {
-      setIsSubmittingDemographics(false);
-    }
-  };
-
-  // File upload handlers
-  const convertFileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        // Remove the data:mime/type;base64, prefix
-        const base64Data = base64String.split(',')[1];
-        resolve(base64Data);
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file size (5MB max to account for base64 overhead)
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        notifications.show({
-          title: 'Error',
-          message: 'File size must be less than 5MB',
-          color: 'red',
-          icon: <IconX size={16} />,
-        });
-        return;
-      }
-
-      // Validate file type
-      const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-
-      if (!allowedTypes.includes(file.type)) {
-        notifications.show({
-          title: 'Error',
-          message: 'File type not allowed. Please upload PDF, JPG, PNG, GIF, or Word documents.',
-          color: 'red',
-          icon: <IconX size={16} />,
-        });
-        return;
-      }
-
-      setSelectedFile(file);
-    }
-  };
-
-  const handleFileUpload = async () => {
-    if (!selectedFile || !subscription?.id) return;
-
-    setIsUploadingFiles(true);
-    try {
-      // Convert file to base64
-      const base64Data = await convertFileToBase64(selectedFile);
-
-      // Call the mutation
-      await uploadFiles({
-        variables: {
-          uploadFilesInput: {
-            subscriptionId: subscription.id,
-            files: [{
-              filename: selectedFile.name,
-              mimetype: selectedFile.type,
-              data: base64Data,
-            }],
-          },
-        },
-      });
-
-      notifications.show({
-        title: 'Success',
-        message: 'File uploaded successfully! Subscription status updated.',
-        color: 'green',
-        icon: <IconCheck size={16} />,
-      });
-      
-      // Refetch subscriptions to get updated data
-      await refetch();
-      
-      // Reset file selection
-      setSelectedFile(null);
-      // Reset file input
-      const fileInput = document.getElementById('file-input') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-      
-    } catch (error: unknown) {
-      console.error('Error uploading file:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload file. Please try again.';
-      notifications.show({
-        title: 'Error',
-        message: errorMessage,
-        color: 'red',
-        icon: <IconX size={16} />,
-      });
-    } finally {
-      setIsUploadingFiles(false);
-    }
-  };
-
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
-    const fileInput = document.getElementById('file-input') as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
-  };
-
-  const handlePlanActivation = async () => {
-    if (!subscription?.id) return;
-
-    setIsActivatingPlan(true);
-    try {
-      await activatePlan({
-        variables: {
-          activatePlanInput: {
-            subscriptionId: subscription.id,
-          },
-        },
-      });
-
-      notifications.show({
-        title: 'Success',
-        message: 'Plan activated successfully! Your subscription is now active.',
-        color: 'green',
-        icon: <IconCheck size={16} />,
-      });
-      
-      // Refetch subscriptions to get updated data
-      await refetch();
-      
-    } catch (error: unknown) {
-      console.error('Error activating plan:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
-      notifications.show({
-        title: 'Error',
-        message: errorMessage,
-        color: 'red',
-        icon: <IconX size={16} />,
-      });
-    } finally {
-      setIsActivatingPlan(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'green';
-      case 'CANCELLED':
-      case 'TERMINATED':
-        return 'red';
-      case 'PENDING':
-        return 'blue';
-      case 'DRAFT':
-        return 'gray';
-      case 'EXPIRED':
-        return 'orange';
-      default:
-        return 'yellow';
-    }
-  };
-
-  // Helper functions to determine workflow state based on steps
-  const getCurrentWorkflowStep = () => {
-    if (!subscription?.steps) return null;
-    
-    // If subscription is not PENDING, return the actual status
-    if (subscription.status !== 'PENDING') {
-      return subscription.status;
-    }
-
-    // Find the first incomplete step to determine what's needed next
-    const demographicStep = subscription.steps.find(step => step.type === 'DEMOGRAPHIC_VERIFICATION');
-    const documentStep = subscription.steps.find(step => step.type === 'DOCUMENT_UPLOAD');
-    const activationStep = subscription.steps.find(step => step.type === 'PLAN_ACTIVATION');
-
-    if (demographicStep?.status === 'PENDING') {
-      return 'DEMOGRAPHIC_VERIFICATION_PENDING';
-    } else if (documentStep?.status === 'PENDING') {
-      return 'DOCUMENT_UPLOAD_PENDING';  
-    } else if (activationStep?.status === 'PENDING') {
-      return 'PLAN_ACTIVATION_PENDING';
-    }
-
-    return 'PENDING';
-  };
-
-  const isStepCompleted = (stepType: string) => {
-    return subscription?.steps?.find(step => step.type === stepType)?.status === 'COMPLETED';
-  };
-
-  const currentStep = getCurrentWorkflowStep();
 
 
   if (loading) {
@@ -464,7 +151,7 @@ const SubscriptionDetails: React.FC = () => {
                 <Group justify="apart" align="flex-start">
                   <Title order={3} fw={600}>Overview</Title>
                   <Badge color={getStatusColor(currentStep || subscription.status)} variant="light" size="lg">
-                    {(currentStep || subscription.status).toLowerCase().replace(/_/g, ' ')}
+                    {formatStatusText(currentStep || subscription.status)}
                   </Badge>
                 </Group>
                 
@@ -511,7 +198,7 @@ const SubscriptionDetails: React.FC = () => {
                     Please provide demographic information for family members covered under this subscription.
                   </Text>
 
-                  <form onSubmit={handleSubmit(onSubmitDemographics)}>
+                  <form onSubmit={demographicForm.handleSubmit}>
                     <Stack gap="xl">
                       {/* Spouse Section - Only show if subscription has spouse */}
                       {spouseCount > 0 && (
@@ -526,27 +213,27 @@ const SubscriptionDetails: React.FC = () => {
                               <Stack gap="xs">
                                 <Text size="sm" fw={500}>First Name *</Text>
                                 <TextInput
-                                  {...register('spouse.firstName')}
+                                  {...demographicForm.register('spouse.firstName')}
                                   placeholder="Enter first name"
-                                  error={errors.spouse?.firstName?.message}
+                                  error={demographicForm.errors.spouse?.firstName?.message}
                                 />
                               </Stack>
 
                               <Stack gap="xs">
                                 <Text size="sm" fw={500}>Last Name *</Text>
                                 <TextInput
-                                  {...register('spouse.lastName')}
+                                  {...demographicForm.register('spouse.lastName')}
                                   placeholder="Enter last name"
-                                  error={errors.spouse?.lastName?.message}
+                                  error={demographicForm.errors.spouse?.lastName?.message}
                                 />
                               </Stack>
 
                               <Stack gap="xs">
                                 <Text size="sm" fw={500}>Government ID *</Text>
                                 <TextInput
-                                  {...register('spouse.governmentId')}
+                                  {...demographicForm.register('spouse.governmentId')}
                                   placeholder="e.g., SSN-123456789"
-                                  error={errors.spouse?.governmentId?.message}
+                                  error={demographicForm.errors.spouse?.governmentId?.message}
                                 />
                               </Stack>
 
@@ -554,8 +241,8 @@ const SubscriptionDetails: React.FC = () => {
                                 <Text size="sm" fw={500}>Birth Date *</Text>
                                 <TextInput
                                   type="date"
-                                  {...register('spouse.birthDate')}
-                                  error={errors.spouse?.birthDate?.message}
+                                  {...demographicForm.register('spouse.birthDate')}
+                                  error={demographicForm.errors.spouse?.birthDate?.message}
                                 />
                               </Stack>
                             </SimpleGrid>
@@ -583,27 +270,27 @@ const SubscriptionDetails: React.FC = () => {
                                     <Stack gap="xs">
                                       <Text size="sm" fw={500}>First Name *</Text>
                                       <TextInput
-                                        {...register(`children.${index}.firstName`)}
+                                        {...demographicForm.register(`children.${index}.firstName`)}
                                         placeholder="Enter first name"
-                                        error={errors.children?.[index]?.firstName?.message}
+                                        error={demographicForm.errors.children?.[index]?.firstName?.message}
                                       />
                                     </Stack>
 
                                     <Stack gap="xs">
                                       <Text size="sm" fw={500}>Last Name *</Text>
                                       <TextInput
-                                        {...register(`children.${index}.lastName`)}
+                                        {...demographicForm.register(`children.${index}.lastName`)}
                                         placeholder="Enter last name"
-                                        error={errors.children?.[index]?.lastName?.message}
+                                        error={demographicForm.errors.children?.[index]?.lastName?.message}
                                       />
                                     </Stack>
 
                                     <Stack gap="xs">
                                       <Text size="sm" fw={500}>Government ID *</Text>
                                       <TextInput
-                                        {...register(`children.${index}.governmentId`)}
+                                        {...demographicForm.register(`children.${index}.governmentId`)}
                                         placeholder="e.g., SSN-123456789"
-                                        error={errors.children?.[index]?.governmentId?.message}
+                                        error={demographicForm.errors.children?.[index]?.governmentId?.message}
                                       />
                                     </Stack>
 
@@ -611,8 +298,8 @@ const SubscriptionDetails: React.FC = () => {
                                       <Text size="sm" fw={500}>Birth Date *</Text>
                                       <TextInput
                                         type="date"
-                                        {...register(`children.${index}.birthDate`)}
-                                        error={errors.children?.[index]?.birthDate?.message}
+                                        {...demographicForm.register(`children.${index}.birthDate`)}
+                                        error={demographicForm.errors.children?.[index]?.birthDate?.message}
                                       />
                                     </Stack>
                                   </SimpleGrid>
@@ -627,11 +314,11 @@ const SubscriptionDetails: React.FC = () => {
                       <Group justify="end" pt="md">
                         <Button
                           type="submit"
-                          loading={isSubmittingDemographics}
+                          loading={demographicForm.isSubmitting}
                           radius="xl"
                           size="md"
                         >
-                          {isSubmittingDemographics ? 'Saving...' : 'Save Demographic Information'}
+                          {demographicForm.isSubmitting ? 'Saving...' : 'Save Demographic Information'}
                         </Button>
                       </Group>
                     </Stack>
@@ -683,14 +370,14 @@ const SubscriptionDetails: React.FC = () => {
                         <input
                           id="file-input"
                           type="file"
-                          onChange={handleFileSelect}
+                          onChange={fileUpload.handleFileSelect}
                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx"
                           style={{ display: 'none' }}
                         />
                         <Button
                           onClick={() => document.getElementById('file-input')?.click()}
                           radius="xl"
-                          disabled={isUploadingFiles}
+                          disabled={fileUpload.isUploading}
                         >
                           Choose File
                         </Button>
@@ -698,7 +385,7 @@ const SubscriptionDetails: React.FC = () => {
                     </Card>
 
                     {/* Selected File Display */}
-                    {selectedFile && (
+                    {fileUpload.selectedFile && (
                       <Card p="md" radius="md" bg="gray.1">
                         <Group justify="apart">
                           <Group gap="md">
@@ -706,9 +393,9 @@ const SubscriptionDetails: React.FC = () => {
                               <IconFileText size={20} />
                             </ThemeIcon>
                             <Stack gap={4}>
-                              <Text fw={500}>{selectedFile.name}</Text>
+                              <Text fw={500}>{fileUpload.selectedFile?.name}</Text>
                               <Text size="sm" c="dimmed">
-                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
+                                {((fileUpload.selectedFile?.size || 0) / 1024 / 1024).toFixed(2)} MB • {fileUpload.selectedFile?.type}
                               </Text>
                             </Stack>
                           </Group>
@@ -716,19 +403,19 @@ const SubscriptionDetails: React.FC = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={removeSelectedFile}
-                              disabled={isUploadingFiles}
+                              onClick={fileUpload.removeSelectedFile}
+                              disabled={fileUpload.isUploading}
                               radius="xl"
                             >
                               Remove
                             </Button>
                             <Button
-                              onClick={handleFileUpload}
-                              loading={isUploadingFiles}
+                              onClick={fileUpload.handleFileUpload}
+                              loading={fileUpload.isUploading}
                               size="sm"
                               radius="xl"
                             >
-                              {isUploadingFiles ? 'Uploading...' : 'Upload'}
+                              {fileUpload.isUploading ? 'Uploading...' : 'Upload'}
                             </Button>
                           </Group>
                         </Group>
@@ -776,14 +463,14 @@ const SubscriptionDetails: React.FC = () => {
                             You can now activate your healthcare plan.
                           </Text>
                           <Button
-                            onClick={handlePlanActivation}
-                            loading={isActivatingPlan}
+                            onClick={planActivation.handlePlanActivation}
+                            loading={planActivation.isActivating}
                             color="green"
                             radius="xl"
                             size="sm"
                             mt="sm"
                           >
-                            {isActivatingPlan ? 'Activating...' : 'Activate Plan'}
+                            {planActivation.isActivating ? 'Activating...' : 'Activate Plan'}
                           </Button>
                         </Stack>
                       </Group>
