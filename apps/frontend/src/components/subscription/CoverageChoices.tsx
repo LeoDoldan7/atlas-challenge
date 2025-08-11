@@ -66,7 +66,7 @@ export const CoverageChoices: React.FC<CoverageChoicesProps> = ({
                   <IconPlus size={20} />
                 </ActionIcon>
               </Group>
-              <Text size="sm" c="dimmed" ta="center">Maximum 7 children allowed</Text>
+              <Text size="sm" c="dimmed" ta="center">Maximum 10 children allowed</Text>
             </Stack>
           </Card>
         </Stack>
