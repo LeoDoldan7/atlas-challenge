@@ -12,6 +12,7 @@ import { EmployeeMapper } from '../employee/employee.mapper';
 import { FamilyDemographicsRepository } from '../family-demographics/family-demographics.repository';
 import { FileUploadRepository } from '../file-upload/file-upload.repository';
 import { PlanActivationRepository } from '../plan-activation/plan-activation.repository';
+import { MinioService } from '../minio/minio.service';
 import {
   SubscriptionStatus,
   StepStatus,
@@ -42,6 +43,13 @@ describe('HealthcareSubscription Integration Tests', () => {
         PlanActivationRepository,
         HealthcarePlanMapper,
         EmployeeMapper,
+        {
+          provide: MinioService,
+          useValue: {
+            uploadFile: jest.fn(),
+            getFileUrl: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -115,7 +123,7 @@ describe('HealthcareSubscription Integration Tests', () => {
     await prisma.demographic.deleteMany();
     await prisma.healthcarePlan.deleteMany();
     await prisma.company.deleteMany();
-    
+
     await prisma.$disconnect();
     await app.close();
   });
@@ -138,14 +146,16 @@ describe('HealthcareSubscription Integration Tests', () => {
       });
 
       expect(dbSubscription?.steps).toHaveLength(3);
-      expect(dbSubscription?.steps.map(s => s.type)).toEqual(
+      expect(dbSubscription?.steps.map((s) => s.type)).toEqual(
         expect.arrayContaining([
           'DEMOGRAPHIC_VERIFICATION',
           'DOCUMENT_UPLOAD',
           'PLAN_ACTIVATION',
         ]),
       );
-      expect(dbSubscription?.steps.every(s => s.status === 'PENDING')).toBe(true);
+      expect(dbSubscription?.steps.every((s) => s.status === 'PENDING')).toBe(
+        true,
+      );
     });
 
     it('should allow progression through enrollment steps', async () => {
@@ -262,9 +272,9 @@ describe('HealthcareSubscription Integration Tests', () => {
       });
 
       expect(dbSubscription?.items).toHaveLength(4);
-      
+
       // All family members use the employee percentage
-      dbSubscription?.items.forEach(item => {
+      dbSubscription?.items.forEach((item) => {
         expect(item.company_pct).toBe(80);
         expect(item.employee_pct).toBe(20);
       });
@@ -284,7 +294,9 @@ describe('HealthcareSubscription Integration Tests', () => {
         service.activatePlan({
           subscriptionId: subscription.id,
         }),
-      ).rejects.toThrow('Step DEMOGRAPHIC_VERIFICATION must be completed before plan activation');
+      ).rejects.toThrow(
+        'Step DEMOGRAPHIC_VERIFICATION must be completed before plan activation',
+      );
     });
 
     it('should allow activation when all prerequisite steps are completed', async () => {
@@ -386,6 +398,134 @@ describe('HealthcareSubscription Integration Tests', () => {
           subscriptionId: subscription.id,
         }),
       ).rejects.toThrow('Insufficient funds or invalid payment allocation');
+    });
+  });
+
+  describe('Custom payment percentages', () => {
+    it('should correctly save custom payment percentages that override plan defaults', async () => {
+      // Set plan defaults to 50% company payment
+      await prisma.healthcarePlan.update({
+        where: { id: testPlanId },
+        data: {
+          pct_employee_paid_by_company: new Prisma.Decimal(50),
+          pct_spouse_paid_by_company: new Prisma.Decimal(40),
+          pct_child_paid_by_company: new Prisma.Decimal(30),
+        },
+      });
+
+      // Create subscription with custom 100% company payment
+      const subscription = await service.createSubscription({
+        employeeId: Number(testEmployeeId),
+        planId: Number(testPlanId),
+        includeSpouse: true,
+        numOfChildren: 2,
+        employeePercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+        spousePercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+        childPercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+      });
+
+      // Verify the saved percentages
+      const savedItems = await prisma.healthcareSubscriptionItem.findMany({
+        where: { healthcare_subscription_id: BigInt(subscription.id) },
+        orderBy: { created_at: 'asc' },
+      });
+
+      expect(savedItems).toHaveLength(4); // Employee + Spouse + 2 Children
+
+      // All items should have 100% company payment, not the plan defaults
+      savedItems.forEach((item) => {
+        expect(item.company_pct).toBe(100);
+        expect(item.employee_pct).toBe(0);
+      });
+
+      // Verify through GraphQL response
+      expect(subscription.items).toHaveLength(4);
+      subscription.items?.forEach((item) => {
+        expect(item.companyPct).toBe(100);
+        expect(item.employeePct).toBe(0);
+      });
+    });
+
+    it('should use plan defaults when no custom percentages are provided', async () => {
+      // Set plan defaults
+      await prisma.healthcarePlan.update({
+        where: { id: testPlanId },
+        data: {
+          pct_employee_paid_by_company: new Prisma.Decimal(75),
+          pct_spouse_paid_by_company: new Prisma.Decimal(60),
+          pct_child_paid_by_company: new Prisma.Decimal(50),
+        },
+      });
+
+      // Create subscription without custom percentages
+      const subscription = await service.createSubscription({
+        employeeId: Number(testEmployeeId),
+        planId: Number(testPlanId),
+        includeSpouse: true,
+        numOfChildren: 1,
+      });
+
+      // Verify the saved percentages match plan defaults
+      const savedItems = await prisma.healthcareSubscriptionItem.findMany({
+        where: { healthcare_subscription_id: BigInt(subscription.id) },
+        orderBy: { created_at: 'asc' },
+      });
+
+      expect(savedItems).toHaveLength(3); // Employee + Spouse + 1 Child
+
+      // All should use the same default (employee percentage)
+      savedItems.forEach((item) => {
+        expect(item.company_pct).toBe(75);
+        expect(item.employee_pct).toBe(25);
+      });
+    });
+
+    it('should handle mixed custom percentages for different member types', async () => {
+      const subscription = await service.createSubscription({
+        employeeId: Number(testEmployeeId),
+        planId: Number(testPlanId),
+        includeSpouse: true,
+        numOfChildren: 1,
+        employeePercentages: {
+          companyPercent: 100,
+          employeePercent: 0,
+        },
+        spousePercentages: {
+          companyPercent: 50,
+          employeePercent: 50,
+        },
+        childPercentages: {
+          companyPercent: 75,
+          employeePercent: 25,
+        },
+      });
+
+      const savedItems = await prisma.healthcareSubscriptionItem.findMany({
+        where: { healthcare_subscription_id: BigInt(subscription.id) },
+        orderBy: { role: 'asc' },
+      });
+
+      const childItem = savedItems.find((item) => item.role === 'child');
+      const employeeItem = savedItems.find((item) => item.role === 'employee');
+      const spouseItem = savedItems.find((item) => item.role === 'spouse');
+
+      expect(employeeItem?.company_pct).toBe(100);
+      expect(employeeItem?.employee_pct).toBe(0);
+
+      expect(spouseItem?.company_pct).toBe(50);
+      expect(spouseItem?.employee_pct).toBe(50);
+
+      expect(childItem?.company_pct).toBe(75);
+      expect(childItem?.employee_pct).toBe(25);
     });
   });
 
