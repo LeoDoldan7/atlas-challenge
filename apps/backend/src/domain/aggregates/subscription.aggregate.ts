@@ -1,7 +1,6 @@
 import { Money } from '../value-objects/money.value-object';
 import { SubscriptionPeriod } from '../value-objects/subscription-period.value-object';
 import { PaymentAllocation } from '../value-objects/payment-allocation.value-object';
-import { PaymentProcessorService } from '../services/payment-processor.service';
 import { PaymentResult } from '../strategies/payment-strategy.interface';
 import { SubscriptionEnrollmentStateMachine } from '../state-machines/enrollment-state-machine';
 import {
@@ -12,8 +11,14 @@ import {
   ItemRole,
   SubscriptionStatus,
   SubscriptionStepType,
-  StepStatus,
 } from '@prisma/client';
+import { SubscriptionValidationService } from '../services/subscription-validation.service';
+import {
+  EnrollmentStepManager,
+  EnrollmentStep,
+} from '../services/enrollment-step-manager.service';
+import { SubscriptionPaymentCoordinator } from '../services/subscription-payment-coordinator.service';
+import { PaymentProcessorService } from '../services/payment-processor.service';
 
 interface SubscriptionItem {
   id: string;
@@ -25,14 +30,6 @@ interface SubscriptionItem {
   createdAt: Date;
 }
 
-interface EnrollmentStep {
-  id?: string;
-  type: SubscriptionStepType;
-  status: StepStatus;
-  completedAt?: Date | null;
-  createdAt?: Date;
-}
-
 export class Subscription {
   private status: SubscriptionStatus;
   private items: SubscriptionItem[] = [];
@@ -41,7 +38,8 @@ export class Subscription {
   private aggregatePaymentAllocation: PaymentAllocation;
   private updatedAt: Date;
   private stateMachine: SubscriptionEnrollmentStateMachine;
-  private paymentProcessor: PaymentProcessorService;
+  private paymentCoordinator: SubscriptionPaymentCoordinator;
+  private validationService: SubscriptionValidationService;
   readonly createdAt: Date = new Date();
 
   constructor(
@@ -50,10 +48,11 @@ export class Subscription {
     readonly employeeId: string,
     readonly planId: string,
     private period: SubscriptionPeriod,
-    paymentProcessor?: PaymentProcessorService,
+    paymentCoordinator?: SubscriptionPaymentCoordinator,
+    validationService?: SubscriptionValidationService,
   ) {
     this.status = SubscriptionStatus.DRAFT;
-    this.enrollmentSteps = this.initializeEnrollmentSteps();
+    this.enrollmentSteps = EnrollmentStepManager.initializeSteps();
     this.totalMonthlyAmount = Money.zero();
     this.aggregatePaymentAllocation = new PaymentAllocation({
       companyContribution: Money.zero(),
@@ -64,27 +63,14 @@ export class Subscription {
       id,
       EnrollmentStatus.DRAFT,
     );
-    this.paymentProcessor = paymentProcessor || new PaymentProcessorService();
-  }
-
-  private initializeEnrollmentSteps(): EnrollmentStep[] {
-    return [
-      {
-        type: SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
-        status: StepStatus.PENDING,
-        createdAt: new Date(),
-      },
-      {
-        type: SubscriptionStepType.DOCUMENT_UPLOAD,
-        status: StepStatus.PENDING,
-        createdAt: new Date(),
-      },
-      {
-        type: SubscriptionStepType.PLAN_ACTIVATION,
-        status: StepStatus.PENDING,
-        createdAt: new Date(),
-      },
-    ];
+    this.validationService =
+      validationService || new SubscriptionValidationService();
+    this.paymentCoordinator =
+      paymentCoordinator ||
+      new SubscriptionPaymentCoordinator(
+        new PaymentProcessorService(),
+        this.stateMachine,
+      );
   }
 
   addSubscriptionItem({
@@ -98,10 +84,10 @@ export class Subscription {
     monthlyPrice: Money;
     paymentAllocation: PaymentAllocation;
   }): void {
-    this.validateCanModifyItems();
-    this.validateEmployeeAddedFirst(memberType);
-    this.validateNoDuplicateMembers(memberId);
-    this.validateChildrenLimit(memberType);
+    this.validationService.validateCanModifyItems(this.status);
+    this.validationService.validateEmployeeAddedFirst(memberType, this.items);
+    this.validationService.validateNoDuplicateMembers(memberId, this.items);
+    this.validationService.validateChildrenLimit(memberType, this.items);
 
     const item: SubscriptionItem = {
       id: `${this.id}_${memberType}_${memberId}`,
@@ -135,18 +121,26 @@ export class Subscription {
   }
 
   async completeEnrollmentStep(stepType: SubscriptionStepType): Promise<void> {
-    this.validateCanCompleteEnrollmentStep();
+    this.validationService.validateCanCompleteEnrollmentStep(this.status);
 
-    const step = this.findEnrollmentStep(stepType);
-    this.validateStepNotAlreadyCompleted(step, stepType);
-    this.validateStepsCompletedInOrder(stepType);
+    const step = this.validationService.validateStepExists(
+      stepType,
+      this.enrollmentSteps,
+    );
+    this.validationService.validateStepNotAlreadyCompleted(step, stepType);
+    this.validationService.validateStepsCompletedInOrder(
+      stepType,
+      this.enrollmentSteps,
+    );
 
-    step.status = StepStatus.COMPLETED;
-    step.completedAt = new Date();
+    this.enrollmentSteps = EnrollmentStepManager.completeStep(
+      this.enrollmentSteps,
+      stepType,
+    );
     this.updatedAt = new Date();
 
     // Check if all steps completed
-    if (this.enrollmentSteps.every((s) => s.status === StepStatus.COMPLETED)) {
+    if (EnrollmentStepManager.areAllStepsCompleted(this.enrollmentSteps)) {
       // All steps completed, go through payment processing flow before activation
       if (this.stateMachine.canTransition(EnrollmentEvent.PROCESS_PAYMENT)) {
         await this.stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
@@ -163,35 +157,17 @@ export class Subscription {
   }
 
   async processPayment(employeeWalletBalance: Money): Promise<PaymentResult> {
-    if (!this.stateMachine.canTransition(EnrollmentEvent.PROCESS_PAYMENT)) {
-      throw new Error('Cannot process payment in current state');
-    }
+    const result = await this.paymentCoordinator.processPayment(
+      this.aggregatePaymentAllocation,
+      employeeWalletBalance,
+    );
 
-    await this.stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
-
-    try {
-      const result = this.paymentProcessor.processPayment(
-        this.aggregatePaymentAllocation,
-        employeeWalletBalance,
-      );
-
-      if (result.success) {
-        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
-      } else {
-        await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED);
-      }
-
-      this.updatedAt = new Date();
-      return result;
-    } catch (error) {
-      await this.stateMachine.transition(EnrollmentEvent.PAYMENT_FAILED);
-
-      throw error;
-    }
+    this.updatedAt = new Date();
+    return result;
   }
 
   validatePayment(employeeWalletBalance: Money): boolean {
-    return this.paymentProcessor.validatePayment(
+    return this.paymentCoordinator.validatePayment(
       this.aggregatePaymentAllocation,
       employeeWalletBalance,
     );
@@ -209,15 +185,7 @@ export class Subscription {
     }
 
     // Ensure all steps are completed before activation
-    const allStepsCompleted = this.enrollmentSteps.every(
-      (s) => s.status === StepStatus.COMPLETED,
-    );
-
-    if (!allStepsCompleted) {
-      throw new Error(
-        'Cannot activate subscription: not all steps are completed',
-      );
-    }
+    this.validationService.validateAllStepsCompleted(this.enrollmentSteps);
 
     await this.stateMachine.transition(EnrollmentEvent.ACTIVATE);
     this.status = SubscriptionStatus.ACTIVE;
@@ -252,78 +220,6 @@ export class Subscription {
     await this.stateMachine.transition(EnrollmentEvent.EXPIRE);
     this.status = SubscriptionStatus.EXPIRED;
     this.updatedAt = new Date();
-  }
-
-  private validateCanModifyItems(): void {
-    if (this.status !== SubscriptionStatus.DRAFT) {
-      throw new Error('Cannot modify items after enrollment has started');
-    }
-  }
-
-  private hasEmployeeItem(): boolean {
-    return this.items.some((item) => item.memberType === ItemRole.employee);
-  }
-
-  private validateEmployeeAddedFirst(memberType: ItemRole): void {
-    if (memberType !== ItemRole.employee && !this.hasEmployeeItem()) {
-      throw new Error('Employee must be added before family members');
-    }
-  }
-
-  private validateNoDuplicateMembers(memberId: string): void {
-    if (this.items.some((item) => item.memberId === memberId)) {
-      throw new Error(`Member ${memberId} already exists in subscription`);
-    }
-  }
-
-  private validateChildrenLimit(memberType: ItemRole): void {
-    if (memberType === ItemRole.child) {
-      const childCount = this.getChildrenCount();
-      if (childCount >= 10) {
-        throw new Error('Maximum 10 children allowed per subscription');
-      }
-    }
-  }
-
-  private getChildrenCount(): number {
-    return this.items.filter((i) => i.memberType === ItemRole.child).length;
-  }
-
-  private validateCanCompleteEnrollmentStep(): void {
-    if (this.status !== SubscriptionStatus.PENDING) {
-      throw new Error('Cannot complete enrollment steps in current status');
-    }
-  }
-
-  private findEnrollmentStep(stepType: SubscriptionStepType): EnrollmentStep {
-    const step = this.enrollmentSteps.find((s) => s.type === stepType);
-    if (!step) {
-      throw new Error(`Enrollment step ${stepType} not found`);
-    }
-    return step;
-  }
-
-  private validateStepNotAlreadyCompleted(
-    step: EnrollmentStep,
-    stepType: SubscriptionStepType,
-  ): void {
-    if (step.status === StepStatus.COMPLETED) {
-      throw new Error(`Step ${stepType} is already completed`);
-    }
-  }
-
-  private validateStepsCompletedInOrder(stepType: SubscriptionStepType): void {
-    const stepIndex = this.enrollmentSteps.findIndex(
-      (s) => s.type === stepType,
-    );
-    if (stepIndex > 0) {
-      const previousStep = this.enrollmentSteps[stepIndex - 1];
-      if (previousStep.status !== StepStatus.COMPLETED) {
-        throw new Error(
-          `Must complete ${previousStep.type} before ${stepType}`,
-        );
-      }
-    }
   }
 
   private recalculateTotals(): void {
@@ -372,8 +268,12 @@ export class Subscription {
     return this.stateMachine;
   }
 
-  getPaymentProcessor(): PaymentProcessorService {
-    return this.paymentProcessor;
+  getPaymentCoordinator(): SubscriptionPaymentCoordinator {
+    return this.paymentCoordinator;
+  }
+
+  getValidationService(): SubscriptionValidationService {
+    return this.validationService;
   }
 
   getCurrentEnrollmentState(): EnrollmentStatus {
