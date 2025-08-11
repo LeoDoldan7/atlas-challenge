@@ -13,8 +13,8 @@ describe('SubscriptionEnrollmentStateMachine', () => {
   });
 
   describe('Initial State', () => {
-    it('should start in DRAFT status', () => {
-      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.DRAFT);
+    it('should start in ENROLLMENT_STARTED status', () => {
+      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.ENROLLMENT_STARTED);
     });
 
     it('should allow custom initial state', () => {
@@ -27,23 +27,8 @@ describe('SubscriptionEnrollmentStateMachine', () => {
   });
 
   describe('Valid Transitions', () => {
-    it('should transition from DRAFT to ENROLLMENT_STARTED', async () => {
-      expect(stateMachine.canTransition(EnrollmentEvent.START_ENROLLMENT)).toBe(
-        true,
-      );
-
-      const success = await stateMachine.transition(
-        EnrollmentEvent.START_ENROLLMENT,
-      );
-
-      expect(success).toBe(true);
-      expect(stateMachine.getCurrentState()).toBe(
-        EnrollmentStatus.ENROLLMENT_STARTED,
-      );
-    });
-
     it('should transition from ENROLLMENT_STARTED to PAYMENT_PENDING', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
 
       const success = await stateMachine.transition(
         EnrollmentEvent.PROCESS_PAYMENT,
@@ -56,7 +41,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should handle payment success flow', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
 
       const success = await stateMachine.transition(
@@ -70,7 +55,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should handle payment failure and retry flow', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
 
       const failureSuccess = await stateMachine.transition(
@@ -91,7 +76,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should complete full enrollment flow', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
 
@@ -103,15 +88,8 @@ describe('SubscriptionEnrollmentStateMachine', () => {
   });
 
   describe('Cancellation', () => {
-    it('should allow cancellation from DRAFT', async () => {
-      const success = await stateMachine.transition(EnrollmentEvent.CANCEL);
-
-      expect(success).toBe(true);
-      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.CANCELLED);
-    });
-
     it('should allow cancellation from ENROLLMENT_STARTED', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
 
       const success = await stateMachine.transition(EnrollmentEvent.CANCEL);
 
@@ -120,7 +98,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should allow cancellation from PAYMENT_PENDING', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
 
       const success = await stateMachine.transition(EnrollmentEvent.CANCEL);
@@ -130,7 +108,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should allow cancellation from ACTIVE', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       await stateMachine.transition(EnrollmentEvent.ACTIVATE);
@@ -144,7 +122,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
 
   describe('Expiration', () => {
     it('should allow expiration from ACTIVE', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       await stateMachine.transition(EnrollmentEvent.ACTIVATE);
@@ -156,7 +134,7 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
 
     it('should allow expiration from SUSPENDED', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       await stateMachine.transition(EnrollmentEvent.ACTIVATE);
@@ -169,22 +147,16 @@ describe('SubscriptionEnrollmentStateMachine', () => {
   });
 
   describe('Invalid Transitions', () => {
-    it('should reject invalid transitions from DRAFT', async () => {
-      await expect(
-        stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS),
-      ).rejects.toThrow('Invalid transition');
-    });
-
     it('should reject transitions from terminal states', async () => {
       await stateMachine.transition(EnrollmentEvent.CANCEL);
 
       await expect(
-        stateMachine.transition(EnrollmentEvent.START_ENROLLMENT),
+        stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT),
       ).rejects.toThrow('Invalid transition');
     });
 
     it('should reject invalid event sequences', async () => {
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
+      // Already in ENROLLMENT_STARTED state
 
       await expect(
         stateMachine.transition(EnrollmentEvent.ACTIVATE),

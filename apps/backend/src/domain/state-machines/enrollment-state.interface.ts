@@ -23,7 +23,6 @@ export interface EnrollmentTransition {
   from: EnrollmentStatus;
   event: EnrollmentEvent;
   to: EnrollmentStatus;
-  guard?: () => boolean;
   action?: () => void | Promise<void>;
 }
 

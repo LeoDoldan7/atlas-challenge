@@ -14,7 +14,7 @@ export class SubscriptionEnrollmentStateMachine
 
   constructor(
     subscriptionId: string,
-    initialStatus: EnrollmentStatus = EnrollmentStatus.DRAFT,
+    initialStatus: EnrollmentStatus = EnrollmentStatus.ENROLLMENT_STARTED,
   ) {
     this.context = {
       subscriptionId,
@@ -33,7 +33,7 @@ export class SubscriptionEnrollmentStateMachine
     const transition = this.findTransition(this.context.currentStatus, event);
     if (!transition) return false;
 
-    return transition.guard ? transition.guard() : true;
+    return true;
   }
 
   async transition(event: EnrollmentEvent): Promise<boolean> {
@@ -43,10 +43,6 @@ export class SubscriptionEnrollmentStateMachine
       throw new Error(
         `Invalid transition: ${event} from state ${this.context.currentStatus}`,
       );
-    }
-
-    if (transition.guard && !transition.guard()) {
-      return false;
     }
 
     const previousState = this.context.currentStatus;
@@ -80,17 +76,6 @@ export class SubscriptionEnrollmentStateMachine
   private defineTransitions(): EnrollmentTransition[] {
     return [
       {
-        from: EnrollmentStatus.DRAFT,
-        event: EnrollmentEvent.START_ENROLLMENT,
-        to: EnrollmentStatus.ENROLLMENT_STARTED,
-      },
-      {
-        from: EnrollmentStatus.DRAFT,
-        event: EnrollmentEvent.CANCEL,
-        to: EnrollmentStatus.CANCELLED,
-      },
-
-      {
         from: EnrollmentStatus.ENROLLMENT_STARTED,
         event: EnrollmentEvent.PROCESS_PAYMENT,
         to: EnrollmentStatus.PAYMENT_PENDING,
@@ -100,7 +85,6 @@ export class SubscriptionEnrollmentStateMachine
         event: EnrollmentEvent.CANCEL,
         to: EnrollmentStatus.CANCELLED,
       },
-
       {
         from: EnrollmentStatus.PAYMENT_PENDING,
         event: EnrollmentEvent.PAYMENT_SUCCESS,
@@ -116,7 +100,6 @@ export class SubscriptionEnrollmentStateMachine
         event: EnrollmentEvent.CANCEL,
         to: EnrollmentStatus.CANCELLED,
       },
-
       {
         from: EnrollmentStatus.PAYMENT_PROCESSED,
         event: EnrollmentEvent.ACTIVATE,
