@@ -340,20 +340,50 @@ const SubscriptionDetails: React.FC = () => {
     switch (status) {
       case 'ACTIVE':
         return 'green';
-      case 'CANCELED':
-        return 'red';
+      case 'CANCELLED':
       case 'TERMINATED':
-        return 'gray';
-      case 'DEMOGRAPHIC_VERIFICATION_PENDING':
+        return 'red';
+      case 'PENDING':
         return 'blue';
-      case 'DOCUMENT_UPLOAD_PENDING':
-        return 'violet';
-      case 'PLAN_ACTIVATION_PENDING':
+      case 'DRAFT':
+        return 'gray';
+      case 'EXPIRED':
         return 'orange';
       default:
         return 'yellow';
     }
   };
+
+  // Helper functions to determine workflow state based on steps
+  const getCurrentWorkflowStep = () => {
+    if (!subscription?.steps) return null;
+    
+    // If subscription is not PENDING, return the actual status
+    if (subscription.status !== 'PENDING') {
+      return subscription.status;
+    }
+
+    // Find the first incomplete step to determine what's needed next
+    const demographicStep = subscription.steps.find(step => step.type === 'DEMOGRAPHIC_VERIFICATION');
+    const documentStep = subscription.steps.find(step => step.type === 'DOCUMENT_UPLOAD');
+    const activationStep = subscription.steps.find(step => step.type === 'PLAN_ACTIVATION');
+
+    if (demographicStep?.status === 'PENDING') {
+      return 'DEMOGRAPHIC_VERIFICATION_PENDING';
+    } else if (documentStep?.status === 'PENDING') {
+      return 'DOCUMENT_UPLOAD_PENDING';  
+    } else if (activationStep?.status === 'PENDING') {
+      return 'PLAN_ACTIVATION_PENDING';
+    }
+
+    return 'PENDING';
+  };
+
+  const isStepCompleted = (stepType: string) => {
+    return subscription?.steps?.find(step => step.type === stepType)?.status === 'COMPLETED';
+  };
+
+  const currentStep = getCurrentWorkflowStep();
 
 
   if (loading) {
@@ -433,8 +463,8 @@ const SubscriptionDetails: React.FC = () => {
               <Stack gap="md">
                 <Group justify="apart" align="flex-start">
                   <Title order={3} fw={600}>Overview</Title>
-                  <Badge color={getStatusColor(subscription.status)} variant="light" size="lg">
-                    {subscription.status.toLowerCase().replace(/_/g, ' ')}
+                  <Badge color={getStatusColor(currentStep || subscription.status)} variant="light" size="lg">
+                    {(currentStep || subscription.status).toLowerCase().replace(/_/g, ' ')}
                   </Badge>
                 </Group>
                 
@@ -468,8 +498,8 @@ const SubscriptionDetails: React.FC = () => {
               </Stack>
             </Card>
 
-            {/* Demographic Data Entry - Only show if status is DEMOGRAPHIC_VERIFICATION_PENDING */}
-            {subscription.status === 'DEMOGRAPHIC_VERIFICATION_PENDING' && (
+            {/* Demographic Data Entry - Only show if current step is DEMOGRAPHIC_VERIFICATION_PENDING */}
+            {currentStep === 'DEMOGRAPHIC_VERIFICATION_PENDING' && (
               <Card p="lg" radius="xl" shadow="md">
                 <Stack gap="lg">
                   <Group gap="sm">
@@ -610,8 +640,8 @@ const SubscriptionDetails: React.FC = () => {
               </Card>
             )}
 
-            {/* Document Upload Section - Only show if status is DOCUMENT_UPLOAD_PENDING */}
-            {subscription.status === 'DOCUMENT_UPLOAD_PENDING' && (
+            {/* Document Upload Section - Only show if current step is DOCUMENT_UPLOAD_PENDING */}
+            {currentStep === 'DOCUMENT_UPLOAD_PENDING' && (
               <Card p="lg" radius="xl" shadow="md">
                 <Stack gap="lg">
                   <Group gap="sm">
@@ -720,8 +750,8 @@ const SubscriptionDetails: React.FC = () => {
               </Card>
             )}
 
-            {/* Plan Activation Pending - Only show if status is PLAN_ACTIVATION_PENDING */}
-            {subscription.status === 'PLAN_ACTIVATION_PENDING' && (
+            {/* Plan Activation Pending - Only show if current step is PLAN_ACTIVATION_PENDING */}
+            {currentStep === 'PLAN_ACTIVATION_PENDING' && (
               <Card p="lg" radius="xl" shadow="md">
                 <Stack gap="lg">
                   <Group gap="sm">
@@ -859,14 +889,88 @@ const SubscriptionDetails: React.FC = () => {
               </Card>
             )}
 
-            {/* Canceled/Terminated Status - Only show if status is CANCELED or TERMINATED */}
-            {(subscription.status === 'CANCELED' || subscription.status === 'TERMINATED') && (
+            {/* Progress Indicator for PENDING status */}
+            {subscription.status === 'PENDING' && subscription.steps && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconClock size={20} style={{ color: 'var(--mantine-color-blue-6)' }} />
+                    <Title order={3} fw={600}>Enrollment Progress</Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    Track the progress of your subscription enrollment.
+                  </Text>
+
+                  <Stack gap="md">
+                    {subscription.steps.map((step) => (
+                      <Card key={step.id} p="md" radius="md" bg={step.status === 'COMPLETED' ? 'green.1' : 'gray.1'}>
+                        <Group gap="md">
+                          <ThemeIcon 
+                            size={40} 
+                            radius="md" 
+                            color={step.status === 'COMPLETED' ? 'green' : 'gray'} 
+                            variant="light"
+                          >
+                            {step.status === 'COMPLETED' ? <IconCheck size={20} /> : <IconClock size={20} />}
+                          </ThemeIcon>
+                          <Stack gap={4} style={{ flex: 1 }}>
+                            <Text fw={500}>
+                              {step.type === 'DEMOGRAPHIC_VERIFICATION' && 'Demographic Verification'}
+                              {step.type === 'DOCUMENT_UPLOAD' && 'Document Upload'}
+                              {step.type === 'PLAN_ACTIVATION' && 'Plan Activation'}
+                            </Text>
+                            <Text size="sm" c="dimmed">
+                              {step.status === 'COMPLETED' ? 'Completed' : 'Pending'}
+                              {step.completedAt && ` on ${formatDate(step.completedAt)}`}
+                            </Text>
+                          </Stack>
+                        </Group>
+                      </Card>
+                    ))}
+                  </Stack>
+                </Stack>
+              </Card>
+            )}
+
+            {/* Draft Status - Only show if status is DRAFT */}
+            {subscription.status === 'DRAFT' && (
+              <Card p="lg" radius="xl" shadow="md">
+                <Stack gap="lg">
+                  <Group gap="sm">
+                    <IconClock size={20} style={{ color: 'var(--mantine-color-gray-6)' }} />
+                    <Title order={3} fw={600}>Draft Subscription</Title>
+                  </Group>
+                  
+                  <Text c="dimmed">
+                    This subscription is in draft status and has not been activated yet.
+                  </Text>
+
+                  <Alert color="gray" radius="md">
+                    <Group gap="md" align="flex-start">
+                      <ThemeIcon size={24} color="gray" variant="light">
+                        <IconClock size={16} />
+                      </ThemeIcon>
+                      <Stack gap="xs" style={{ flex: 1 }}>
+                        <Text fw={500}>Waiting for Activation</Text>
+                        <Text size="sm">
+                          This subscription needs to be activated to begin the enrollment process.
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </Alert>
+                </Stack>
+              </Card>
+            )}
+
+            {/* Cancelled/Terminated Status - Only show if status is CANCELLED or TERMINATED */}
+            {(subscription.status === 'CANCELLED' || subscription.status === 'TERMINATED') && (
               <Card p="lg" radius="xl" shadow="md">
                 <Stack gap="lg">
                   <Group gap="sm">
                     <IconX size={20} style={{ color: 'var(--mantine-color-red-6)' }} />
                     <Title order={3} fw={600}>
-                      {subscription.status === 'CANCELED' ? 'Subscription Canceled' : 'Subscription Terminated'}
+                      {subscription.status === 'CANCELLED' ? 'Subscription Cancelled' : 'Subscription Terminated'}
                     </Title>
                   </Group>
                   
@@ -881,11 +985,11 @@ const SubscriptionDetails: React.FC = () => {
                       </ThemeIcon>
                       <Stack gap="md" style={{ flex: 1 }}>
                         <Text fw={500}>
-                          {subscription.status === 'CANCELED' ? 'Canceled' : 'Terminated'}
+                          {subscription.status === 'CANCELLED' ? 'Cancelled' : 'Terminated'}
                         </Text>
                         <Text size="sm">
-                          {subscription.status === 'CANCELED' 
-                            ? 'This subscription has been canceled and is no longer providing coverage.'
+                          {subscription.status === 'CANCELLED' 
+                            ? 'This subscription has been cancelled and is no longer providing coverage.'
                             : 'This subscription has been terminated and is no longer providing coverage.'
                           }
                         </Text>
