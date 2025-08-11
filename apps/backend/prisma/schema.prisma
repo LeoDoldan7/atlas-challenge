@@ -147,6 +147,11 @@ model HealthcareSubscriptionItem {
   healthcare_subscription_id BigInt
   role                       ItemRole
   demographic_id             BigInt?
+  
+  // Custom percentage overrides (nullable to use plan defaults when not specified)
+  company_pct                Int?            @db.SmallInt
+  employee_pct               Int?            @db.SmallInt
+  
   created_at                 DateTime        @default(now())
 
   subscription               HealthcareSubscription @relation(fields: [healthcare_subscription_id], references: [id], onDelete: Cascade)

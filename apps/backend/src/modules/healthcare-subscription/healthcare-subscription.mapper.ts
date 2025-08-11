@@ -17,7 +17,7 @@ import {
 } from '../../graphql/shared/enums';
 import { HealthcareSubscriptionItem } from '../../graphql/healthcare-subscription/types/healthcare-subscription-item.type';
 import { HealthcareSubscriptionFile } from '../../graphql/healthcare-subscription/types/healthcare-subscription-file.type';
-import { 
+import {
   SubscriptionStep,
   SubscriptionStepType,
   StepStatus,
@@ -108,6 +108,8 @@ export class HealthcareSubscriptionMapper {
       healthcareSubscriptionId: item.healthcare_subscription_id.toString(),
       role: this.mapItemRole(item.role),
       demographicId: item.demographic_id?.toString(),
+      companyPct: item.company_pct !== null ? item.company_pct : undefined,
+      employeePct: item.employee_pct !== null ? item.employee_pct : undefined,
       createdAt: item.created_at,
     };
   }

@@ -17,6 +17,18 @@ export class HealthcareSubscriptionItem {
   @Field(() => ID, { nullable: true })
   demographicId?: string;
 
+  @Field({
+    nullable: true,
+    description: 'Custom percentage company pays (0-100)',
+  })
+  companyPct?: number;
+
+  @Field({
+    nullable: true,
+    description: 'Custom percentage employee pays (0-100)',
+  })
+  employeePct?: number;
+
   @Field()
   createdAt: Date;
 

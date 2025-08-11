@@ -28,6 +28,7 @@ import { DocumentUploadCard } from '../components/subscription/DocumentUploadCar
 import { PlanActivationCard } from '../components/subscription/PlanActivationCard';
 import { SubscriptionStatusCards } from '../components/subscription/SubscriptionStatusCards';
 import { EnrollmentProgressCard } from '../components/subscription/EnrollmentProgressCard';
+import { CostBreakdownCard } from '../components/subscription/CostBreakdownCard';
 
 const SubscriptionDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -143,6 +144,12 @@ const SubscriptionDetails: React.FC = () => {
                 onSuccess={() => refetch()}
               />
             )}
+
+            <CostBreakdownCard 
+              subscription={subscription} 
+              spouseCount={spouseCount}
+              childrenCount={childrenCount}
+            />
 
             <SubscriptionStatusCards subscription={subscription} />
 

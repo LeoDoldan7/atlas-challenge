@@ -19,14 +19,14 @@ import {
   Group,
   ActionIcon,
   Loader,
-  Alert,
-  Grid
+  Alert
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
 import { useEmployees } from '../hooks/useEmployees';
 import { useHealthcarePlans } from '../hooks/useHealthcarePlans';
 import { useCreateSubscription } from '../hooks/useCreateSubscription';
+import { CostSharingConfiguration } from '../components/cost-sharing';
 import type { Employee, SubscriptionType } from '../types';
 
 // Form validation schema
@@ -35,6 +35,21 @@ const subscriptionSchema = z.object({
   planId: z.string().min(1, 'Please select a healthcare plan'),
   spouseIncluded: z.boolean(),
   childrenCount: z.number().min(0).max(7),
+  employeeCompanyPercent: z.number().min(0).max(100),
+  employeeEmployeePercent: z.number().min(0).max(100),
+  spouseCompanyPercent: z.number().min(0).max(100),
+  spouseEmployeePercent: z.number().min(0).max(100),
+  childCompanyPercent: z.number().min(0).max(100),
+  childEmployeePercent: z.number().min(0).max(100),
+}).refine((data) => {
+  // Validate that employee percentages sum to 100
+  const employeeSum = data.employeeCompanyPercent + data.employeeEmployeePercent;
+  const spouseSum = data.spouseCompanyPercent + data.spouseEmployeePercent;
+  const childSum = data.childCompanyPercent + data.childEmployeePercent;
+  
+  return employeeSum === 100 && spouseSum === 100 && childSum === 100;
+}, {
+  message: "Employee and Company percentages must sum to 100% for each member type",
 });
 
 type SubscriptionForm = z.infer<typeof subscriptionSchema>;
@@ -64,6 +79,12 @@ const NewSubscription: React.FC = () => {
       planId: '',
       spouseIncluded: false,
       childrenCount: 0,
+      employeeCompanyPercent: 0,
+      employeeEmployeePercent: 100,
+      spouseCompanyPercent: 0,
+      spouseEmployeePercent: 100,
+      childCompanyPercent: 0,
+      childEmployeePercent: 100,
     },
     mode: 'onChange',
   });
@@ -73,6 +94,12 @@ const NewSubscription: React.FC = () => {
   const planId = watch('planId');
   const spouseIncluded = watch('spouseIncluded');
   const childrenCount = watch('childrenCount');
+  const employeeCompanyPercent = watch('employeeCompanyPercent');
+  const employeeEmployeePercent = watch('employeeEmployeePercent');
+  const spouseCompanyPercent = watch('spouseCompanyPercent');
+  const spouseEmployeePercent = watch('spouseEmployeePercent');
+  const childCompanyPercent = watch('childCompanyPercent');
+  const childEmployeePercent = watch('childEmployeePercent');
 
   // Calculate subscription type dynamically
   const subscriptionType: SubscriptionType =
@@ -115,6 +142,18 @@ const NewSubscription: React.FC = () => {
         includeSpouse: data.spouseIncluded,
         numOfChildren: data.childrenCount,
         planId: parseInt(data.planId),
+        employeePercentages: {
+          companyPercent: data.employeeCompanyPercent,
+          employeePercent: data.employeeEmployeePercent,
+        },
+        spousePercentages: {
+          companyPercent: data.spouseCompanyPercent,
+          employeePercent: data.spouseEmployeePercent,
+        },
+        childPercentages: {
+          companyPercent: data.childCompanyPercent,
+          employeePercent: data.childEmployeePercent,
+        },
       });
 
       notifications.show({
@@ -140,6 +179,61 @@ const NewSubscription: React.FC = () => {
   const adjustChildrenCount = (adjustment: number) => {
     const newCount = Math.max(0, Math.min(7, childrenCount + adjustment));
     setValue('childrenCount', newCount, { shouldValidate: true });
+  };
+
+  const handlePlanSelection = (planId: string | null) => {
+    setValue('planId', planId || '', { shouldValidate: true });
+    
+    if (planId) {
+      const plan = plans.find(p => p.id === planId);
+      if (plan) {
+        // Auto-populate with plan's default percentages (convert strings to numbers)
+        const employeeCompanyPercent = parseInt(plan.pctEmployeePaidByCompany);
+        const spouseCompanyPercent = parseInt(plan.pctSpousePaidByCompany);
+        const childCompanyPercent = parseInt(plan.pctChildPaidByCompany);
+        
+        setValue('employeeCompanyPercent', employeeCompanyPercent, { shouldValidate: true });
+        setValue('employeeEmployeePercent', 100 - employeeCompanyPercent, { shouldValidate: true });
+        setValue('spouseCompanyPercent', spouseCompanyPercent, { shouldValidate: true });
+        setValue('spouseEmployeePercent', 100 - spouseCompanyPercent, { shouldValidate: true });
+        setValue('childCompanyPercent', childCompanyPercent, { shouldValidate: true });
+        setValue('childEmployeePercent', 100 - childCompanyPercent, { shouldValidate: true });
+      }
+    }
+  };
+
+  const handleCompanyPercentChange = (value: number | string, memberType: 'employee' | 'spouse' | 'child') => {
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    const clampedValue = Math.max(0, Math.min(100, numValue));
+    const employeePercent = 100 - clampedValue;
+    
+    if (memberType === 'employee') {
+      setValue('employeeCompanyPercent', clampedValue, { shouldValidate: true });
+      setValue('employeeEmployeePercent', employeePercent, { shouldValidate: true });
+    } else if (memberType === 'spouse') {
+      setValue('spouseCompanyPercent', clampedValue, { shouldValidate: true });
+      setValue('spouseEmployeePercent', employeePercent, { shouldValidate: true });
+    } else if (memberType === 'child') {
+      setValue('childCompanyPercent', clampedValue, { shouldValidate: true });
+      setValue('childEmployeePercent', employeePercent, { shouldValidate: true });
+    }
+  };
+
+  const handleEmployeePercentChange = (value: number | string, memberType: 'employee' | 'spouse' | 'child') => {
+    const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    const clampedValue = Math.max(0, Math.min(100, numValue));
+    const companyPercent = 100 - clampedValue;
+    
+    if (memberType === 'employee') {
+      setValue('employeeEmployeePercent', clampedValue, { shouldValidate: true });
+      setValue('employeeCompanyPercent', companyPercent, { shouldValidate: true });
+    } else if (memberType === 'spouse') {
+      setValue('spouseEmployeePercent', clampedValue, { shouldValidate: true });
+      setValue('spouseCompanyPercent', companyPercent, { shouldValidate: true });
+    } else if (memberType === 'child') {
+      setValue('childEmployeePercent', clampedValue, { shouldValidate: true });
+      setValue('childCompanyPercent', companyPercent, { shouldValidate: true });
+    }
   };
 
   if (isLoading) {
@@ -242,41 +336,10 @@ const NewSubscription: React.FC = () => {
                     label: plan.name,
                   }))}
                   value={planId}
-                  onChange={(value) => setValue('planId', value || '', { shouldValidate: true })}
+                  onChange={handlePlanSelection}
                   error={errors.planId?.message}
                 />
 
-                {selectedPlan && (
-                  <Card bg="gray.0" padding="md">
-                    <Stack gap="xs">
-                      <Text fw={500}>Plan Details</Text>
-                      <Grid>
-                        <Grid.Col span={6}>
-                          <Text size="sm">
-                            <Text component="span" fw={500}>Employee Cost:</Text> ${(parseInt(selectedPlan.costEmployeeCents) / 100).toFixed(2)}/month
-                          </Text>
-                          <Text size="sm">
-                            <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctEmployeePaidByCompany}%
-                          </Text>
-                        </Grid.Col>
-                        <Grid.Col span={6}>
-                          <Text size="sm">
-                            <Text component="span" fw={500}>Spouse Cost:</Text> ${(parseInt(selectedPlan.costSpouseCents) / 100).toFixed(2)}/month
-                          </Text>
-                          <Text size="sm">
-                            <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctSpousePaidByCompany}%
-                          </Text>
-                        </Grid.Col>
-                      </Grid>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Child Cost:</Text> ${(parseInt(selectedPlan.costChildCents) / 100).toFixed(2)}/month (per child)
-                      </Text>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Company Covers:</Text> {selectedPlan.pctChildPaidByCompany}%
-                      </Text>
-                    </Stack>
-                  </Card>
-                )}
               </Stack>
             </Card>
 
@@ -336,6 +399,22 @@ const NewSubscription: React.FC = () => {
                 </Stack>
               </Stack>
             </Card>
+
+            {selectedPlan && (
+              <CostSharingConfiguration
+                plan={selectedPlan}
+                employeeCompanyPercent={employeeCompanyPercent}
+                employeeEmployeePercent={employeeEmployeePercent}
+                spouseCompanyPercent={spouseCompanyPercent}
+                spouseEmployeePercent={spouseEmployeePercent}
+                childCompanyPercent={childCompanyPercent}
+                childEmployeePercent={childEmployeePercent}
+                spouseIncluded={spouseIncluded}
+                childrenCount={childrenCount}
+                onCompanyPercentChange={handleCompanyPercentChange}
+                onEmployeePercentChange={handleEmployeePercentChange}
+              />
+            )}
 
             {/* Subscription Type Preview */}
             <Card shadow="lg" padding="lg" bg="blue.0">

@@ -76,11 +76,19 @@ export const GET_SUBSCRIPTIONS_QUERY = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
       files {
@@ -135,11 +143,19 @@ export const GET_EMPLOYEE_SUBSCRIPTIONS_QUERY = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
       files {
@@ -194,11 +210,19 @@ export const CREATE_SUBSCRIPTION_MUTATION = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
     }
@@ -236,11 +260,19 @@ export const UPLOAD_FAMILY_DEMOGRAPHICS_MUTATION = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
     }
@@ -278,11 +310,19 @@ export const UPLOAD_FILES_MUTATION = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
       files {
@@ -329,11 +369,19 @@ export const ACTIVATE_PLAN_MUTATION = gql`
       plan {
         id
         name
+        costEmployeeCents
+        pctEmployeePaidByCompany
+        costSpouseCents
+        pctSpousePaidByCompany
+        costChildCents
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
       files {
@@ -380,11 +428,19 @@ export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
       plan {
         id
         name
+        costEmployeeCents
+        costSpouseCents
+        costChildCents
+        pctEmployeePaidByCompany
+        pctSpousePaidByCompany
+        pctChildPaidByCompany
       }
       items {
         id
         role
         demographicId
+        companyPct
+        employeePct
         createdAt
       }
       files {

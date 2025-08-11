@@ -5,7 +5,6 @@ import {
   Group,
   Text,
   Title,
-  Alert,
   ThemeIcon,
   SimpleGrid
 } from '@mantine/core';
@@ -30,36 +29,22 @@ export const ActiveSubscriptionCard: React.FC<ActiveSubscriptionCardProps> = ({ 
           Your healthcare subscription is now active and ready to use.
         </Text>
 
-        <Stack gap="lg">
-          <Alert color="green" radius="md">
-            <Group gap="md" align="flex-start">
-              <ThemeIcon size={24} color="green" variant="light">
-                <IconCheck size={16} />
-              </ThemeIcon>
-              <Stack gap="md" style={{ flex: 1 }}>
-                <Text fw={500}>Subscription Active</Text>
-                <Text size="sm">
-                  Congratulations! Your healthcare subscription is now active. You can start using your benefits immediately.
-                </Text>
-                <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md" mt="sm">
-                  <Card p="md" radius="md" withBorder>
-                    <Stack gap="xs">
-                      <Text fw={500}>Coverage Starts</Text>
-                      <Text c="dimmed">{formatDate(subscription.startDate)}</Text>
-                    </Stack>
-                  </Card>
-                  <Card p="md" radius="md" withBorder>
-                    <Stack gap="xs">
-                      <Text fw={500}>Monthly Billing</Text>
-                      <Text c="dimmed">{subscription.billingAnchor} of each month</Text>
-                    </Stack>
-                  </Card>
-                </SimpleGrid>
-              </Stack>
-            </Group>
-          </Alert>
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+          <Card p="md" radius="md" withBorder>
+            <Stack gap="xs">
+              <Text fw={500}>Coverage Starts</Text>
+              <Text c="dimmed">{formatDate(subscription.startDate)}</Text>
+            </Stack>
+          </Card>
+          <Card p="md" radius="md" withBorder>
+            <Stack gap="xs">
+              <Text fw={500}>Monthly Billing</Text>
+              <Text c="dimmed">{subscription.billingAnchor} of each month</Text>
+            </Stack>
+          </Card>
+        </SimpleGrid>
 
-          <Stack gap="md">
+        <Stack gap="md">
             <Title order={5} fw={500}>Covered Members:</Title>
             <Stack gap="xs">
               {subscription.items?.map((item: HealthcareSubscriptionItem) => (
@@ -81,7 +66,6 @@ export const ActiveSubscriptionCard: React.FC<ActiveSubscriptionCardProps> = ({ 
                 </Card>
               ))}
             </Stack>
-          </Stack>
         </Stack>
       </Stack>
     </Card>

@@ -90,6 +90,8 @@ export interface HealthcareSubscriptionItem {
   id: string;
   role: ItemRole;
   demographicId: string;
+  companyPct?: number; // Custom percentage company pays (0-100)
+  employeePct?: number; // Custom percentage employee pays (0-100)
   createdAt: string; // DateTime as ISO string
 }
 

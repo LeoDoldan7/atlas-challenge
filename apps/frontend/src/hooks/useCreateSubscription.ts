@@ -2,11 +2,19 @@ import { useMutation } from '@apollo/client';
 import type { HealthcareSubscription, ApiError } from '../types';
 import { CREATE_SUBSCRIPTION_MUTATION, GET_SUBSCRIPTIONS_QUERY } from '../lib/queries';
 
+interface MemberTypePercentages {
+  companyPercent: number;
+  employeePercent: number;
+}
+
 interface CreateSubscriptionInput {
   employeeId: number;
   includeSpouse: boolean;
   numOfChildren: number;
   planId: number;
+  employeePercentages?: MemberTypePercentages;
+  spousePercentages?: MemberTypePercentages;
+  childPercentages?: MemberTypePercentages;
 }
 
 interface CreateSubscriptionResponse {

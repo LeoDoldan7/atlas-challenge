@@ -35,7 +35,12 @@ export const SubscriptionOverviewCard: React.FC<SubscriptionOverviewCardProps> =
           {subscription.endDate && (
             <div>
               <Text size="sm" fw={500} c="dimmed" mb={4}>End Date</Text>
-              <Text size="lg" c="red">{formatDate(subscription.endDate)}</Text>
+              <Text 
+                size="lg" 
+                c={new Date(subscription.endDate) < new Date() ? "red" : undefined}
+              >
+                {formatDate(subscription.endDate)}
+              </Text>
             </div>
           )}
 

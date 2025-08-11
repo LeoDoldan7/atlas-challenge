@@ -26,10 +26,18 @@ type CompanySpendingStatistics {
 }
 
 input CreateSubscriptionInput {
+  """Custom percentages for children coverage"""
+  childPercentages: MemberTypePercentages
   employeeId: Float!
+
+  """Custom percentages for employee coverage"""
+  employeePercentages: MemberTypePercentages
   includeSpouse: Boolean!
   numOfChildren: Float!
   planId: Float!
+
+  """Custom percentages for spouse coverage"""
+  spousePercentages: MemberTypePercentages
 }
 
 """
@@ -138,9 +146,14 @@ type HealthcareSubscriptionFile {
 }
 
 type HealthcareSubscriptionItem {
+  """Custom percentage company pays (0-100)"""
+  companyPct: Float
   createdAt: DateTime!
   demographic: Demographic
   demographicId: ID
+
+  """Custom percentage employee pays (0-100)"""
+  employeePct: Float
   healthcareSubscriptionId: ID!
   id: ID!
   role: ItemRole!
@@ -161,6 +174,14 @@ enum MaritalStatus {
   SEPARATED
   SINGLE
   WIDOWED
+}
+
+input MemberTypePercentages {
+  """Percentage company pays (0-100)"""
+  companyPercent: Float!
+
+  """Percentage employee pays (0-100)"""
+  employeePercent: Float!
 }
 
 type Mutation {

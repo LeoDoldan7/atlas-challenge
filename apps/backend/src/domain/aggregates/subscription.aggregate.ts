@@ -27,6 +27,8 @@ interface SubscriptionItem {
   memberId: string;
   monthlyPrice: Money;
   paymentAllocation: PaymentAllocation;
+  customCompanyPercent?: number; // Custom percentage override
+  customEmployeePercent?: number; // Custom percentage override
   createdAt: Date;
 }
 
@@ -78,11 +80,15 @@ export class Subscription {
     memberId,
     monthlyPrice,
     paymentAllocation,
+    customCompanyPercent,
+    customEmployeePercent,
   }: {
     memberType: ItemRole;
     memberId: string;
     monthlyPrice: Money;
     paymentAllocation: PaymentAllocation;
+    customCompanyPercent?: number;
+    customEmployeePercent?: number;
   }): void {
     this.validationService.validateCanModifyItems(this.status);
     this.validationService.validateEmployeeAddedFirst(memberType, this.items);
@@ -96,6 +102,8 @@ export class Subscription {
       memberId,
       monthlyPrice,
       paymentAllocation,
+      customCompanyPercent,
+      customEmployeePercent,
       createdAt: new Date(),
     };
 
