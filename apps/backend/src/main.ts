@@ -6,9 +6,6 @@ import * as express from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Configure Express middleware for larger payloads
-
-  // Increase payload size limits and timeout for all routes
   app.use(
     express.json({
       limit: '50mb',

@@ -12,7 +12,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create company
   const company = await prisma.company.create({
     data: {
       name: 'Atlas Healthcare Solutions',
@@ -21,8 +20,6 @@ async function main() {
   });
   console.log(`✅ Created company: ${company.name}`);
 
-  // -------------------- Seed healthcare plans --------------------
-  // amounts are in cents, stored as BigInt
   const plans = [
     {
       name: 'Basic Health Plan',
@@ -59,7 +56,6 @@ async function main() {
     console.log(`✅ Created plan: ${p.name}`);
   }
 
-  // -------------------- Seed employees + wallets --------------------
   const employeesData = [
     {
       demographic: {
@@ -143,12 +139,10 @@ async function main() {
 
   const employees: EmployeeWithDemographic[] = [];
   for (const data of employeesData) {
-    // Create demographic record
     const demographic = await prisma.demographic.create({
       data: data.demographic,
     });
 
-    // Create employee record linked to demographic and company
     const employee = await prisma.employee.create({
       data: {
         company_id: company.id,
@@ -163,42 +157,36 @@ async function main() {
     );
   }
 
-  // -------------------- Seed healthcare subscriptions with proper costs --------------------
   const basicPlan = await prisma.healthcarePlan.findFirst();
   if (!basicPlan) {
     throw new Error('No healthcare plans found');
   }
 
   const subscriptionPlans = [
-    // Employee 0: John Smith - Family subscription (employee + spouse + 1 child) - ACTIVE
     {
       employeeIndex: 0,
       type: 'family' as const,
       status: SubscriptionStatus.ACTIVE,
       items: ['employee', 'spouse', 'child'],
     },
-    // Employee 1: Sarah Johnson - Individual subscription - ACTIVE
     {
       employeeIndex: 1,
       type: 'individual' as const,
       status: SubscriptionStatus.ACTIVE,
       items: ['employee'],
     },
-    // Employee 2: Michael Davis - Individual subscription - ACTIVE
     {
       employeeIndex: 2,
       type: 'individual' as const,
       status: SubscriptionStatus.ACTIVE,
       items: ['employee'],
     },
-    // Employee 3: Emily Rodriguez - Family subscription - PENDING (for testing workflow)
     {
       employeeIndex: 3,
       type: 'family' as const,
       status: SubscriptionStatus.PENDING,
       items: ['employee', 'spouse'],
     },
-    // Employee 4: David Wilson - Individual subscription - PENDING
     {
       employeeIndex: 4,
       type: 'individual' as const,
@@ -214,7 +202,6 @@ async function main() {
     }
     const { employee, demographic } = employeeData;
 
-    // Calculate monthly cost for this subscription
     let monthlyCost = BigInt(0);
     for (const roleString of plan.items) {
       switch (roleString) {
@@ -230,7 +217,6 @@ async function main() {
       }
     }
 
-    // Create subscription
     const subscription = await prisma.healthcareSubscription.create({
       data: {
         employee_id: employee.id,
@@ -243,7 +229,6 @@ async function main() {
       },
     });
 
-    // Create subscription items
     for (const roleString of plan.items) {
       const role = roleString as keyof typeof ItemRole;
       await prisma.healthcareSubscriptionItem.create({
@@ -255,21 +240,17 @@ async function main() {
       });
     }
 
-    // Create wallet with sufficient balance for active subscriptions
     let walletBalance: bigint;
     if (plan.status === SubscriptionStatus.ACTIVE) {
-      // For active subscriptions, provide 3-6 months of payments
       const monthsOfPayment = 3 + Math.floor(Math.random() * 4); // 3-6 months
       walletBalance = monthlyCost * BigInt(monthsOfPayment);
       console.log(
         `💰 Wallet for ${demographic.first_name} ${demographic.last_name}: $${Number(walletBalance) / 100} (${monthsOfPayment} months of $${Number(monthlyCost) / 100})`,
       );
     } else {
-      // For pending subscriptions, provide random amount
       walletBalance = BigInt(Math.floor(Math.random() * dollarsToCents(500))); // $0-$500
     }
 
-    // Create wallet for employee
     await prisma.wallet.create({
       data: {
         employee_id: employee.id,

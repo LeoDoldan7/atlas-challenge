@@ -41,12 +41,10 @@ const Navbar: React.FC = () => {
     >
       <Container size="xl">
         <Group justify="apart" h={64}>
-          {/* Logo/Brand */}
           <Title order={3} fw={700}>
             Atlas Healthcare
           </Title>
 
-          {/* Navigation Links - Desktop */}
           <Group gap="xs" visibleFrom="md">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -90,7 +88,6 @@ const Navbar: React.FC = () => {
             })}
           </Group>
 
-          {/* Navigation Links - Mobile */}
           <Group gap={4} hiddenFrom="md">
             {navItems.map((item) => {
               const Icon = item.icon;

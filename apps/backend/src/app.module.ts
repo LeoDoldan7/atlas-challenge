@@ -25,7 +25,6 @@ import { PaymentModule } from './modules/payment/payment.module';
           path: error.path,
         };
       },
-      // Increase limits for file uploads
       persistedQueries: false,
     }),
     EmployeeModule,
