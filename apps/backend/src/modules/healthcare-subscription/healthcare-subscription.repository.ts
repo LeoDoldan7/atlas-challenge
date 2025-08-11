@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma, SubscriptionStepType, StepStatus } from '@prisma/client';
+import {
+  Prisma,
+  SubscriptionStepType,
+  StepStatus,
+  SubscriptionStatus,
+  ItemRole,
+} from '@prisma/client';
 
 const subscriptionWithRelationsInclude = {
   items: true,
@@ -71,7 +77,10 @@ export class HealthcareSubscriptionRepository {
   async findEmployeeById(id: string) {
     return this.prisma.employee.findUnique({
       where: { id: BigInt(id) },
-      select: { demographics_id: true },
+      include: {
+        wallet: true,
+        demographics: true,
+      },
     });
   }
 
@@ -146,5 +155,60 @@ export class HealthcareSubscriptionRepository {
     });
 
     return steps.every((step) => step.status === 'COMPLETED');
+  }
+
+  async findPlanById(planId: string) {
+    return this.prisma.healthcarePlan.findUnique({
+      where: { id: BigInt(planId) },
+    });
+  }
+
+  async updateSubscriptionStatus(
+    subscriptionId: string,
+    status: SubscriptionStatus,
+  ): Promise<HealthcareSubscriptionWithRelations> {
+    return this.prisma.healthcareSubscription.update({
+      where: { id: BigInt(subscriptionId) },
+      data: { status },
+      include: subscriptionWithRelationsInclude,
+    });
+  }
+
+  async createDemographic(
+    demographicData: {
+      first_name: string;
+      last_name: string;
+      government_id: string;
+      birth_date: Date;
+    },
+    subscriptionId: string,
+    role: ItemRole,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const demographic = await tx.demographic.create({
+        data: demographicData,
+      });
+
+      await tx.healthcareSubscriptionItem.updateMany({
+        where: {
+          healthcare_subscription_id: BigInt(subscriptionId),
+          role,
+          demographic_id: null,
+        },
+        data: {
+          demographic_id: demographic.id,
+        },
+      });
+
+      return demographic;
+    });
+  }
+
+  async createSubscriptionFile(
+    fileData: Prisma.HealthcareSubscriptionFileCreateInput,
+  ) {
+    return this.prisma.healthcareSubscriptionFile.create({
+      data: fileData,
+    });
   }
 }
