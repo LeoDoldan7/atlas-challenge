@@ -10,8 +10,6 @@ import {
   Group, 
   Loader, 
   ThemeIcon,
-  Breadcrumbs,
-  Anchor,
   Button
 } from '@mantine/core';
 import { 
@@ -22,6 +20,7 @@ import { GET_EMPLOYEE_SUBSCRIPTIONS_QUERY, EMPLOYEES_BY_COMPANY_QUERY } from '..
 import type { Employee, EmployeesByCompanyResponse, SubscriptionsResponse } from '../types';
 import { EmployeeInformationCard } from '../components/employee/EmployeeInformationCard';
 import { EmployeeSubscriptionsList } from '../components/employee/EmployeeSubscriptionsList';
+import { PageBreadcrumbs } from '../components/common';
 
 const EmployeeDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -83,16 +82,13 @@ const EmployeeDetails: React.FC = () => {
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
-        {/* Header with Breadcrumbs */}
         <Stack gap="md">
-          <Breadcrumbs>
-            <Anchor href="/employees" c="dimmed">
-              Employees
-            </Anchor>
-            <Text fw={500}>
-              {employee.demographic.firstName} {employee.demographic.lastName}
-            </Text>
-          </Breadcrumbs>
+          <PageBreadcrumbs
+            items={[
+              { label: 'Employees', href: '/employees' },
+              { label: `${employee.demographic.firstName} ${employee.demographic.lastName}` },
+            ]}
+          />
 
           <Group justify="apart">
             <Stack gap="xs">

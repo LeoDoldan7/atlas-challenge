@@ -3,34 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { useMutation } from '@apollo/client';
 import {
   IconPlus,
-  IconActivity,
-  IconArrowRight,
-  IconUser,
-  IconCalendar,
-  IconBuilding,
   IconCreditCard,
   IconCheck,
   IconX,
-  IconCoin,
 } from "@tabler/icons-react";
 
 import {
   Button,
-  Card,
   Stack,
   Group,
   Text,
   Title,
   Container,
-  Badge,
-  Loader,
-  SimpleGrid,
-  ThemeIcon,
 } from "@mantine/core";
 import { notifications } from '@mantine/notifications';
 import { useSubscriptions } from "../hooks/useSubscriptions";
 import { PROCESS_COMPANY_PAYMENTS_MUTATION } from '../lib/queries';
-import type { HealthcareSubscription, ProcessPaymentsResponse } from "../types";
+import { SubscriptionsContent } from '../components/subscription';
+import type { ProcessPaymentsResponse } from "../types";
 
 const Subscriptions: React.FC = () => {
   const navigate = useNavigate();
@@ -131,7 +121,6 @@ const Subscriptions: React.FC = () => {
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
-        {/* Hero Section */}
         <Stack align="center" gap="md" py="xl">
           <Title order={1} size={48} ta="center" fw={700} c="dark">
             Healthcare Subscriptions
@@ -163,119 +152,14 @@ const Subscriptions: React.FC = () => {
           </Group>
         </Stack>
 
-        {/* Main Content */}
-        {loading ? (
-          <Card p="xl" radius="xl" shadow="lg" style={{ maxWidth: 600, margin: '0 auto' }}>
-            <Stack align="center" gap="md">
-              <Loader size="xl" />
-              <Text size="xl" fw={500}>Loading subscriptions...</Text>
-            </Stack>
-          </Card>
-        ) : error ? (
-          <Card p="xl" radius="xl" shadow="lg" style={{ maxWidth: 600, margin: '0 auto' }}>
-            <Stack align="center" gap="md">
-              <ThemeIcon size={64} radius="xl" color="red">
-                <IconActivity size={32} />
-              </ThemeIcon>
-              <Title order={2}>Failed to load subscriptions</Title>
-              <Text ta="center" c="dimmed" maw={400}>
-                {error.message || 'An error occurred while fetching subscriptions'}
-              </Text>
-              <Button onClick={() => window.location.reload()} radius="xl">
-                Try Again
-              </Button>
-            </Stack>
-          </Card>
-        ) : subscriptions.length === 0 ? (
-          <Card p="xl" radius="xl" shadow="lg" style={{ maxWidth: 600, margin: '0 auto' }}>
-            <Stack align="center" gap="lg">
-              <ThemeIcon size={80} radius="xl" gradient={{ from: 'blue', to: 'cyan' }}>
-                <IconActivity size={40} />
-              </ThemeIcon>
-              <Title order={2} ta="center">Ready to get started?</Title>
-              <Text ta="center" c="dimmed" size="lg" maw={500}>
-                Create your first healthcare subscription and start managing employee benefits with ease.
-              </Text>
-              <Button
-                onClick={handleNewSubscription}
-                size="lg"
-                radius="xl"
-                leftSection={<IconPlus size={20} />}
-                rightSection={<IconArrowRight size={20} />}
-              >
-                Create your first subscription
-              </Button>
-            </Stack>
-          </Card>
-        ) : (
-          <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg">
-            {subscriptions.map((subscription: HealthcareSubscription) => (
-              <Card
-                key={subscription.id}
-                p="lg"
-                radius="xl"
-                shadow="md"
-                style={{ cursor: 'pointer', transition: 'all 0.2s ease' }}
-                onClick={() => navigate(`/subscriptions/${subscription.id}`)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = 'var(--mantine-shadow-xl)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'var(--mantine-shadow-md)';
-                }}
-              >
-                <Stack gap="md">
-                  <Group justify="apart">
-                    <Title order={4} fw={600}>
-                      {subscription.employee?.demographic.firstName} {subscription.employee?.demographic.lastName} – {subscription.plan?.name || 'Healthcare Plan'}
-                    </Title>
-                    <Group gap="xs">
-                      <Badge color={getStatusColor(subscription.status)} variant="light">
-                        {subscription.status.toLowerCase()}
-                      </Badge>
-                      <IconArrowRight size={16} style={{ opacity: 0.6 }} />
-                    </Group>
-                  </Group>
-
-                  <Stack gap="xs">
-                    <Group gap="sm">
-                      <IconUser size={16} style={{ opacity: 0.6 }} />
-                      <Text size="sm" c="dimmed">
-                        {subscription.type === 'INDIVIDUAL' ? 'Individual' : 'Family'} Plan
-                      </Text>
-                    </Group>
-                    
-                    <Group gap="sm">
-                      <IconCalendar size={16} style={{ opacity: 0.6 }} />
-                      <Text size="sm" c="dimmed">Started {formatDate(subscription.startDate)}</Text>
-                    </Group>
-                    
-                    <Group gap="sm">
-                      <IconBuilding size={16} style={{ opacity: 0.6 }} />
-                      <Text size="sm" c="dimmed">ID: {subscription.id}</Text>
-                    </Group>
-
-                    <Group gap="sm">
-                      <IconCoin size={16} style={{ opacity: 0.6 }} />
-                      <Text size="sm" c="dimmed">
-                        Last payment: {subscription.lastPaymentAt ? formatDate(subscription.lastPaymentAt) : 'Never'}
-                      </Text>
-                    </Group>
-
-                    {subscription.endDate && (
-                      <Group gap="sm">
-                        <IconCalendar size={16} style={{ opacity: 0.6 }} />
-                        <Text size="sm" c="red">Ends {formatDate(subscription.endDate)}</Text>
-                      </Group>
-                    )}
-                  </Stack>
-                </Stack>
-              </Card>
-            ))}
-          </SimpleGrid>
-        )}
+        <SubscriptionsContent
+          subscriptions={subscriptions}
+          loading={loading}
+          error={error}
+          onNewSubscription={handleNewSubscription}
+          formatDate={formatDate}
+          getStatusColor={getStatusColor}
+        />
       </Stack>
     </Container>
   );

@@ -14,8 +14,6 @@ import {
   Title,
   Container,
   Loader,
-  Breadcrumbs,
-  Anchor,
   ThemeIcon,
   Card,
 } from '@mantine/core';
@@ -23,6 +21,7 @@ import { GET_SUBSCRIPTION_STATUS_QUERY } from '../lib/queries';
 import type { HealthcareSubscription } from '../types';
 import { useSubscriptionWorkflow } from '../hooks/useSubscriptionWorkflow';
 import { SubscriptionOverviewCard } from '../components/subscription/SubscriptionOverviewCard';
+import { PageBreadcrumbs } from '../components/common';
 import { DemographicVerificationCard } from '../components/subscription/DemographicVerificationCard';
 import { DocumentUploadCard } from '../components/subscription/DocumentUploadCard';
 import { PlanActivationCard } from '../components/subscription/PlanActivationCard';
@@ -85,14 +84,13 @@ const SubscriptionDetails: React.FC = () => {
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
-        {/* Header with Breadcrumbs */}
         <Stack gap="md">
-          <Breadcrumbs>
-            <Anchor href="/subscriptions" c="dimmed">
-              Subscriptions
-            </Anchor>
-            <Text fw={500}>Details</Text>
-          </Breadcrumbs>
+          <PageBreadcrumbs
+            items={[
+              { label: 'Subscriptions', href: '/subscriptions' },
+              { label: 'Details' },
+            ]}
+          />
 
           <Group justify="apart">
             <Stack gap="xs">

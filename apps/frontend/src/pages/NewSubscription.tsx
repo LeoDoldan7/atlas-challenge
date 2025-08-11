@@ -3,21 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { IconMinus, IconPlus } from '@tabler/icons-react';
 import {
   Button,
   Card,
-  Checkbox,
-  Select,
-  Badge,
-  Breadcrumbs,
-  Anchor,
   Text,
   Title,
   Container,
   Stack,
   Group,
-  ActionIcon,
   Loader,
   Alert
 } from '@mantine/core';
@@ -27,7 +20,9 @@ import { useEmployees } from '../hooks/useEmployees';
 import { useHealthcarePlans } from '../hooks/useHealthcarePlans';
 import { useCreateSubscription } from '../hooks/useCreateSubscription';
 import { CostSharingConfiguration } from '../components/cost-sharing';
-import type { Employee, SubscriptionType } from '../types';
+import { CoverageChoices, EmployeeSelection, SubscriptionPreview, PlanSelection } from '../components/subscription';
+import { PageBreadcrumbs } from '../components/common';
+import type { SubscriptionType } from '../types';
 
 // Form validation schema
 const subscriptionSchema = z.object({
@@ -176,10 +171,6 @@ const NewSubscription: React.FC = () => {
     navigate('/subscriptions');
   };
 
-  const adjustChildrenCount = (adjustment: number) => {
-    const newCount = Math.max(0, Math.min(7, childrenCount + adjustment));
-    setValue('childrenCount', newCount, { shouldValidate: true });
-  };
 
   const handlePlanSelection = (planId: string | null) => {
     setValue('planId', planId || '', { shouldValidate: true });
@@ -267,22 +258,15 @@ const NewSubscription: React.FC = () => {
   }
 
   const breadcrumbItems = [
-    { title: 'Subscriptions', href: '/subscriptions' },
-    { title: 'New', href: '#' },
+    { label: 'Subscriptions', href: '/subscriptions' },
+    { label: 'New' },
   ];
 
   return (
     <Container size="xl" py={32}>
       <Stack gap="xl">
-        {/* Header with Breadcrumbs */}
         <Stack gap="md">
-          <Breadcrumbs>
-            {breadcrumbItems.map((item, index) => (
-              <Anchor key={index} href={item.href} c={index === breadcrumbItems.length - 1 ? 'dimmed' : 'blue'}>
-                {item.title}
-              </Anchor>
-            ))}
-          </Breadcrumbs>
+          <PageBreadcrumbs items={breadcrumbItems} />
 
           <Stack align="center" gap="xs">
             <Title order={1}>New Subscription</Title>
@@ -292,113 +276,28 @@ const NewSubscription: React.FC = () => {
           </Stack>
         </Stack>
 
-        {/* Main Form */}
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack gap="xl">
-            {/* Employee Selection */}
-            <Card shadow="lg" padding="lg">
-              <Stack gap="md">
-                <Group gap="xs">
-                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-blue-6)', borderRadius: '50%' }} />
-                  <Title order={3}>Employee Selection</Title>
-                </Group>
-                <Text c="dimmed">Select the employee for this subscription</Text>
+            <EmployeeSelection
+              employees={employees}
+              selectedEmployeeId={employeeId}
+              onEmployeeChange={(employeeId) => setValue('employeeId', employeeId, { shouldValidate: true })}
+              error={errors.employeeId?.message}
+            />
 
-                <Select
-                  label="Employee *"
-                  placeholder="Search and select an employee..."
-                  data={employees.map((employee: Employee) => ({
-                    value: employee.id,
-                    label: `${employee.demographic.firstName} ${employee.demographic.lastName}`,
-                  }))}
-                  value={employeeId}
-                  onChange={(value) => setValue('employeeId', value || '', { shouldValidate: true })}
-                  error={errors.employeeId?.message}
-                  searchable
-                />
-              </Stack>
-            </Card>
+            <PlanSelection
+              plans={plans}
+              selectedPlanId={planId}
+              onPlanChange={handlePlanSelection}
+              error={errors.planId?.message}
+            />
 
-            {/* Healthcare Plan Selection */}
-            <Card shadow="lg" padding="lg">
-              <Stack gap="md">
-                <Group gap="xs">
-                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-green-6)', borderRadius: '50%' }} />
-                  <Title order={3}>Healthcare Plan</Title>
-                </Group>
-                <Text c="dimmed">Select the healthcare plan for this subscription</Text>
-
-                <Select
-                  label="Healthcare Plan *"
-                  placeholder="Select a healthcare plan..."
-                  data={plans.map((plan) => ({
-                    value: plan.id,
-                    label: plan.name,
-                  }))}
-                  value={planId}
-                  onChange={handlePlanSelection}
-                  error={errors.planId?.message}
-                />
-
-              </Stack>
-            </Card>
-
-            {/* Coverage Choices */}
-            <Card shadow="lg" padding="lg">
-              <Stack gap="md">
-                <Group gap="xs">
-                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-teal-6)', borderRadius: '50%' }} />
-                  <Title order={3}>Coverage Choices</Title>
-                </Group>
-                <Text c="dimmed">Configure family coverage options</Text>
-
-                <Stack gap="lg">
-                  {/* Spouse Checkbox */}
-                  <Card bg="gray.0" padding="md">
-                    <Checkbox
-                      label="Spouse included"
-                      checked={spouseIncluded}
-                      onChange={(event) =>
-                        setValue('spouseIncluded', event.currentTarget.checked, { shouldValidate: true })
-                      }
-                    />
-                  </Card>
-
-                  {/* Children Count Stepper */}
-                  <Card bg="gray.0" padding="md">
-                    <Stack gap="md">
-                      <Text fw={500}>Number of children</Text>
-                      <Group justify="center">
-                        <ActionIcon
-                          size="xl"
-                          variant="outline"
-                          radius="xl"
-                          onClick={() => adjustChildrenCount(-1)}
-                          disabled={childrenCount <= 0}
-                        >
-                          <IconMinus size={20} />
-                        </ActionIcon>
-
-                        <Text size="xl" fw={700} w={60} ta="center">
-                          {childrenCount}
-                        </Text>
-
-                        <ActionIcon
-                          size="xl"
-                          variant="outline"
-                          radius="xl"
-                          onClick={() => adjustChildrenCount(1)}
-                          disabled={childrenCount >= 7}
-                        >
-                          <IconPlus size={20} />
-                        </ActionIcon>
-                      </Group>
-                      <Text size="sm" c="dimmed" ta="center">Maximum 7 children allowed</Text>
-                    </Stack>
-                  </Card>
-                </Stack>
-              </Stack>
-            </Card>
+            <CoverageChoices
+              spouseIncluded={spouseIncluded}
+              childrenCount={childrenCount}
+              onSpouseChange={(checked) => setValue('spouseIncluded', checked, { shouldValidate: true })}
+              onChildrenCountChange={(count) => setValue('childrenCount', count, { shouldValidate: true })}
+            />
 
             {selectedPlan && (
               <CostSharingConfiguration
@@ -416,48 +315,11 @@ const NewSubscription: React.FC = () => {
               />
             )}
 
-            {/* Subscription Type Preview */}
-            <Card shadow="lg" padding="lg" bg="blue.0">
-              <Stack gap="md">
-                <Group gap="xs">
-                  <div style={{ width: 8, height: 8, backgroundColor: 'var(--mantine-color-violet-6)', borderRadius: '50%' }} />
-                  <Title order={3}>Subscription Preview</Title>
-                </Group>
-                <Text c="dimmed">Based on your coverage selections</Text>
+            <SubscriptionPreview
+              subscriptionType={subscriptionType}
+              selectedEmployee={selectedEmployee}
+            />
 
-                <Group justify="space-between" p="md" bg="white" style={{ borderRadius: 8 }}>
-                  <Text fw={500}>Subscription type:</Text>
-                  <Badge 
-                    variant={subscriptionType === 'INDIVIDUAL' ? 'light' : 'filled'}
-                    color={subscriptionType === 'INDIVIDUAL' ? 'gray' : 'blue'}
-                  >
-                    {subscriptionType.toLowerCase()}
-                  </Badge>
-                </Group>
-
-                {selectedEmployee && (
-                  <Card bg="white" padding="lg" style={{ borderRadius: 12 }}>
-                    <Stack gap="xs">
-                      <Title order={4}>Selected Employee</Title>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Name:</Text> {selectedEmployee.demographic.firstName} {selectedEmployee.demographic.lastName}
-                      </Text>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Email:</Text> {selectedEmployee.email}
-                      </Text>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Marital Status:</Text> {selectedEmployee.maritalStatus}
-                      </Text>
-                      <Text size="sm">
-                        <Text component="span" fw={500}>Birth Date:</Text> {new Date(selectedEmployee.birthDate).toLocaleDateString()}
-                      </Text>
-                    </Stack>
-                  </Card>
-                )}
-              </Stack>
-            </Card>
-
-            {/* Action Buttons */}
             <Group justify="flex-end" pt="lg">
               <Button 
                 type="button" 
