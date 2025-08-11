@@ -5,10 +5,10 @@
 
 */
 -- CreateEnum
-CREATE TYPE "public"."SubscriptionStepType" AS ENUM ('demographic_verification_pending', 'document_upload_pending', 'plan_activation_pending', 'active', 'canceled', 'terminated');
+CREATE TYPE "public"."SubscriptionStepType" AS ENUM ('DEMOGRAPHIC_VERIFICATION', 'DOCUMENT_UPLOAD', 'PLAN_ACTIVATION');
 
 -- CreateEnum
-CREATE TYPE "public"."StepStatus" AS ENUM ('PENDING', 'SUCCESS');
+CREATE TYPE "public"."StepStatus" AS ENUM ('PENDING', 'COMPLETED');
 
 -- AlterTable
 ALTER TABLE "public"."healthcare_subscriptions" DROP COLUMN "status",

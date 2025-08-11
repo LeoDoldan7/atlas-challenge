@@ -10,7 +10,7 @@
 */
 -- AlterEnum
 BEGIN;
-CREATE TYPE "public"."SubscriptionStatus_new" AS ENUM ('demographic_verification_pending', 'document_upload_pending', 'plan_activation_pending', 'active', 'canceled', 'terminated');
+CREATE TYPE "public"."SubscriptionStatus_new" AS ENUM ('DEMOGRAPHIC_VERIFICATION', 'DOCUMENT_UPLOAD', 'PLAN_ACTIVATION');
 ALTER TABLE "public"."healthcare_subscriptions" ALTER COLUMN "status" TYPE "public"."SubscriptionStatus_new" USING ("status"::text::"public"."SubscriptionStatus_new");
 ALTER TYPE "public"."SubscriptionStatus" RENAME TO "SubscriptionStatus_old";
 ALTER TYPE "public"."SubscriptionStatus_new" RENAME TO "SubscriptionStatus";

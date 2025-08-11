@@ -5,7 +5,7 @@
 
 */
 -- CreateEnum
-CREATE TYPE "public"."SubscriptionStatus" AS ENUM ('DRAFT', 'PENDING', 'ACTIVE', 'CANCELLED', 'TERMINATED', 'EXPIRED');
+CREATE TYPE "public"."SubscriptionStatus" AS ENUM ('DRAFT', 'PENDING', 'ACTIVE', 'CANCELLED', 'EXPIRED');
 
 -- AlterTable
 ALTER TABLE "public"."healthcare_subscriptions" DROP COLUMN "status",

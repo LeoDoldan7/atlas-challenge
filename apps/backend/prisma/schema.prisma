@@ -17,17 +17,13 @@ enum SubscriptionStatus {
   PENDING
   ACTIVE
   CANCELLED
-  TERMINATED
   EXPIRED
 }
 
 enum SubscriptionStepType {
-  demographic_verification_pending
-  document_upload_pending
-  plan_activation_pending
-  active
-  canceled
-  terminated
+  DEMOGRAPHIC_VERIFICATION
+  DOCUMENT_UPLOAD
+  PLAN_ACTIVATION
 }
 
 enum ItemRole {
@@ -192,7 +188,7 @@ model SubscriptionStep {
 
 enum StepStatus {
   PENDING
-  SUCCESS
+  COMPLETED
 }
 
 enum TransactionType {

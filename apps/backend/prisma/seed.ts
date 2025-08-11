@@ -1,4 +1,10 @@
-import { PrismaClient, Prisma, MaritalStatus, ItemRole } from '@prisma/client';
+import {
+  PrismaClient,
+  Prisma,
+  MaritalStatus,
+  ItemRole,
+  SubscriptionStatus,
+} from '@prisma/client';
 import { dollarsToCents } from '../src/utils';
 
 const prisma = new PrismaClient();
@@ -168,35 +174,35 @@ async function main() {
     {
       employeeIndex: 0,
       type: 'family' as const,
-      status: 'active' as const,
+      status: SubscriptionStatus.ACTIVE,
       items: ['employee', 'spouse', 'child'],
     },
     // Employee 1: Sarah Johnson - Individual subscription - ACTIVE
     {
       employeeIndex: 1,
       type: 'individual' as const,
-      status: 'active' as const,
+      status: SubscriptionStatus.ACTIVE,
       items: ['employee'],
     },
     // Employee 2: Michael Davis - Individual subscription - ACTIVE
     {
       employeeIndex: 2,
       type: 'individual' as const,
-      status: 'active' as const,
+      status: SubscriptionStatus.ACTIVE,
       items: ['employee'],
     },
     // Employee 3: Emily Rodriguez - Family subscription - PENDING (for testing workflow)
     {
       employeeIndex: 3,
       type: 'family' as const,
-      status: 'demographic_verification_pending' as const,
+      status: SubscriptionStatus.PENDING,
       items: ['employee', 'spouse'],
     },
     // Employee 4: David Wilson - Individual subscription - PENDING
     {
       employeeIndex: 4,
       type: 'individual' as const,
-      status: 'document_upload_pending' as const,
+      status: SubscriptionStatus.PENDING,
       items: ['employee'],
     },
   ];
@@ -251,7 +257,7 @@ async function main() {
 
     // Create wallet with sufficient balance for active subscriptions
     let walletBalance: bigint;
-    if (plan.status === 'active') {
+    if (plan.status === SubscriptionStatus.ACTIVE) {
       // For active subscriptions, provide 3-6 months of payments
       const monthsOfPayment = 3 + Math.floor(Math.random() * 4); // 3-6 months
       walletBalance = monthlyCost * BigInt(monthsOfPayment);
