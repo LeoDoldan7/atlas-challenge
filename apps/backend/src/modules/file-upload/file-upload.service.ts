@@ -27,10 +27,8 @@ export class FileUploadService {
       throw new Error('Subscription is not in pending status');
     }
 
-    // Validate files
     this.validateFiles(input.files);
 
-    // Process files - upload to MinIO first
     const processedFiles: Array<{
       path: string;
       original_name: string;

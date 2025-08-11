@@ -18,7 +18,6 @@ export class FamilyDemographicsService {
   async validateAndUploadFamilyDemographics(
     input: UploadFamilyDemographicsInput,
   ) {
-    // Validate subscription exists and is in correct status
     const subscription = await this.repository.findSubscriptionWithItems(
       input.subscriptionId,
     );
@@ -31,10 +30,8 @@ export class FamilyDemographicsService {
       throw new Error('Subscription is not in pending status');
     }
 
-    // Validate family members data
     await this.validateFamilyMembers(input.familyMembers, subscription.items);
 
-    // Create demographics and update subscription items in a transaction
     return await this.repository.createFamilyDemographicsTransaction(
       subscription.id,
       input.familyMembers,

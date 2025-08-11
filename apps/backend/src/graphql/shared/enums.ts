@@ -27,7 +27,6 @@ export enum MaritalStatus {
   SEPARATED = 'separated',
 }
 
-// Register enums with GraphQL
 registerEnumType(SubscriptionType, {
   name: 'SubscriptionType',
   description: 'Healthcare subscription type',

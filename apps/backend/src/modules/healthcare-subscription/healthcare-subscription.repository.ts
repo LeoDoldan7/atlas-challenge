@@ -83,12 +83,10 @@ export class HealthcareSubscriptionRepository {
     >[],
   ): Promise<HealthcareSubscriptionWithRelations> {
     return this.prisma.$transaction(async (tx) => {
-      // Create the subscription
       const subscription = await tx.healthcareSubscription.create({
         data: subscriptionData,
       });
 
-      // Create subscription items
       await tx.healthcareSubscriptionItem.createMany({
         data: items.map((item) => ({
           ...item,
@@ -96,7 +94,6 @@ export class HealthcareSubscriptionRepository {
         })),
       });
 
-      // Create subscription steps in PENDING status
       await tx.subscriptionStep.createMany({
         data: [
           {
@@ -117,7 +114,6 @@ export class HealthcareSubscriptionRepository {
         ],
       });
 
-      // Return the subscription with full relations
       return tx.healthcareSubscription.findUnique({
         where: { id: subscription.id },
         include: subscriptionWithRelationsInclude,

@@ -63,7 +63,6 @@ export class HealthcareSubscriptionService {
       throw new Error('Employee not found');
     }
 
-    // Prepare subscription data
     const subscriptionData: Prisma.HealthcareSubscriptionCreateInput = {
       employee: { connect: { id: BigInt(input.employeeId) } },
       company: { connect: { id: BigInt(1) } }, // TODO: Get from auth context
@@ -77,22 +76,27 @@ export class HealthcareSubscriptionService {
       ),
     };
 
-    // Create subscription items for family members
-    const itemsToCreate: Omit<
-      Prisma.HealthcareSubscriptionItemCreateManyInput,
-      'healthcare_subscription_id'
-    >[] = [];
+    const itemsToCreate: Array<{
+      role: 'employee' | 'spouse' | 'child';
+      demographic_id?: bigint;
+      company_pct?: number;
+      employee_pct?: number;
+    }> = [];
 
     // 1. Always create an employee item linking to their existing demographic
     itemsToCreate.push({
       role: 'employee',
       demographic_id: employee.demographics_id,
+      company_pct: input.employeePercentages?.companyPercent ?? undefined,
+      employee_pct: input.employeePercentages?.employeePercent ?? undefined,
     });
 
     // 2. Create spouse item if family subscription includes spouse
     if (input.includeSpouse) {
       itemsToCreate.push({
         role: 'spouse',
+        company_pct: input.spousePercentages?.companyPercent ?? undefined,
+        employee_pct: input.spousePercentages?.employeePercent ?? undefined,
       });
     }
 
@@ -100,10 +104,11 @@ export class HealthcareSubscriptionService {
     for (let i = 0; i < input.numOfChildren; i++) {
       itemsToCreate.push({
         role: 'child',
+        company_pct: input.childPercentages?.companyPercent ?? undefined,
+        employee_pct: input.childPercentages?.employeePercent ?? undefined,
       });
     }
 
-    // Create subscription with items using repository
     const createdSubscription =
       await this.repository.createSubscriptionWithItems(
         subscriptionData,

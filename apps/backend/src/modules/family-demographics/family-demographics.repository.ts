@@ -50,7 +50,6 @@ export class FamilyDemographicsRepository {
           continue;
         }
 
-        // Create demographic record
         const demographic = await tx.demographic.create({
           data: {
             first_name: member.demographic.firstName,
@@ -60,7 +59,6 @@ export class FamilyDemographicsRepository {
           },
         });
 
-        // Find the subscription item for this role and update with demographic ID
         const subscriptionItem = subscriptionItems.find(
           (item) => item.role === member.role && !item.demographic_id,
         );
@@ -79,7 +77,6 @@ export class FamilyDemographicsRepository {
         updatedItems.push(updatedItem);
       }
 
-      // Mark the demographic verification step as completed
       await tx.subscriptionStep.updateMany({
         where: {
           healthcare_subscription_id: subscriptionId,
@@ -91,7 +88,6 @@ export class FamilyDemographicsRepository {
         },
       });
 
-      // Get the updated subscription
       const subscription = await tx.healthcareSubscription.findUnique({
         where: { id: subscriptionId },
       });

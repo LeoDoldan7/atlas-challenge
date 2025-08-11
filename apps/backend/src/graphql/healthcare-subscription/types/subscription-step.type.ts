@@ -11,7 +11,6 @@ export enum StepStatus {
   COMPLETED = 'COMPLETED',
 }
 
-// Register enums for GraphQL
 registerEnumType(SubscriptionStepType, {
   name: 'SubscriptionStepType',
   description: 'The type of subscription step',
