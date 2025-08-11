@@ -103,16 +103,6 @@ describe('SubscriptionEnrollmentStateMachine', () => {
     });
   });
 
-  describe('Suspension and Resume', () => {
-    beforeEach(async () => {
-      // Set up active subscription
-      await stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
-      await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
-      await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
-      await stateMachine.transition(EnrollmentEvent.ACTIVATE);
-    });
-  });
-
   describe('Cancellation', () => {
     it('should allow cancellation from DRAFT', async () => {
       const success = await stateMachine.transition(EnrollmentEvent.CANCEL);

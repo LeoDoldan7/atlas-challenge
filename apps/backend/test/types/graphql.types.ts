@@ -68,12 +68,11 @@ export type MaritalStatus =
   | 'WIDOWED'
   | 'SEPARATED';
 export type SubscriptionStatus =
-  | 'DEMOGRAPHIC_VERIFICATION_PENDING'
-  | 'DOCUMENT_UPLOAD_PENDING'
-  | 'PLAN_ACTIVATION_PENDING'
+  | 'DRAFT'
+  | 'PENDING'
   | 'ACTIVE'
-  | 'CANCELED'
-  | 'TERMINATED';
+  | 'CANCELLED'
+  | 'EXPIRED';
 export type SubscriptionType = 'INDIVIDUAL' | 'FAMILY';
 
 export interface HealthcarePlan {

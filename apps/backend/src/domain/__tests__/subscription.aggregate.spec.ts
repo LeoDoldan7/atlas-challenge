@@ -1,11 +1,13 @@
-import {
-  Subscription,
-  EnrollmentStepType,
-} from '../aggregates/subscription.aggregate';
+import { Subscription } from '../aggregates/subscription.aggregate';
 import { Money } from '../value-objects/money.value-object';
 import { SubscriptionPeriod } from '../value-objects/subscription-period.value-object';
 import { PaymentAllocation } from '../value-objects/payment-allocation.value-object';
-import { ItemRole } from '@prisma/client';
+import {
+  ItemRole,
+  SubscriptionStatus,
+  SubscriptionStepType,
+  StepStatus,
+} from '@prisma/client';
 
 describe('Subscription Aggregate', () => {
   let subscription: Subscription;
@@ -44,7 +46,7 @@ describe('Subscription Aggregate', () => {
     });
 
     it('should start in DRAFT status', () => {
-      expect(subscription.getStatus()).toBe('DRAFT');
+      expect(subscription.getStatus()).toBe(SubscriptionStatus.DRAFT);
     });
 
     it('should initialize with empty items', () => {
@@ -54,7 +56,7 @@ describe('Subscription Aggregate', () => {
     it('should initialize with empty enrollment steps', () => {
       const steps = subscription.getEnrollmentSteps();
       expect(steps).toHaveLength(3);
-      expect(steps.every((step) => step.status === 'PENDING')).toBe(true);
+      expect(steps.every((step) => step.status === StepStatus.PENDING)).toBe(true);
     });
 
     it('should initialize with zero monetary amounts', () => {
@@ -209,7 +211,7 @@ describe('Subscription Aggregate', () => {
       it('should start enrollment successfully', async () => {
         await subscription.startEnrollment();
         expect(subscription.getStatus()).toBe(
-          'demographic_verification_pending',
+          SubscriptionStatus.PENDING,
         );
       });
 
@@ -243,41 +245,41 @@ describe('Subscription Aggregate', () => {
 
       it('should complete demographic verification step', async () => {
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+          SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
         );
 
-        expect(subscription.getStatus()).toBe('document_upload_pending');
+        expect(subscription.getStatus()).toBe(SubscriptionStatus.PENDING);
         const steps = subscription.getEnrollmentSteps();
         const demoStep = steps.find(
-          (s) => s.type === EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+          (s) => s.type === SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
         );
-        expect(demoStep?.status).toBe('COMPLETED');
+        expect(demoStep?.status).toBe(StepStatus.COMPLETED);
       });
 
       it('should progress through all enrollment steps', async () => {
         // Complete demographic verification
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+          SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
         );
-        expect(subscription.getStatus()).toBe('document_upload_pending');
+        expect(subscription.getStatus()).toBe(SubscriptionStatus.PENDING);
 
         // Complete document upload
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DOCUMENT_UPLOAD,
+          SubscriptionStepType.DOCUMENT_UPLOAD,
         );
-        expect(subscription.getStatus()).toBe('plan_activation_pending');
+        expect(subscription.getStatus()).toBe(SubscriptionStatus.PENDING);
 
-        // Complete plan activation
+        // Complete plan activation - should activate the subscription
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.PLAN_ACTIVATION,
+          SubscriptionStepType.PLAN_ACTIVATION,
         );
-        expect(subscription.getStatus()).toBe('active');
+        expect(subscription.getStatus()).toBe(SubscriptionStatus.ACTIVE);
       });
 
       it('should enforce step completion order', async () => {
         await expect(
           subscription.completeEnrollmentStep(
-            EnrollmentStepType.DOCUMENT_UPLOAD,
+            SubscriptionStepType.DOCUMENT_UPLOAD,
           ),
         ).rejects.toThrow(
           'Must complete DEMOGRAPHIC_VERIFICATION before DOCUMENT_UPLOAD',
@@ -286,28 +288,28 @@ describe('Subscription Aggregate', () => {
 
       it('should prevent completing already completed steps', async () => {
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+          SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
         );
 
         await expect(
           subscription.completeEnrollmentStep(
-            EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+            SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
           ),
         ).rejects.toThrow('Step DEMOGRAPHIC_VERIFICATION is already completed');
       });
 
       it('should activate subscription when all steps completed', async () => {
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DEMOGRAPHIC_VERIFICATION,
+          SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
         );
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.DOCUMENT_UPLOAD,
+          SubscriptionStepType.DOCUMENT_UPLOAD,
         );
         await subscription.completeEnrollmentStep(
-          EnrollmentStepType.PLAN_ACTIVATION,
+          SubscriptionStepType.PLAN_ACTIVATION,
         );
 
-        expect(subscription.getStatus()).toBe('active');
+        expect(subscription.getStatus()).toBe(SubscriptionStatus.ACTIVE);
       });
     });
   });
@@ -401,7 +403,7 @@ describe('Subscription Aggregate', () => {
     it('should handle empty subscription gracefully', () => {
       expect(subscription.getItems()).toHaveLength(0);
       expect(subscription.getTotalMonthlyAmount().amount).toBe(0);
-      expect(subscription.getStatus()).toBe('DRAFT');
+      expect(subscription.getStatus()).toBe(SubscriptionStatus.DRAFT);
     });
 
     it('should handle currency consistency', () => {

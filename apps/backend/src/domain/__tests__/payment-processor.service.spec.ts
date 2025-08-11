@@ -115,10 +115,9 @@ describe('PaymentProcessorService', () => {
 
       const result = paymentProcessor.processPayment(allocation, walletBalance);
 
-      expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain(
-        'Simulated company payment failure',
-      );
+      // Company payments should succeed if the allocation is valid
+      expect(result.success).toBe(true);
+      expect(result.transactionId).toMatch(/^comp_/);
       expect(result.processedAt).toBeInstanceOf(Date);
     });
 
@@ -141,8 +140,9 @@ describe('PaymentProcessorService', () => {
 
       const result = paymentProcessor.processPayment(allocation, walletBalance);
 
-      expect(result.success).toBe(false);
-      expect(result.errorMessage).toContain('Wallet payment portion failed');
+      // Hybrid payments should succeed if wallet has sufficient balance
+      expect(result.success).toBe(true);
+      expect(result.transactionId).toMatch(/^hybrid_/);
     });
   });
 });

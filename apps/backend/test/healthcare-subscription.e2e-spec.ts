@@ -7,6 +7,7 @@ import {
   UploadFamilyDemographicsMutationResponse,
   ActivatePlanMutationResponse,
 } from './types/graphql.types';
+import { SubscriptionStatus } from '@prisma/client';
 
 describe('Healthcare Subscription Resolver (e2e)', () => {
   beforeAll(async () => {
@@ -68,7 +69,7 @@ describe('Healthcare Subscription Resolver (e2e)', () => {
 
       const subscription = response.body.data.createSubscription;
       expect(subscription.type).toBe('INDIVIDUAL');
-      expect(subscription.status).toBe('DEMOGRAPHIC_VERIFICATION_PENDING');
+      expect(subscription.status).toBe('PENDING');
 
       if (!subscription.items) {
         fail('Expected subscription to have items');
@@ -357,7 +358,7 @@ describe('Healthcare Subscription Resolver (e2e)', () => {
       `;
 
       const input = {
-        subscriptionId: subscriptionIds[1], // Use the family subscription in demographic_verification_pending status
+        subscriptionId: subscriptionIds[1], // Use the family subscription in PENDING status
         familyMembers: [
           {
             role: 'SPOUSE',
@@ -417,7 +418,7 @@ describe('Healthcare Subscription Resolver (e2e)', () => {
             company_id: BigInt(companyId),
             plan_id: BigInt(planIds[0]),
             type: 'individual',
-            status: 'plan_activation_pending',
+            status: SubscriptionStatus.PENDING,
             start_date: new Date(),
             billing_anchor: 1,
           },

@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { GraphQLResponse } from '../types/graphql.types';
+import { SubscriptionStatus } from '@prisma/client';
 
 /** Test context with mutable arrays for test data management */
 export interface TestContext {
@@ -172,7 +173,7 @@ export class TestSetup {
           company_id: company.id,
           plan_id: basicPlan.id,
           type: 'individual',
-          status: 'document_upload_pending',
+          status: SubscriptionStatus.PENDING,
           start_date: new Date(),
           billing_anchor: 1,
         },
@@ -197,7 +198,7 @@ export class TestSetup {
         company_id: company.id,
         plan_id: basicPlan.id,
         type: 'family',
-        status: 'demographic_verification_pending',
+        status: SubscriptionStatus.PENDING,
         start_date: new Date(),
         billing_anchor: 1,
       },
