@@ -64,13 +64,35 @@ const Subscriptions: React.FC = () => {
         }
       });
 
-      if (result.data?.processCompanyPayments.success) {
-        notifications.show({
-          title: 'Payments Processed',
-          message: `Successfully processed ${formatCurrency(result.data.processCompanyPayments.totalAmountProcessed)} in payments for ${result.data.processCompanyPayments.employeePayments.length} employees`,
-          color: 'green',
-          icon: <IconCheck size={16} />,
-        });
+      const paymentData = result.data?.processCompanyPayments;
+      if (paymentData) {
+        const { overallSuccess, totalAmountProcessed, totalSuccessfulPayments, totalFailedPayments, totalPartialFailures } = paymentData;
+        
+        if (overallSuccess) {
+          notifications.show({
+            title: 'All Payments Processed Successfully',
+            message: `Successfully processed ${formatCurrency(totalAmountProcessed)} in payments for ${totalSuccessfulPayments} employees`,
+            color: 'green',
+            icon: <IconCheck size={16} />,
+          });
+        } else {
+          // Show detailed results for partial success/failures
+          const successCount = totalSuccessfulPayments;
+          const partialCount = totalPartialFailures;
+          const failureCount = totalFailedPayments;
+          
+          let message = `Processed ${formatCurrency(totalAmountProcessed)} in payments. `;
+          message += `${successCount} successful`;
+          if (partialCount > 0) message += `, ${partialCount} partial`;
+          if (failureCount > 0) message += `, ${failureCount} failed`;
+          
+          notifications.show({
+            title: 'Payments Processed with Issues',
+            message,
+            color: totalSuccessfulPayments > 0 ? 'yellow' : 'red',
+            icon: totalSuccessfulPayments > 0 ? <IconCheck size={16} /> : <IconX size={16} />,
+          });
+        }
         
         // Refresh subscription data to show updated payment status
         await refetch();

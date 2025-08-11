@@ -387,12 +387,18 @@ export const GET_SUBSCRIPTION_STATUS_QUERY = gql`
 export const PROCESS_COMPANY_PAYMENTS_MUTATION = gql`
   mutation ProcessCompanyPayments($processPaymentsInput: ProcessPaymentsInput!) {
     processCompanyPayments(processPaymentsInput: $processPaymentsInput) {
-      success
+      overallSuccess
       totalAmountProcessed
-      employeePayments {
+      totalSuccessfulPayments
+      totalFailedPayments
+      totalPartialFailures
+      employeeResults {
         employeeId
+        success
         amountPaid
         subscriptionsPaid
+        error
+        partialSuccess
       }
     }
   }

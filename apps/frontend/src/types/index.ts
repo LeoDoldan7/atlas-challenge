@@ -127,14 +127,20 @@ export interface SubscriptionsResponse {
 
 export interface EmployeePaymentResult {
   employeeId: string;
-  amountPaid: string;
-  subscriptionsPaid: number;
+  success: boolean;
+  amountPaid?: string;
+  subscriptionsPaid?: number;
+  error?: string;
+  partialSuccess?: boolean;
 }
 
 export interface PaymentResult {
-  success: boolean;
+  overallSuccess: boolean;
   totalAmountProcessed: string;
-  employeePayments: EmployeePaymentResult[];
+  totalSuccessfulPayments: number;
+  totalFailedPayments: number;
+  totalPartialFailures: number;
+  employeeResults: EmployeePaymentResult[];
 }
 
 export interface ProcessPaymentsResponse {
