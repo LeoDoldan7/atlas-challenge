@@ -21,7 +21,9 @@ export class PaymentService {
     try {
       return await this.repository.processPayments(companyId);
     } catch (error) {
-      throw new Error(`Payment processing failed: ${error.message}`);
+      throw new Error(
+        `Payment processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
