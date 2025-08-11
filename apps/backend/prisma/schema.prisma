@@ -12,6 +12,15 @@ enum SubscriptionType {
   family
 }
 
+enum SubscriptionStatus {
+  DRAFT
+  PENDING
+  ACTIVE
+  CANCELLED
+  TERMINATED
+  EXPIRED
+}
+
 enum SubscriptionStepType {
   demographic_verification_pending
   document_upload_pending
@@ -114,7 +123,7 @@ model HealthcareSubscription {
   company_id          BigInt
   employee_id         BigInt
   type                SubscriptionType
-  status              SubscriptionStepType
+  status              SubscriptionStatus
   plan_id             BigInt
   start_date          DateTime              @db.Date
   end_date            DateTime?             @db.Date

@@ -111,22 +111,6 @@ describe('SubscriptionEnrollmentStateMachine', () => {
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       await stateMachine.transition(EnrollmentEvent.ACTIVATE);
     });
-
-    it('should suspend active subscription', async () => {
-      const success = await stateMachine.transition(EnrollmentEvent.SUSPEND);
-
-      expect(success).toBe(true);
-      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.SUSPENDED);
-    });
-
-    it('should resume suspended subscription', async () => {
-      await stateMachine.transition(EnrollmentEvent.SUSPEND);
-
-      const success = await stateMachine.transition(EnrollmentEvent.RESUME);
-
-      expect(success).toBe(true);
-      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.ACTIVE);
-    });
   });
 
   describe('Cancellation', () => {
@@ -187,7 +171,6 @@ describe('SubscriptionEnrollmentStateMachine', () => {
       await stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
       await stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
       await stateMachine.transition(EnrollmentEvent.ACTIVATE);
-      await stateMachine.transition(EnrollmentEvent.SUSPEND);
 
       const success = await stateMachine.transition(EnrollmentEvent.EXPIRE);
 

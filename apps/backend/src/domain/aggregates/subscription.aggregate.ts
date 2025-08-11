@@ -13,15 +13,12 @@ import { ItemRole } from '@prisma/client';
 // Domain status enum - includes states not in database (DRAFT, SUSPENDED, EXPIRED)
 // Values that exist in Prisma use lowercase to match database values
 enum DomainSubscriptionStatus {
-  DRAFT = 'DRAFT', // Not in DB - exists only in domain before persistence
-  DEMOGRAPHIC_VERIFICATION_PENDING = 'demographic_verification_pending',
-  DOCUMENT_UPLOAD_PENDING = 'document_upload_pending',
-  PLAN_ACTIVATION_PENDING = 'plan_activation_pending',
+  DRAFT = 'DRAFT',
+  PENDING = 'PENDING',
   ACTIVE = 'active',
-  SUSPENDED = 'SUSPENDED', // Not in DB - domain-specific state
   CANCELLED = 'canceled',
   TERMINATED = 'terminated',
-  EXPIRED = 'EXPIRED', // Not in DB - computed from end_date
+  EXPIRED = 'EXPIRED',
 }
 
 export enum EnrollmentStepType {
@@ -210,16 +207,6 @@ export class Subscription {
 
     await this.stateMachine.transition(EnrollmentEvent.ACTIVATE);
     this.status = DomainSubscriptionStatus.ACTIVE;
-    this.updatedAt = new Date();
-  }
-
-  async suspend(): Promise<void> {
-    if (!this.stateMachine.canTransition(EnrollmentEvent.SUSPEND)) {
-      throw new Error('Cannot suspend subscription in current state');
-    }
-
-    await this.stateMachine.transition(EnrollmentEvent.SUSPEND);
-    this.status = DomainSubscriptionStatus.SUSPENDED;
     this.updatedAt = new Date();
   }
 
