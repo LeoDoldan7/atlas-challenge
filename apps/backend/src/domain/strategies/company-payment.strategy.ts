@@ -66,6 +66,7 @@ export class CompanyPaymentStrategy implements PaymentStrategy {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private processCompanyPayment(_amount: Money): void {
-    // TODO: TBD
+    // TODO: Implement actual company payment processing
+    // For now, always succeeds
   }
 }

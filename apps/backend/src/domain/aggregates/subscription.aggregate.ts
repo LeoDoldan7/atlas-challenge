@@ -8,24 +8,12 @@ import {
   EnrollmentStatus,
   EnrollmentEvent,
 } from '../state-machines/enrollment-state.interface';
-import { ItemRole } from '@prisma/client';
-
-// Domain status enum - includes states not in database (DRAFT, SUSPENDED, EXPIRED)
-// Values that exist in Prisma use lowercase to match database values
-enum DomainSubscriptionStatus {
-  DRAFT = 'DRAFT',
-  PENDING = 'PENDING',
-  ACTIVE = 'active',
-  CANCELLED = 'canceled',
-  TERMINATED = 'terminated',
-  EXPIRED = 'EXPIRED',
-}
-
-export enum EnrollmentStepType {
-  DEMOGRAPHIC_VERIFICATION = 'DEMOGRAPHIC_VERIFICATION',
-  DOCUMENT_UPLOAD = 'DOCUMENT_UPLOAD',
-  PLAN_ACTIVATION = 'PLAN_ACTIVATION',
-}
+import {
+  ItemRole,
+  SubscriptionStatus,
+  SubscriptionStepType,
+  StepStatus,
+} from '@prisma/client';
 
 interface SubscriptionItem {
   id: string;
@@ -38,13 +26,15 @@ interface SubscriptionItem {
 }
 
 interface EnrollmentStep {
-  type: EnrollmentStepType;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
-  completedAt?: Date;
+  id?: string;
+  type: SubscriptionStepType;
+  status: StepStatus;
+  completedAt?: Date | null;
+  createdAt?: Date;
 }
 
 export class Subscription {
-  private status: DomainSubscriptionStatus;
+  private status: SubscriptionStatus;
   private items: SubscriptionItem[] = [];
   private enrollmentSteps: EnrollmentStep[];
   private totalMonthlyAmount: Money;
@@ -62,7 +52,7 @@ export class Subscription {
     private period: SubscriptionPeriod,
     paymentProcessor?: PaymentProcessorService,
   ) {
-    this.status = DomainSubscriptionStatus.DRAFT;
+    this.status = SubscriptionStatus.DRAFT;
     this.enrollmentSteps = this.initializeEnrollmentSteps();
     this.totalMonthlyAmount = Money.zero();
     this.aggregatePaymentAllocation = new PaymentAllocation({
@@ -79,9 +69,21 @@ export class Subscription {
 
   private initializeEnrollmentSteps(): EnrollmentStep[] {
     return [
-      { type: EnrollmentStepType.DEMOGRAPHIC_VERIFICATION, status: 'PENDING' },
-      { type: EnrollmentStepType.DOCUMENT_UPLOAD, status: 'PENDING' },
-      { type: EnrollmentStepType.PLAN_ACTIVATION, status: 'PENDING' },
+      {
+        type: SubscriptionStepType.DEMOGRAPHIC_VERIFICATION,
+        status: StepStatus.PENDING,
+        createdAt: new Date(),
+      },
+      {
+        type: SubscriptionStepType.DOCUMENT_UPLOAD,
+        status: StepStatus.PENDING,
+        createdAt: new Date(),
+      },
+      {
+        type: SubscriptionStepType.PLAN_ACTIVATION,
+        status: StepStatus.PENDING,
+        createdAt: new Date(),
+      },
     ];
   }
 
@@ -128,33 +130,34 @@ export class Subscription {
     }
 
     await this.stateMachine.transition(EnrollmentEvent.START_ENROLLMENT);
-    this.status = DomainSubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING;
+    this.status = SubscriptionStatus.PENDING;
     this.updatedAt = new Date();
   }
 
-  async completeEnrollmentStep(stepType: EnrollmentStepType): Promise<void> {
+  async completeEnrollmentStep(stepType: SubscriptionStepType): Promise<void> {
     this.validateCanCompleteEnrollmentStep();
 
     const step = this.findEnrollmentStep(stepType);
     this.validateStepNotAlreadyCompleted(step, stepType);
     this.validateStepsCompletedInOrder(stepType);
 
-    step.status = 'COMPLETED';
+    step.status = StepStatus.COMPLETED;
     step.completedAt = new Date();
-
-    // Progress to next enrollment status
-    if (stepType === EnrollmentStepType.DEMOGRAPHIC_VERIFICATION) {
-      this.status = DomainSubscriptionStatus.DOCUMENT_UPLOAD_PENDING;
-    } else if (stepType === EnrollmentStepType.DOCUMENT_UPLOAD) {
-      this.status = DomainSubscriptionStatus.PLAN_ACTIVATION_PENDING;
-    }
-
     this.updatedAt = new Date();
 
     // Check if all steps completed
-    if (this.enrollmentSteps.every((s) => s.status === 'COMPLETED')) {
-      if (this.stateMachine.canTransition(EnrollmentEvent.ACTIVATE)) {
-        await this.activate();
+    if (this.enrollmentSteps.every((s) => s.status === StepStatus.COMPLETED)) {
+      // All steps completed, go through payment processing flow before activation
+      if (this.stateMachine.canTransition(EnrollmentEvent.PROCESS_PAYMENT)) {
+        await this.stateMachine.transition(EnrollmentEvent.PROCESS_PAYMENT);
+        // Simulate immediate payment success for step-based workflow
+        if (this.stateMachine.canTransition(EnrollmentEvent.PAYMENT_SUCCESS)) {
+          await this.stateMachine.transition(EnrollmentEvent.PAYMENT_SUCCESS);
+        }
+        // Now activate
+        if (this.stateMachine.canTransition(EnrollmentEvent.ACTIVATE)) {
+          await this.activate();
+        }
       }
     }
   }
@@ -205,8 +208,19 @@ export class Subscription {
       throw new Error('Cannot activate subscription in current state');
     }
 
+    // Ensure all steps are completed before activation
+    const allStepsCompleted = this.enrollmentSteps.every(
+      (s) => s.status === StepStatus.COMPLETED,
+    );
+
+    if (!allStepsCompleted) {
+      throw new Error(
+        'Cannot activate subscription: not all steps are completed',
+      );
+    }
+
     await this.stateMachine.transition(EnrollmentEvent.ACTIVATE);
-    this.status = DomainSubscriptionStatus.ACTIVE;
+    this.status = SubscriptionStatus.ACTIVE;
     this.updatedAt = new Date();
   }
 
@@ -216,7 +230,7 @@ export class Subscription {
     }
 
     await this.stateMachine.transition(EnrollmentEvent.RESUME);
-    this.status = DomainSubscriptionStatus.ACTIVE;
+    this.status = SubscriptionStatus.ACTIVE;
     this.updatedAt = new Date();
   }
 
@@ -226,7 +240,7 @@ export class Subscription {
     }
 
     await this.stateMachine.transition(EnrollmentEvent.CANCEL);
-    this.status = DomainSubscriptionStatus.CANCELLED;
+    this.status = SubscriptionStatus.CANCELLED;
     this.updatedAt = new Date();
   }
 
@@ -236,12 +250,12 @@ export class Subscription {
     }
 
     await this.stateMachine.transition(EnrollmentEvent.EXPIRE);
-    this.status = DomainSubscriptionStatus.EXPIRED;
+    this.status = SubscriptionStatus.EXPIRED;
     this.updatedAt = new Date();
   }
 
   private validateCanModifyItems(): void {
-    if (this.status !== DomainSubscriptionStatus.DRAFT) {
+    if (this.status !== SubscriptionStatus.DRAFT) {
       throw new Error('Cannot modify items after enrollment has started');
     }
   }
@@ -276,18 +290,12 @@ export class Subscription {
   }
 
   private validateCanCompleteEnrollmentStep(): void {
-    const enrollmentStatuses = [
-      DomainSubscriptionStatus.DEMOGRAPHIC_VERIFICATION_PENDING,
-      DomainSubscriptionStatus.DOCUMENT_UPLOAD_PENDING,
-      DomainSubscriptionStatus.PLAN_ACTIVATION_PENDING,
-    ];
-
-    if (!enrollmentStatuses.includes(this.status)) {
+    if (this.status !== SubscriptionStatus.PENDING) {
       throw new Error('Cannot complete enrollment steps in current status');
     }
   }
 
-  private findEnrollmentStep(stepType: EnrollmentStepType): EnrollmentStep {
+  private findEnrollmentStep(stepType: SubscriptionStepType): EnrollmentStep {
     const step = this.enrollmentSteps.find((s) => s.type === stepType);
     if (!step) {
       throw new Error(`Enrollment step ${stepType} not found`);
@@ -297,20 +305,20 @@ export class Subscription {
 
   private validateStepNotAlreadyCompleted(
     step: EnrollmentStep,
-    stepType: EnrollmentStepType,
+    stepType: SubscriptionStepType,
   ): void {
-    if (step.status === 'COMPLETED') {
+    if (step.status === StepStatus.COMPLETED) {
       throw new Error(`Step ${stepType} is already completed`);
     }
   }
 
-  private validateStepsCompletedInOrder(stepType: EnrollmentStepType): void {
+  private validateStepsCompletedInOrder(stepType: SubscriptionStepType): void {
     const stepIndex = this.enrollmentSteps.findIndex(
       (s) => s.type === stepType,
     );
     if (stepIndex > 0) {
       const previousStep = this.enrollmentSteps[stepIndex - 1];
-      if (previousStep.status !== 'COMPLETED') {
+      if (previousStep.status !== StepStatus.COMPLETED) {
         throw new Error(
           `Must complete ${previousStep.type} before ${stepType}`,
         );
@@ -332,7 +340,7 @@ export class Subscription {
     );
   }
 
-  getStatus(): DomainSubscriptionStatus {
+  getStatus(): SubscriptionStatus {
     return this.status;
   }
 

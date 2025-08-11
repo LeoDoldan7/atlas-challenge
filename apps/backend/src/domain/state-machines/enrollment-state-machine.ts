@@ -135,11 +135,6 @@ export class SubscriptionEnrollmentStateMachine
       // From ACTIVE
       {
         from: EnrollmentStatus.ACTIVE,
-        event: EnrollmentEvent.SUSPEND,
-        to: EnrollmentStatus.SUSPENDED,
-      },
-      {
-        from: EnrollmentStatus.ACTIVE,
         event: EnrollmentEvent.CANCEL,
         to: EnrollmentStatus.CANCELLED,
       },
@@ -148,24 +143,6 @@ export class SubscriptionEnrollmentStateMachine
         event: EnrollmentEvent.EXPIRE,
         to: EnrollmentStatus.EXPIRED,
       },
-
-      // From SUSPENDED
-      {
-        from: EnrollmentStatus.SUSPENDED,
-        event: EnrollmentEvent.RESUME,
-        to: EnrollmentStatus.ACTIVE,
-      },
-      {
-        from: EnrollmentStatus.SUSPENDED,
-        event: EnrollmentEvent.CANCEL,
-        to: EnrollmentStatus.CANCELLED,
-      },
-      {
-        from: EnrollmentStatus.SUSPENDED,
-        event: EnrollmentEvent.EXPIRE,
-        to: EnrollmentStatus.EXPIRED,
-      },
-
       // Terminal states (CANCELLED, EXPIRED) have no outgoing transitions
     ];
   }
