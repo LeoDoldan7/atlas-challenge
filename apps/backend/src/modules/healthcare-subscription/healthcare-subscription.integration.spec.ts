@@ -9,6 +9,8 @@ import { FileUploadService } from '../file-upload/file-upload.service';
 import { PlanActivationService } from '../plan-activation/plan-activation.service';
 import { HealthcarePlanMapper } from '../healthcare-plan/healthcare-plan.mapper';
 import { EmployeeMapper } from '../employee/employee.mapper';
+import { DemographicMapper } from '../demographic/demographic.mapper';
+import { WalletMapper } from '../wallet/wallet.mapper';
 import { FamilyDemographicsRepository } from '../family-demographics/family-demographics.repository';
 import { FileUploadRepository } from '../file-upload/file-upload.repository';
 import { PlanActivationRepository } from '../plan-activation/plan-activation.repository';
@@ -43,6 +45,8 @@ describe('HealthcareSubscription Integration Tests', () => {
         PlanActivationRepository,
         HealthcarePlanMapper,
         EmployeeMapper,
+        DemographicMapper,
+        WalletMapper,
         {
           provide: MinioService,
           useValue: {
@@ -92,21 +96,19 @@ describe('HealthcareSubscription Integration Tests', () => {
       },
     });
 
-    const wallet = await prisma.wallet.create({
-      data: {
-        balance_cents: 100000n, // $1000
-        currency_code: 'USD',
-      },
-    });
-
     const employee = await prisma.employee.create({
       data: {
         email: 'test@example.com',
         birth_date: new Date('1990-01-01'),
         marital_status: 'single',
         demographics_id: demographic.id,
-        wallet_id: wallet.id,
         company_id: testCompanyId,
+        wallet: {
+          create: {
+            balance_cents: 100000n, // $1000
+            currency_code: 'USD',
+          },
+        },
       },
     });
     testEmployeeId = employee.id;
@@ -338,13 +340,6 @@ describe('HealthcareSubscription Integration Tests', () => {
 
     it('should handle insufficient wallet balance', async () => {
       // Create an employee with insufficient funds
-      const poorWallet = await prisma.wallet.create({
-        data: {
-          balance_cents: 100n, // Only $1
-          currency_code: 'USD',
-        },
-      });
-
       const poorDemographic = await prisma.demographic.create({
         data: {
           first_name: 'Poor',
@@ -360,8 +355,13 @@ describe('HealthcareSubscription Integration Tests', () => {
           birth_date: new Date('1990-01-01'),
           marital_status: 'single',
           demographics_id: poorDemographic.id,
-          wallet_id: poorWallet.id,
           company_id: testCompanyId,
+          wallet: {
+            create: {
+              balance_cents: 100, // Only $1
+              currency_code: 'USD',
+            },
+          },
         },
       });
 

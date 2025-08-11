@@ -1,5 +1,8 @@
 import { Money } from './money.value-object';
-import { PaymentAllocation, PaymentSource } from './payment-allocation.value-object';
+import {
+  PaymentAllocation,
+  PaymentSource,
+} from './payment-allocation.value-object';
 
 describe('PaymentAllocation', () => {
   describe('fromPercentage', () => {
@@ -94,7 +97,10 @@ describe('PaymentAllocation', () => {
     it('should create hybrid allocation correctly', () => {
       const companyAmount = Money.fromCents(30000, 'USD');
       const employeeAmount = Money.fromCents(20000, 'USD');
-      const allocation = PaymentAllocation.hybrid(companyAmount, employeeAmount);
+      const allocation = PaymentAllocation.hybrid(
+        companyAmount,
+        employeeAmount,
+      );
 
       expect(allocation.companyContribution.toCents()).toBe(30000);
       expect(allocation.employeeContribution.toCents()).toBe(20000);
@@ -169,7 +175,7 @@ describe('PaymentAllocation', () => {
         Money.fromCents(50000, 'USD'),
         75,
       ); // Employee pays 12500
-      
+
       const insufficientBalance = Money.fromCents(10000, 'USD');
       const sufficientBalance = Money.fromCents(15000, 'USD');
 

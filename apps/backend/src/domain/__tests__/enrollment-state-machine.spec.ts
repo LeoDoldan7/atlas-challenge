@@ -14,7 +14,9 @@ describe('SubscriptionEnrollmentStateMachine', () => {
 
   describe('Initial State', () => {
     it('should start in ENROLLMENT_STARTED status', () => {
-      expect(stateMachine.getCurrentState()).toBe(EnrollmentStatus.ENROLLMENT_STARTED);
+      expect(stateMachine.getCurrentState()).toBe(
+        EnrollmentStatus.ENROLLMENT_STARTED,
+      );
     });
 
     it('should allow custom initial state', () => {
