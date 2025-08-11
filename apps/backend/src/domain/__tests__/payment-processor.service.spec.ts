@@ -47,7 +47,6 @@ describe('PaymentProcessorService', () => {
     });
 
     it('should return error when no strategy can handle allocation', () => {
-      // Create a mock allocation that no strategy can handle
       const mockAllocation = {
         source: 'UNKNOWN_SOURCE' as PaymentSource,
         companyContribution: usd100,
@@ -115,7 +114,6 @@ describe('PaymentProcessorService', () => {
 
       const result = paymentProcessor.processPayment(allocation, walletBalance);
 
-      // Company payments should succeed if the allocation is valid
       expect(result.success).toBe(true);
       expect(result.transactionId).toMatch(/^comp_/);
       expect(result.processedAt).toBeInstanceOf(Date);
@@ -140,7 +138,6 @@ describe('PaymentProcessorService', () => {
 
       const result = paymentProcessor.processPayment(allocation, walletBalance);
 
-      // Hybrid payments should succeed if wallet has sufficient balance
       expect(result.success).toBe(true);
       expect(result.transactionId).toMatch(/^hybrid_/);
     });

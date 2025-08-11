@@ -81,7 +81,6 @@ describe('SubscriptionEnrollmentStateMachine', () => {
         EnrollmentStatus.ENROLLMENT_STARTED,
       );
 
-      // Can retry payment
       const retrySuccess = await stateMachine.transition(
         EnrollmentEvent.PROCESS_PAYMENT,
       );

@@ -294,7 +294,6 @@ describe('PaymentAllocation Value Object', () => {
     });
 
     it('should not allow external modification of contribution properties', () => {
-      // Properties are readonly, this test ensures TypeScript prevents modification
       expect(allocation.companyContribution).toEqual(usd100);
       expect(allocation.employeeContribution).toEqual(usd50);
     });
@@ -303,11 +302,9 @@ describe('PaymentAllocation Value Object', () => {
       const other = PaymentAllocation.companyPaid(usd50);
       const combined = allocation.combine(other);
 
-      // Original allocation should be unchanged
       expect(allocation.companyContribution.amount).toBe(100);
       expect(allocation.employeeContribution.amount).toBe(50);
 
-      // Combined should be a new instance
       expect(combined).not.toBe(allocation);
     });
   });

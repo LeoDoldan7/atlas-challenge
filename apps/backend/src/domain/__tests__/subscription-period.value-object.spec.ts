@@ -16,15 +16,12 @@ describe('SubscriptionPeriod Value Object', () => {
       const mutableEnd = new Date(endDate);
       const period = new SubscriptionPeriod(mutableStart, mutableEnd);
 
-      // Store the original values
       const originalStart = period.getStartDate().getFullYear();
       const originalEnd = period.getEndDate().getFullYear();
 
-      // Mutate the original dates passed to constructor
       mutableStart.setFullYear(2025);
       mutableEnd.setFullYear(2025);
 
-      // The period should be unaffected by the mutation
       expect(period.getStartDate().getFullYear()).toBe(originalStart);
       expect(period.getEndDate().getFullYear()).toBe(originalEnd);
     });
@@ -169,14 +166,12 @@ describe('SubscriptionPeriod Value Object', () => {
       const retrievedStart = period.getStartDate();
       const retrievedEnd = period.getEndDate();
 
-      // Store original values
       const originalStartYear = period.getStartDate().getFullYear();
       const originalEndYear = period.getEndDate().getFullYear();
 
       retrievedStart.setFullYear(2025);
       retrievedEnd.setFullYear(2025);
 
-      // Original period should be unchanged
       expect(period.getStartDate().getFullYear()).toBe(originalStartYear);
       expect(period.getEndDate().getFullYear()).toBe(originalEndYear);
     });
