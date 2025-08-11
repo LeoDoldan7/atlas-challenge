@@ -96,15 +96,17 @@ export class SubscriptionValidationService {
     }
   }
 
-  validateAllStepsCompleted(steps: EnrollmentStep[]): void {
-    const allStepsCompleted = steps.every(
-      (s) => s.status === StepStatus.COMPLETED,
+  validateStepsForActivation(steps: EnrollmentStep[]): void {
+    const prerequisiteSteps = steps.filter(
+      (step) => step.type !== SubscriptionStepType.PLAN_ACTIVATION,
     );
-    if (!allStepsCompleted) {
-      throw new Error(
-        'Cannot activate subscription: not all steps are completed',
-      );
-    }
+    prerequisiteSteps.forEach((step) => {
+      if (step.status !== StepStatus.COMPLETED) {
+        throw new Error(
+          `Step ${step.type} must be completed before plan activation`,
+        );
+      }
+    });
   }
 
   private hasEmployeeItem(items: SubscriptionItem[]): boolean {
