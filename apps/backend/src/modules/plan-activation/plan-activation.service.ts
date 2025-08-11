@@ -17,6 +17,7 @@ export class PlanActivationService {
     }
 
     if (subscription.status !== 'PENDING') {
+      console.log('### status 2', subscription.status);
       throw new Error('Subscription is not in pending status');
     }
 
